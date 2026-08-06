@@ -115,8 +115,8 @@ footer{max-width:920px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-s
     <small>paste langsung dari Excel</small>
   </div>
   <div class="panel-box">
-    <textarea id="paste-area" placeholder="Paste baris planning di sini (masih contoh, belum tersambung ke Sheets)&#10;05/08/2026&#9;DESTI&#9;CV. Budiana - PANGKALAN BUN&#9;2.185&#9;32,6"></textarea>
-    <div class="paste-hint">Format kolom (pisah tab, sesuai urutan planning): Tanggal · Nama Sales · Customer - Kota Tujuan · Jumlah Karton · CBM. Asal selalu Gudang UNIFAM.</div>
+    <textarea id="paste-area" placeholder="Paste baris planning di sini (masih contoh, belum tersambung ke Sheets)&#10;05/08/2026&#9;DESTI&#9;CV. Budiana - PANGKALAN BUN&#9;CDE 6x4&#9;2.185&#9;32,6"></textarea>
+    <div class="paste-hint">Format kolom (pisah tab): Tanggal Lelang · Nama Sales · Customer - Kota Tujuan · Tipe Mobil · Jumlah Karton · CBM. Asal selalu Gudang UNIFAM.</div>
     <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
     <div id="preview-wrap"></div>
   </div>
@@ -204,8 +204,8 @@ function waUntuk(e){
 
 function parsePlanningBaris(baris){
   const kol = baris.split('\t').map(s=>s.trim());
-  if(kol.length < 5) return null;
-  const [tanggal, sales, customerKota, kartonRaw, cbmRaw] = kol;
+  if(kol.length < 6) return null;
+  const [tanggal, sales, customerKota, tipeMobil, kartonRaw, cbmRaw] = kol;
   let customer = customerKota, kota = customerKota;
   if(customerKota.includes(' - ')){
     const parts = customerKota.split(' - ');
@@ -214,7 +214,7 @@ function parsePlanningBaris(baris){
   }
   const karton = parseInt(kartonRaw.replace(/\./g,'').replace(/,/g,''), 10) || 0;
   const cbm = parseFloat(cbmRaw.replace(/\./g,'').replace(',','.')) || 0;
-  return {tanggal, sales, customer, kota, karton, cbm};
+  return {tanggal, sales, customer, kota, tipeMobil, karton, cbm};
 }
 
 function prosesPaste(){
@@ -230,10 +230,10 @@ function renderPreview(){
   wrap.innerHTML = `
     <div class="preview-table">
       <table>
-        <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota Tujuan</th><th>Karton</th><th>CBM</th></tr></thead>
+        <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota</th><th>Tipe Mobil</th><th>Karton</th><th>CBM</th></tr></thead>
         <tbody>
           ${pendingPreview.map(p=>`<tr>
-            <td>${p.tanggal}</td><td>${p.sales}</td><td>${p.customer}</td><td>${p.kota}</td>
+            <td>${p.tanggal}</td><td>${p.sales}</td><td>${p.customer}</td><td>${p.kota}</td><td>${p.tipeMobil}</td>
             <td>${formatKarton(p.karton)}</td><td>${formatCbm(p.cbm)}</td>
           </tr>`).join('')}
         </tbody>
@@ -248,7 +248,7 @@ function konfirmasiPaste(){
   pendingPreview.forEach(p=>{
     lelangList.push({
       id: nextId++, tanggal:p.tanggal, sales:p.sales, customer:p.customer, kota:p.kota,
-      karton:p.karton, cbm:p.cbm,
+      tipeMobil:p.tipeMobil, karton:p.karton, cbm:p.cbm,
       batasWaktu: Date.now() + 3*3600*1000,
       status: "terbuka", bids: {}
     });
@@ -312,7 +312,7 @@ function render(){
       <div class="card-head">
         <div>
           <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-          <div class="meta">${l.customer} · Sales ${l.sales} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal} · ${entries.length} ekspedisi mengisi</div>
+          <div class="meta">${l.customer} · Sales ${l.sales} · ${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal} · ${entries.length} ekspedisi mengisi</div>
         </div>
         <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
       </div>
@@ -332,7 +332,7 @@ function render(){
         return `<div class="card"><div class="card-head">
           <div>
             <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-            <div class="meta">${l.customer} · Sales ${l.sales} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM</div>
+            <div class="meta">${l.customer} · Sales ${l.sales} · ${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM</div>
           </div>
         </div>
         <div class="card-body">

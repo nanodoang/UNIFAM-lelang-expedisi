@@ -108,20 +108,20 @@ const namaEkspedisi = params.get('ekspedisi') || 'DEMO';
 let lelangList = [
   {
     id: 1, tanggal:"05/08/2026", sales:"DESTI", customer:"CV. Budiana", kota:"PANGKALAN BUN",
-    karton: 2185, cbm: 32.6,
+    tipeMobil: "CDE 6x4", karton: 2185, cbm: 32.6,
     batasWaktu: Date.now() + 3*3600*1000,
     status: "terbuka", bids: {}
   },
   {
     id: 2, tanggal:"05/08/2026", sales:"RIO", customer:"UD. Sinar Abadi", kota:"SAMPIT",
-    karton: 940, cbm: 15.2,
+    tipeMobil: "CDD 6x2", karton: 940, cbm: 15.2,
     batasWaktu: Date.now() + 1*3600*1000,
     status: "terbuka",
     bids: { "PAT": {harga:3200000, waktu:Date.now()-40*60000} }
   },
   {
-    id: 4, tanggal:"05/08/2026", sales:"DESTI", customer:"Toko Sejahtera", kota:"KUALA KAPUAS",
-    karton: 1120, cbm: 18.4,
+    id: 4, tanggal:"05/08/2026", sales:"DESTI", customer:"Toko Sejahtera", kota:"KUALA KAPUAS", 
+    tipeMobil: "CDE 4x2", karton: 1120, cbm: 18.4,
     batasWaktu: Date.now() + 5*3600*1000,
     status: "terbuka", bids: {}
   }
@@ -142,9 +142,19 @@ function ajukanBid(id){
   const inp = document.getElementById(`bid-input-${id}`);
   const harga = parseInt(inp.value, 10);
   if(!harga || harga <= 0){ inp.style.borderColor = 'var(--red)'; return; }
+  
+  const etdInp = document.getElementById(`etd-input-${id}`);
+  const etd = etdInp.value.trim();
+  
+  const etaInp = document.getElementById(`eta-input-${id}`);
+  const eta = etaInp.value.trim();
+  
+  const kapalInp = document.getElementById(`kapal-input-${id}`);  
+  const namaKapal = kapalInp.value.trim();
+  
   const l = lelangList.find(x=>x.id===id);
-  l.bids[namaEkspedisi] = {harga, waktu: Date.now()};
-  render();
+  l.bids[namaEkspedisi] = {harga, etd, eta, namaKapal, waktu: Date.now()};
+  render();  
 }
 
 function render(){
@@ -174,13 +184,16 @@ function render(){
     card.innerHTML = `
       <div class="card-head">
         <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-        <div class="meta">${l.customer} · Sales ${l.sales}<br>${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal}</div>
+        <div class="meta">${l.customer} · Sales ${l.sales}<br>${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal}</div>
         <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
       </div>
       <div class="card-body">
-        ${mine ? `<div class="submitted-note">✓ Terakhir Anda ajukan: ${formatRupiah(mine.harga)} · ${new Date(mine.waktu).toLocaleTimeString('id-ID')}</div>` : ''}
+        ${mine ? `<div class="submitted-note">✓ Harga: ${formatRupiah(mine.harga)} · ETD: ${mine.etd} · ETA: ${mine.eta} · Kapal: ${mine.namaKapal} · ${new Date(mine.waktu).toLocaleTimeString('id-ID')}</div>` : ''}
         <div class="my-bid-row">
           <input id="bid-input-${l.id}" type="number" placeholder="Masukkan harga penawaran (Rp)" value="${mine ? mine.harga : ''}">
+          <input id="etd-input-${l.id}" type="text" placeholder="ETD" value="${mine ? mine.etd : ''}">
+          <input id="eta-input-${l.id}" type="text" placeholder="ETA" value="${mine ? mine.eta : ''}">
+          <input id="kapal-input-${l.id}" type="text" placeholder="Nama Kapal" value="${mine ? mine.namaKapal : ''}">
           <button onclick="ajukanBid(${l.id})">${mine ? 'Update' : 'Ajukan'}</button>
         </div>
       </div>
