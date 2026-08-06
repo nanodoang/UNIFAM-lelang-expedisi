@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lelang Kiriman — UNIFAM</title>
+<style>
+:root{
+  --sky-deep:#1E88E5;
+  --sky:#3FA3F2;
+  --sky-light:#EAF4FD;
+  --panel:#FFFFFF;
+  --line:#D8E9FB;
+  --text:#14293D;
+  --muted:#5C7896;
+  --amber:#F2A93B;
+  --teal:#0FA894;
+  --red:#E1554D;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --sans:'Space Grotesk',Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    linear-gradient(180deg, var(--sky-deep) 0%, var(--sky) 220px, var(--sky-light) 220px, var(--sky-light) 100%);
+  color:var(--text);
+  font-family:var(--sans);
+  min-height:100vh;
+  padding-bottom:60px;
+}
+header{
+  max-width:640px;margin:0 auto;padding:32px 24px 20px;color:#fff;
+}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:8px;}
+h1{font-size:clamp(22px,5vw,28px);margin:0 0 6px;letter-spacing:-0.01em;}
+.sub{color:rgba(255,255,255,.85);font-size:13.5px;max-width:520px;line-height:1.55;}
+.eks-badge{
+  display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
+  padding:6px 14px;border-radius:20px;font-family:var(--mono);font-size:12.5px;
+}
+
+main{max-width:640px;margin:0 auto;padding:0 24px;}
+.section-title{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 14px;}
+.section-title h2{font-size:15.5px;margin:0;color:var(--text);}
+.section-title small{color:var(--muted);font-family:var(--mono);font-size:11px;}
+
+.grid{display:flex;flex-direction:column;gap:12px;}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(30,136,229,.08);
+}
+.card-head{padding:16px 18px 10px;}
+.route{font-size:15.5px;font-weight:700;color:var(--text);}
+.route .arrow{color:var(--sky-deep);margin:0 6px;}
+.meta{font-size:12px;color:var(--muted);margin-top:5px;font-family:var(--mono);line-height:1.7;}
+.deadline-tag{
+  display:inline-block;margin-top:8px;font-family:var(--mono);font-size:11px;
+  color:var(--amber);background:rgba(242,169,59,.12);padding:3px 10px;border-radius:20px;
+}
+.deadline-tag.lewat{color:var(--red);background:rgba(225,85,77,.1);}
+
+.card-body{border-top:1px solid var(--line);padding:14px 18px 18px;background:#FBFDFF;}
+.submitted-note{font-family:var(--mono);font-size:11.5px;color:var(--teal);margin-bottom:10px;}
+.my-bid-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}
+.my-bid-row input{
+  background:#fff;border:1.5px solid var(--line);color:var(--text);
+  padding:10px 12px;border-radius:8px;font-size:13.5px;font-family:var(--mono);width:100%;
+}
+.my-bid-row input:focus{outline:none;border-color:var(--sky-deep);}
+.my-bid-row button{
+  background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
+  font-weight:700;font-size:13px;padding:10px 18px;cursor:pointer;white-space:nowrap;
+}
+.my-bid-row button:hover{background:#1670BF;}
+
+.empty-state{
+  text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;
+  background:var(--panel);border:1px dashed var(--line);border-radius:14px;
+}
+.invalid{
+  max-width:640px;margin:60px auto;padding:24px;text-align:center;
+  background:var(--panel);border-radius:14px;color:var(--text);font-size:14px;
+}
+
+footer{max-width:640px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<header id="header"></header>
+<main>
+  <div class="section-title">
+    <h2>Lelang Terbuka Untuk Anda</h2>
+    <small id="jumlah-lelang"></small>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+<footer>Link ini tetap — begitu ada lelang baru, langsung muncul di sini. Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.</footer>
+
+<script>
+// ambil nama ekspedisi dari URL: index.html?ekspedisi=PAT
+const params = new URLSearchParams(window.location.search);
+const namaEkspedisi = params.get('ekspedisi') || 'DEMO';
+
+// contoh data statis (nanti diganti fetch ke Google Sheets via GAS)
+let lelangList = [
+  {
+    id: 1, tanggal:"05/08/2026", sales:"DESTI", customer:"CV. Budiana", kota:"PANGKALAN BUN",
+    karton: 2185, cbm: 32.6,
+    batasWaktu: Date.now() + 3*3600*1000,
+    status: "terbuka", bids: {}
+  },
+  {
+    id: 2, tanggal:"05/08/2026", sales:"RIO", customer:"UD. Sinar Abadi", kota:"SAMPIT",
+    karton: 940, cbm: 15.2,
+    batasWaktu: Date.now() + 1*3600*1000,
+    status: "terbuka",
+    bids: { "PAT": {harga:3200000, waktu:Date.now()-40*60000} }
+  },
+  {
+    id: 4, tanggal:"05/08/2026", sales:"DESTI", customer:"Toko Sejahtera", kota:"KUALA KAPUAS",
+    karton: 1120, cbm: 18.4,
+    batasWaktu: Date.now() + 5*3600*1000,
+    status: "terbuka", bids: {}
+  }
+];
+
+function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
+function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
+function formatCbm(n){ return Number(n).toLocaleString("id-ID", {minimumFractionDigits:1}); }
+function formatJam(ts){
+  const diff = ts - Date.now();
+  if(diff <= 0) return "lewat batas";
+  const h = Math.floor(diff/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  return h>0 ? `sisa ${h}j ${m}m` : `sisa ${m}m`;
+}
+
+function ajukanBid(id){
+  const inp = document.getElementById(`bid-input-${id}`);
+  const harga = parseInt(inp.value, 10);
+  if(!harga || harga <= 0){ inp.style.borderColor = 'var(--red)'; return; }
+  const l = lelangList.find(x=>x.id===id);
+  l.bids[namaEkspedisi] = {harga, waktu: Date.now()};
+  render();
+}
+
+function render(){
+  document.getElementById('header').innerHTML = `
+    <div class="eyebrow">PT. UNIFAM · Lelang Kiriman</div>
+    <h1>Panel Ekspedisi</h1>
+    <p class="sub">Daftar lelang pengiriman yang masih terbuka. Isi harga penawaran Anda — tidak terlihat oleh ekspedisi lain.</p>
+    <div class="eks-badge">🚚 ${namaEkspedisi}</div>
+  `;
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const terbuka = lelangList.filter(l=>l.status==='terbuka');
+  document.getElementById('jumlah-lelang').textContent = `${terbuka.length} aktif`;
+
+  if(terbuka.length === 0){
+    grid.innerHTML = `<div class="empty-state">Belum ada lelang terbuka saat ini. Cek lagi nanti ya.</div>`;
+    return;
+  }
+
+  terbuka.forEach(l=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    const lewat = l.batasWaktu - Date.now() <= 0;
+    const mine = l.bids[namaEkspedisi];
+
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
+        <div class="meta">${l.customer} · Sales ${l.sales}<br>${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal}</div>
+        <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
+      </div>
+      <div class="card-body">
+        ${mine ? `<div class="submitted-note">✓ Terakhir Anda ajukan: ${formatRupiah(mine.harga)} · ${new Date(mine.waktu).toLocaleTimeString('id-ID')}</div>` : ''}
+        <div class="my-bid-row">
+          <input id="bid-input-${l.id}" type="number" placeholder="Masukkan harga penawaran (Rp)" value="${mine ? mine.harga : ''}">
+          <button onclick="ajukanBid(${l.id})">${mine ? 'Update' : 'Ajukan'}</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+setInterval(render, 30000);
+render();
+</script>
+</body>
+</html>
