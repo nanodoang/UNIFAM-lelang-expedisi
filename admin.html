@@ -107,14 +107,15 @@ footer{max-width:920px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-s
       <input id="eks-wa" placeholder="No. WA (mis. 6281234567890)">
       <button class="btn-primary" onclick="tambahEkspedisi()">+ Tambah</button>
     </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);font-style:italic;">Data masih contoh — belum tersambung ke Sheets</div>
   </div>
-
+  
   <div class="section-title">
     <h2>Tambah Lelang dari Planning</h2>
     <small>paste langsung dari Excel</small>
   </div>
   <div class="panel-box">
-    <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;05/08/2026&#9;DESTI&#9;CV. Budiana - PANGKALAN BUN&#9;2.185&#9;32,6"></textarea>
+    <textarea id="paste-area" placeholder="Paste baris planning di sini (masih contoh, belum tersambung ke Sheets)&#10;05/08/2026&#9;DESTI&#9;CV. Budiana - PANGKALAN BUN&#9;2.185&#9;32,6"></textarea>
     <div class="paste-hint">Format kolom (pisah tab, sesuai urutan planning): Tanggal · Nama Sales · Customer - Kota Tujuan · Jumlah Karton · CBM. Asal selalu Gudang UNIFAM.</div>
     <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
     <div id="preview-wrap"></div>
@@ -195,7 +196,7 @@ function tambahEkspedisi(){
   render();
 }
 
-function linkUntuk(nama){ return `https://nanodoang.github.io/Lelang-Expedisi-UNIFAM/index.html?ekspedisi=${encodeURIComponent(nama)}`; }
+function linkUntuk(nama){ return `https://nanodoang.github.io/UNIFAM-lelang-expedisi/index.html?ekspedisi=${encodeURIComponent(nama)}`; }
 function waUntuk(e){
   const teks = `Halo ${e.nama}, ini link lelang kiriman UNIFAM khusus untuk tim Anda:\n${linkUntuk(e.nama)}\nSilakan cek lelang terbuka & isi harga penawaran ya.`;
   return `https://wa.me/${e.wa}?text=${encodeURIComponent(teks)}`;
