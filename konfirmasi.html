@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konfirmasi Armada — UNIFAM</title>
+<style>
+:root{
+  --sky-deep:#1E88E5; --sky:#3FA3F2; --sky-light:#EAF4FD;
+  --panel:#FFFFFF; --line:#D8E9FB; --text:#14293D; --muted:#5C7896;
+  --amber:#F2A93B; --teal:#0FA894; --red:#E1554D;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --sans:'Space Grotesk',Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:linear-gradient(180deg,var(--sky-deep) 0%,var(--sky) 200px,var(--sky-light) 200px,var(--sky-light) 100%);
+  color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:60px;}
+header{max-width:620px;margin:0 auto;padding:30px 24px 18px;color:#fff;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:8px;}
+h1{font-size:clamp(21px,5vw,27px);margin:0 0 6px;letter-spacing:-0.01em;}
+.sub{color:rgba(255,255,255,.85);font-size:13.5px;line-height:1.55;}
+.eks-badge{display:inline-flex;align-items:center;gap:6px;margin-top:13px;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:20px;font-family:var(--mono);font-size:12.5px;}
+#status-bar{max-width:620px;margin:0 auto 10px;padding:0 24px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+#status-bar.err{color:var(--red);}
+#status-bar.ok{color:var(--teal);}
+main{max-width:620px;margin:0 auto;padding:0 24px;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(30,136,229,.08);margin-bottom:14px;}
+.card-head{padding:17px 18px 14px;}
+.route{font-size:16px;font-weight:700;}
+.route .arrow{color:var(--sky-deep);margin:0 6px;}
+.rincian{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px;}
+.rincian dt{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding-top:2px;}
+.rincian dd{margin:0;font-weight:600;}
+.muat-box{margin:14px 18px 0;background:rgba(242,169,59,.12);border:1px solid rgba(242,169,59,.4);
+  border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.muat-box .lbl{font-family:var(--mono);font-size:10.5px;color:#B67A16;text-transform:uppercase;letter-spacing:.05em;}
+.muat-box .tgl{font-size:18px;font-weight:700;color:#8A5A0A;font-family:var(--mono);}
+.form-wrap{border-top:1px solid var(--line);margin-top:16px;padding:16px 18px 18px;background:#FBFDFF;}
+.form-judul{font-size:13.5px;font-weight:700;margin-bottom:13px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-grid .full{grid-column:1 / -1;}
+label{display:block;font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+input,textarea{background:#fff;border:1.5px solid var(--line);color:var(--text);padding:10px 12px;
+  border-radius:8px;font-size:13.5px;font-family:var(--mono);width:100%;}
+textarea{resize:vertical;min-height:60px;}
+input:focus,textarea:focus{outline:none;border-color:var(--sky-deep);}
+.btn-kirim{width:100%;background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
+  font-weight:700;font-size:14px;padding:12px 18px;cursor:pointer;margin-top:14px;font-family:var(--sans);}
+.btn-kirim:hover{background:#1670BF;}
+.btn-kirim:disabled{opacity:.5;cursor:default;}
+.sudah{background:rgba(15,168,148,.1);border:1px solid rgba(15,168,148,.35);border-radius:10px;
+  padding:12px 14px;margin-bottom:14px;font-family:var(--mono);font-size:12px;color:#0A7D6E;line-height:1.7;}
+.pesan-kosong{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;
+  background:var(--panel);border:1px dashed var(--line);border-radius:14px;}
+footer{max-width:620px;margin:30px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<header id="header"></header>
+<div id="status-bar">Memuat data…</div>
+<main id="isi"></main>
+<footer>Data konfirmasi langsung masuk ke sistem UNIFAM. Bisa diubah selama belum hari muat.</footer>
+
+<script>
+/* ====== GANTI URL INI kalau deployment Apps Script berubah ====== */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
+
+const params = new URLSearchParams(window.location.search);
+const idLelang = params.get('id') || '';
+const namaEkspedisi = (params.get('ekspedisi') || '').toUpperCase();
+
+let jsonpN = 0;
+function jsonp(url){
+  return new Promise((resolve, reject) => {
+    const cb = 'gascb' + (++jsonpN) + '_' + Date.now();
+    const s = document.createElement('script');
+    const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server tidak merespons')); }, 25000);
+    function bersih(){ clearTimeout(t); try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = (d) => { bersih(); resolve(d); };
+    s.src = url + '&callback=' + cb;
+    s.onerror = () => { bersih(); reject(new Error('Gagal terhubung ke Apps Script')); };
+    document.body.appendChild(s);
+  });
+}
+
+async function gas(p){
+  const q = Object.keys(p).map(k => encodeURIComponent(k)+'='+encodeURIComponent(p[k])).join('&');
+  const url = GAS_URL + '?' + q;
+  let d = null;
+  try {
+    const r = await fetch(url);
+    if(r.ok) d = await r.json();
+  } catch(e){ d = null; }
+  if(d === null) d = await jsonp(url);
+  if(d && d.error) throw new Error(d.error);
+  return d;
+}
+
+let lelang = null, bidSaya = null, konfirmasiSaya = null;
+
+function setStatus(teks, kelas){
+  const el = document.getElementById('status-bar');
+  el.textContent = teks;
+  el.className = kelas || '';
+}
+function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
+function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
+function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
+
+async function muat(){
+  if(!idLelang || !namaEkspedisi){
+    setStatus('Link tidak lengkap — minta admin kirim ulang link konfirmasinya.', 'err');
+    document.getElementById('isi').innerHTML = `<div class="pesan-kosong">Link konfirmasi tidak valid.</div>`;
+    return;
+  }
+  try{
+    setStatus('Memuat data…');
+    const d = await gas({action:'ambil_semua'});
+    lelang = (d.lelang || []).find(l => l.id === idLelang) || null;
+    bidSaya = (d.bids || []).find(b => b.idLelang === idLelang && b.ekspedisi.toUpperCase() === namaEkspedisi) || null;
+    konfirmasiSaya = (d.konfirmasi || []).find(k => k.idLelang === idLelang && k.ekspedisi.toUpperCase() === namaEkspedisi) || null;
+    setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
+    render();
+  }catch(err){
+    setStatus('Gagal memuat: ' + err.message, 'err');
+  }
+}
+
+async function kirimKonfirmasi(){
+  const noPolisi   = document.getElementById('nopol').value.trim();
+  const namaDriver = document.getElementById('driver').value.trim();
+  const hpDriver   = document.getElementById('hp').value.trim();
+  const jamTiba    = document.getElementById('jam').value.trim();
+  const catatan    = document.getElementById('catatan').value.trim();
+  const btn = document.getElementById('btn-kirim');
+
+  if(!noPolisi){ document.getElementById('nopol').style.borderColor = 'var(--red)'; return; }
+  document.getElementById('nopol').style.borderColor = '';
+
+  try{
+    btn.disabled = true;
+    setStatus('Mengirim konfirmasi…');
+    await gas({action:'konfirmasi_submit', idLelang, ekspedisi:namaEkspedisi,
+               noPolisi, namaDriver, hpDriver, jamTiba, catatan});
+    setStatus('Konfirmasi terkirim. Terima kasih.', 'ok');
+    await muat();
+  }catch(err){
+    setStatus('Gagal kirim: ' + err.message, 'err');
+    btn.disabled = false;
+  }
+}
+
+function render(){
+  document.getElementById('header').innerHTML = `
+    <div class="eyebrow">PT. UNIFAM · Konfirmasi Armada</div>
+    <h1>Penawaran Anda Terpilih</h1>
+    <p class="sub">Mohon lengkapi data armada dan driver untuk pengiriman berikut.</p>
+    <div class="eks-badge">🚚 ${namaEkspedisi || '—'}</div>`;
+
+  const isi = document.getElementById('isi');
+
+  if(!lelang){
+    isi.innerHTML = `<div class="pesan-kosong">Data lelang tidak ditemukan. Kemungkinan link sudah tidak berlaku — hubungi admin UNIFAM.</div>`;
+    return;
+  }
+
+  const k = konfirmasiSaya;
+  isi.innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div class="route">Gudang UNIFAM<span class="arrow">→</span>${lelang.kota}</div>
+        <dl class="rincian">
+          <dt>Customer</dt><dd>${lelang.customer}</dd>
+          <dt>Muatan</dt><dd>${lelang.tipeMobil} · ${formatKarton(lelang.karton)} karton · ${formatCbm(lelang.cbm)} CBM</dd>
+          ${bidSaya ? `<dt>Harga Deal</dt><dd>${formatRupiah(bidSaya.harga)}</dd>` : ''}
+          ${bidSaya && bidSaya.namaKapal ? `<dt>Kapal</dt><dd>${bidSaya.namaKapal} · ETD ${bidSaya.etd||'-'} · ETA ${bidSaya.eta||'-'}</dd>` : ''}
+        </dl>
+      </div>
+
+      <div class="muat-box">
+        <span class="lbl">Permintaan<br>Pick Up / Muat</span>
+        <span class="tgl">${lelang.tanggalMuat || lelang.tanggal || '—'}</span>
+      </div>
+
+      <div class="form-wrap">
+        ${k ? `<div class="sudah">✓ Sudah dikonfirmasi ${new Date(k.waktu).toLocaleString('id-ID')}<br>
+                ${k.noPolisi} · ${k.namaDriver||'-'} · ${k.hpDriver||'-'}${k.jamTiba ? ' · tiba ' + k.jamTiba : ''}<br>
+                Silakan ubah di bawah kalau ada perubahan.</div>` : ''}
+        <div class="form-judul">Data Armada &amp; Driver</div>
+        <div class="form-grid">
+          <div class="full">
+            <label>No. Polisi *</label>
+            <input id="nopol" type="text" placeholder="B 1234 XYZ" value="${k ? k.noPolisi : ''}">
+          </div>
+          <div>
+            <label>Nama Driver</label>
+            <input id="driver" type="text" placeholder="Nama lengkap" value="${k ? k.namaDriver : ''}">
+          </div>
+          <div>
+            <label>No. HP Driver</label>
+            <input id="hp" type="text" inputmode="numeric" placeholder="08xxx" value="${k ? k.hpDriver : ''}">
+          </div>
+          <div class="full">
+            <label>Estimasi Jam Tiba di Gudang</label>
+            <input id="jam" type="text" placeholder="mis. 08:00" value="${k ? k.jamTiba : ''}">
+          </div>
+          <div class="full">
+            <label>Catatan</label>
+            <textarea id="catatan" placeholder="Opsional">${k ? k.catatan : ''}</textarea>
+          </div>
+        </div>
+        <button class="btn-kirim" id="btn-kirim" onclick="kirimKonfirmasi()">${k ? 'Update Konfirmasi' : 'Kirim Konfirmasi'}</button>
+      </div>
+    </div>`;
+}
+
+muat();
+</script>
+</body>
+</html>

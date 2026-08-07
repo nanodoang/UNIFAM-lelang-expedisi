@@ -65,6 +65,19 @@ tr.termurah td{color:var(--teal);font-weight:700;}
 .btn-pilih{background:var(--amber);color:#3D2607;border:none;border-radius:8px;font-weight:700;font-size:11.5px;padding:6px 12px;cursor:pointer;white-space:nowrap;}
 .empty{color:var(--muted);font-size:12.5px;font-style:italic;padding:10px 0;}
 .pemenang-banner{font-family:var(--mono);font-size:12.5px;color:#B67A16;background:rgba(242,169,59,.12);border:1px solid rgba(242,169,59,.35);padding:9px 12px;border-radius:8px;}
+.muat-input{margin-bottom:12px;}
+.muat-input label{display:block;font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.muat-input input{background:#fff;border:1.5px solid var(--line);color:var(--text);padding:8px 11px;border-radius:8px;font-size:13px;font-family:var(--mono);max-width:200px;}
+.muat-input input:focus{outline:none;border-color:var(--sky-deep);}
+.konfirmasi-ok{margin-top:10px;background:rgba(15,168,148,.1);border:1px solid rgba(15,168,148,.35);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;color:#0A7D6E;line-height:1.75;}
+.konfirmasi-nunggu{margin-top:10px;background:#F4F7FB;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+.btn-wa-konfirmasi{display:block;text-align:center;margin-top:12px;background:#1F9E52;color:#fff;text-decoration:none;
+  border-radius:8px;font-weight:700;font-size:13px;padding:11px 18px;font-family:var(--sans);}
+.btn-wa-konfirmasi:hover{background:#188443;}
+.rate-panel{font-family:var(--mono);font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:8px;margin-bottom:12px;}
+.rate-panel b{color:var(--text);}
+.rate-panel .hemat{color:var(--teal);font-weight:700;margin-left:6px;}
+.rate-panel .lebih{color:var(--red);font-weight:700;margin-left:6px;}
 footer{max-width:940px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
 </style>
 </head>
@@ -98,7 +111,7 @@ footer{max-width:940px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-s
   </div>
   <div class="panel-box">
     <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;05/08/2026&#9;DESTI&#9;CV. Budiana - PANGKALAN BUN&#9;CDE 6x4&#9;2.185&#9;32,6"></textarea>
-    <div class="paste-hint">Format kolom (pisah tab): Tanggal · Nama Sales · Customer - Kota Tujuan · Tipe Mobil · Jumlah Karton · CBM. Asal selalu Gudang UNIFAM. Batas isi harga: 3 jam dari sekarang.</div>
+    <div class="paste-hint">Format kolom (pisah tab): Tanggal · Nama Sales · Customer - Kota Tujuan · Tipe Mobil · Jumlah Karton · CBM · <b>Rate Patokan (opsional)</b>.<br>Kalau kolom rate dikosongkan, sistem cari sendiri di tab "Rate" berdasarkan Kota + Tipe Mobil (ambil rank 1). Asal selalu Gudang UNIFAM. Batas isi harga: 3 jam dari sekarang.</div>
     <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
     <div id="preview-wrap"></div>
   </div>
@@ -146,7 +159,7 @@ async function gas(params){
   return d;
 }
 
-let lelangList = [], bidList = [], daftarEkspedisi = [], pendingPreview = [];
+let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], pendingPreview = [];
 
 function setStatus(teks, error){
   const el = document.getElementById('status-bar');
@@ -179,6 +192,7 @@ async function muat(){
     lelangList = d.lelang || [];
     bidList = d.bids || [];
     daftarEkspedisi = d.ekspedisi || [];
+    konfirmasiList = d.konfirmasi || [];
     setStatus(`Tersambung ke Sheet · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
@@ -204,7 +218,7 @@ async function tambahEkspedisi(){
 function parseBaris(baris){
   const kol = baris.split('\t').map(s => s.trim());
   if(kol.length < 6) return null;
-  const [tanggal, sales, customerKota, tipeMobil, kartonRaw, cbmRaw] = kol;
+  const [tanggal, sales, customerKota, tipeMobil, kartonRaw, cbmRaw, rateRaw] = kol;
   let customer = customerKota, kota = customerKota;
   if(customerKota.includes(' - ')){
     const parts = customerKota.split(' - ');
@@ -213,7 +227,8 @@ function parseBaris(baris){
   }
   const karton = parseInt(String(kartonRaw).replace(/\./g,'').replace(/,/g,''),10) || 0;
   const cbm = parseFloat(String(cbmRaw).replace(/\./g,'').replace(',','.')) || 0;
-  return {tanggal, sales, customer, kota, tipeMobil, karton, cbm};
+  const rateExisting = rateRaw ? (parseInt(String(rateRaw).replace(/[^0-9]/g,''),10) || 0) : 0;
+  return {tanggal, sales, customer, kota, tipeMobil, karton, cbm, rateExisting};
 }
 
 function prosesPaste(){
@@ -232,10 +247,11 @@ function renderPreview(){
   wrap.innerHTML = `
     <div class="preview-table">
       <table>
-        <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota</th><th>Tipe Mobil</th><th>Karton</th><th>CBM</th></tr></thead>
+        <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota</th><th>Tipe Mobil</th><th>Karton</th><th>CBM</th><th>Rate Patokan</th></tr></thead>
         <tbody>${pendingPreview.map(p=>`<tr>
           <td>${p.tanggal}</td><td>${p.sales}</td><td>${p.customer}</td><td>${p.kota}</td>
           <td>${p.tipeMobil}</td><td>${formatKarton(p.karton)}</td><td>${formatCbm(p.cbm)}</td>
+          <td>${p.rateExisting ? formatRupiah(p.rateExisting) : '<i style="color:#5C7896">dari tab Rate</i>'}</td>
         </tr>`).join('')}</tbody>
       </table>
       <div class="preview-actions">
@@ -254,7 +270,8 @@ async function konfirmasiPaste(){
       const p = pendingPreview[i];
       setStatus(`Menyimpan lelang ${i+1} dari ${pendingPreview.length}…`);
       await gas({action:'lelang_insert', tanggal:p.tanggal, sales:p.sales, customer:p.customer,
-                 kota:p.kota, tipeMobil:p.tipeMobil, karton:p.karton, cbm:p.cbm, batasWaktu:batas});
+                 kota:p.kota, tipeMobil:p.tipeMobil, karton:p.karton, cbm:p.cbm,
+                 rateExisting:p.rateExisting, batasWaktu:batas});
     }
     pendingPreview = [];
     document.getElementById('paste-area').value = '';
@@ -269,11 +286,37 @@ function batalPaste(){ pendingPreview=[]; document.getElementById('paste-area').
 
 /* ---------- pilih pemenang ---------- */
 async function pilihPemenang(idLelang, ekspedisi){
+  const inp = document.getElementById(`muat-${idLelang}`);
+  const tanggalMuat = inp ? inp.value.trim() : '';
   try{
     setStatus('Menyimpan pemenang…');
-    await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi});
+    await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat});
     await muat();
   }catch(err){ setStatus('Gagal simpan pemenang: ' + err.message, true); }
+}
+
+function linkKonfirmasi(idLelang, ekspedisi){
+  return `${BASE_URL}/konfirmasi.html?id=${encodeURIComponent(idLelang)}&ekspedisi=${encodeURIComponent(ekspedisi)}`;
+}
+
+function waKonfirmasi(l, win, eks){
+  const baris = [
+    `Halo ${eks.nama}, penawaran Anda kami PILIH untuk pengiriman berikut:`,
+    ``,
+    `Tujuan    : Gudang UNIFAM -> ${l.kota}`,
+    `Customer  : ${l.customer}`,
+    `Muatan    : ${l.tipeMobil} | ${formatKarton(l.karton)} karton | ${formatCbm(l.cbm)} CBM`,
+    win ? `Harga     : ${formatRupiah(win.harga)}` : '',
+    win && win.namaKapal ? `Kapal     : ${win.namaKapal} (ETD ${win.etd||'-'} / ETA ${win.eta||'-'})` : '',
+    ``,
+    `*Permintaan pick up / muat: ${l.tanggalMuat || l.tanggal || '-'}*`,
+    ``,
+    `Mohon konfirmasi armada & driver lewat link berikut:`,
+    linkKonfirmasi(l.id, eks.nama),
+    ``,
+    `Terima kasih.`
+  ].filter(x => x !== '').join('\n');
+  return `https://wa.me/${eks.wa}?text=${encodeURIComponent(baris)}`;
 }
 
 /* ---------- render ---------- */
@@ -309,6 +352,21 @@ function render(){
               <td>${b.etd||'-'}</td><td>${b.eta||'-'}</td><td>${b.namaKapal||'-'}</td>
               <td><button class="btn-pilih" onclick="pilihPemenang('${l.id}','${b.ekspedisi}')">Pilih Ini</button></td>
             </tr>`).join('');
+
+        let ratePanel = '';
+        if(l.rateExisting){
+          let selisih = '';
+          if(bids.length){
+            const beda = l.rateExisting - bids[0].harga;
+            selisih = beda > 0
+              ? `<span class="hemat">hemat ${formatRupiah(beda)}</span>`
+              : beda < 0
+                ? `<span class="lebih">lebih mahal ${formatRupiah(-beda)}</span>`
+                : `<span>sama dengan patokan</span>`;
+          }
+          ratePanel = `<div class="rate-panel">Rate patokan: <b>${formatRupiah(l.rateExisting)}</b> ${selisih}</div>`;
+        }
+
         return `<div class="card">
           <div class="card-head">
             <div>
@@ -318,6 +376,11 @@ function render(){
             <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
           </div>
           <div class="card-body">
+            ${ratePanel}
+            <div class="muat-input">
+              <label for="muat-${l.id}">Tanggal muat / pick up</label>
+              <input id="muat-${l.id}" type="text" value="${l.tanggalMuat || l.tanggal || ''}" placeholder="dd/mm/yyyy">
+            </div>
             <table class="bidtable">
               <thead><tr><th>Ekspedisi</th><th>Penawaran</th><th>ETD</th><th>ETA</th><th>Kapal</th><th></th></tr></thead>
               <tbody>${rows}</tbody>
@@ -331,13 +394,30 @@ function render(){
     <div class="section-title"><h2>Riwayat Selesai</h2><small>${selesai.length} lelang</small></div>
     <div class="grid">${selesai.length === 0 ? '<div class="empty">Belum ada.</div>' : selesai.map(l=>{
       const win = bidsUntuk(l.id).find(b => b.ekspedisi === l.pemenang);
+      const k = konfirmasiList.find(x => x.idLelang === l.id && x.ekspedisi.toUpperCase() === (l.pemenang||'').toUpperCase());
+      const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === (l.pemenang||'').toUpperCase());
+
+      const panelKonfirmasi = k
+        ? `<div class="konfirmasi-ok">✓ Armada dikonfirmasi ${new Date(k.waktu).toLocaleString('id-ID')}<br>
+             <b>${k.noPolisi}</b> · ${k.namaDriver||'-'} · ${k.hpDriver||'-'}${k.jamTiba ? ' · tiba ' + k.jamTiba : ''}
+             ${k.catatan ? '<br>Catatan: ' + k.catatan : ''}</div>`
+        : `<div class="konfirmasi-nunggu">⏳ Menunggu konfirmasi armada dari ${l.pemenang || '—'}</div>`;
+
+      const tombolWA = eks
+        ? `<a class="btn-wa-konfirmasi" href="${waKonfirmasi(l, win, eks)}" target="_blank">Kirim Form Konfirmasi via WA</a>`
+        : `<div class="empty">Nomor WA ${l.pemenang || '—'} belum terdaftar — tambahkan di Daftar Ekspedisi dulu.</div>`;
+
       return `<div class="card">
         <div class="card-head"><div>
           <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
           <div class="meta">${l.customer} · Sales ${l.sales} · ${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM</div>
-        </div></div>
+        </div>
+        <div class="deadline-tag">Muat ${l.tanggalMuat || l.tanggal || '—'}</div>
+        </div>
         <div class="card-body">
           <div class="pemenang-banner">🏆 Dipilih: ${l.pemenang || '—'}${win ? ' · ' + formatRupiah(win.harga) + ' · Kapal ' + (win.namaKapal||'-') + ' · ETD ' + (win.etd||'-') : ''}</div>
+          ${panelKonfirmasi}
+          ${tombolWA}
         </div></div>`;
     }).join('')}</div>`;
 }
