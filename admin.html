@@ -390,7 +390,7 @@ function render(){
           <div class="card-head">
             <div>
               <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-              <div class="meta">${l.customer} · Sales ${l.sales} · ${l.tipeMobil}<br>${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal} · ${bids.length} ekspedisi mengisi</div>
+              <div class="meta">${l.customer} · ${l.tipeMobil}<br>${l.tanggal} · ${bids.length} ekspedisi mengisi</div>
             </div>
             <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
           </div>
@@ -436,7 +436,7 @@ function render(){
       return `<div class="card">
         <div class="card-head"><div>
           <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-          <div class="meta">${l.customer} · Sales ${l.sales} · ${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM</div>
+          <div class="meta">${l.customer} · ${l.tipeMobil} · ${l.tanggal}</div>
         </div>
         <div class="deadline-tag">Muat ${l.tanggalMuat || l.tanggal || '—'}</div>
         </div>

@@ -202,7 +202,7 @@ function render(){
     return `<div class="card">
       <div class="card-head">
         <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-        <div class="meta">${l.customer} · Sales ${l.sales}<br>${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal}</div>
+        <div class="meta">${l.customer}<br>${l.tipeMobil} · ${l.tanggal}</div>
         <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
       </div>
       <div class="card-body">
