@@ -12,7 +12,7 @@ h1{font-size:20px;margin:0 0 4px;}
 .baris{padding:11px 0;border-bottom:1px solid #D8E9FB;font-size:13.5px;line-height:1.6;}
 .baris:last-child{border-bottom:none;}
 .label{font-weight:700;display:block;margin-bottom:3px;}
-.val{font-family:'Courier New',monospace;font-size:12px;word-break:break-all;color:#14293D;}
+.val{font-family:'Courier New',monospace;font-size:12px;word-break:break-all;}
 .ok{color:#0FA894;font-weight:700;}
 .bad{color:#E1554D;font-weight:700;}
 .wait{color:#F2A93B;font-weight:700;}
@@ -21,44 +21,51 @@ h1{font-size:20px;margin:0 0 4px;}
 <body>
 <div class="box">
   <h1>Tes Koneksi Apps Script</h1>
-  <div class="sub">Halaman ini cuma untuk mendiagnosa. Screenshot seluruh isinya lalu kirim ke chat.</div>
+  <div class="sub">Menguji 2 metode. Cukup salah satu BERHASIL, aplikasi akan jalan. Screenshot lalu kirim ke chat.</div>
 
-  <div class="baris"><span class="label">1. Halaman ini dibuka dari</span><span class="val" id="asal"></span></div>
-  <div class="baris"><span class="label">2. Protokol</span><span class="val" id="proto"></span></div>
-  <div class="baris"><span class="label">3. URL yang dipanggil</span><span class="val" id="urlpanggil"></span></div>
-  <div class="baris"><span class="label">4. Hasil</span><span class="val" id="hasil"><span class="wait">menunggu…</span></span></div>
-  <div class="baris"><span class="label">5. Data yang diterima</span><span class="val" id="data">—</span></div>
+  <div class="baris"><span class="label">Halaman dibuka dari</span><span class="val" id="asal"></span></div>
+  <div class="baris"><span class="label">METODE A — fetch GET</span><span class="val" id="hasilA"><span class="wait">menunggu…</span></span></div>
+  <div class="baris"><span class="label">METODE B — JSONP</span><span class="val" id="hasilB"><span class="wait">menunggu…</span></span></div>
+  <div class="baris"><span class="label">Data yang diterima</span><span class="val" id="data">—</span></div>
 </div>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
+const URL_DASAR = GAS_URL + '?action=ambil_semua';
 
 document.getElementById('asal').textContent = window.location.href;
-document.getElementById('proto').textContent = window.location.protocol +
-  (window.location.protocol === 'file:' ? '  ← dibuka sebagai file lokal, bukan dari web' : '  (normal)');
+const elA = document.getElementById('hasilA');
+const elB = document.getElementById('hasilB');
+const elD = document.getElementById('data');
 
+/* METODE A */
+(async function(){
+  try{
+    const r = await fetch(URL_DASAR);
+    if(!r.ok){ elA.innerHTML = '<span class="bad">GAGAL</span> — status HTTP ' + r.status; return; }
+    const d = await r.json();
+    elA.innerHTML = '<span class="ok">BERHASIL</span>';
+    elD.textContent = JSON.stringify(d);
+  }catch(err){
+    elA.innerHTML = '<span class="bad">GAGAL</span> — ' + err.message;
+  }
+})();
+
+/* METODE B */
 const cb = 'tescb' + Date.now();
-const src = GAS_URL + '?action=ambil_semua&callback=' + cb;
-document.getElementById('urlpanggil').textContent = src;
-
-const elHasil = document.getElementById('hasil');
-const elData  = document.getElementById('data');
-
-const timer = setTimeout(() => {
-  elHasil.innerHTML = '<span class="bad">TIMEOUT</span> — script termuat tapi callback tidak pernah dipanggil (25 detik)';
+const t = setTimeout(() => {
+  elB.innerHTML = '<span class="bad">TIMEOUT</span> — script termuat tapi callback tidak dipanggil';
 }, 25000);
-
 window[cb] = function(d){
-  clearTimeout(timer);
-  elHasil.innerHTML = '<span class="ok">BERHASIL</span> — callback terpanggil';
-  elData.textContent = JSON.stringify(d);
+  clearTimeout(t);
+  elB.innerHTML = '<span class="ok">BERHASIL</span>';
+  if(elD.textContent === '—') elD.textContent = JSON.stringify(d);
 };
-
 const s = document.createElement('script');
-s.src = src;
+s.src = URL_DASAR + '&callback=' + cb;
 s.onerror = function(){
-  clearTimeout(timer);
-  elHasil.innerHTML = '<span class="bad">ONERROR</span> — browser gagal memuat script (diblokir, 404, atau ditolak)';
+  clearTimeout(t);
+  elB.innerHTML = '<span class="bad">ONERROR</span> — browser memblokir pemuatan script';
 };
 document.body.appendChild(s);
 </script>

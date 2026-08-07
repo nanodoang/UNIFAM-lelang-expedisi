@@ -120,18 +120,30 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 const BASE_URL = 'https://nanodoang.github.io/UNIFAM-lelang-expedisi';
 
 let jsonpN = 0;
-function gas(params){
+function jsonp(url){
   return new Promise((resolve, reject) => {
     const cb = 'gascb' + (++jsonpN) + '_' + Date.now();
     const s = document.createElement('script');
     const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server tidak merespons')); }, 25000);
     function bersih(){ clearTimeout(t); try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
-    window[cb] = (data) => { bersih(); if(data && data.error) reject(new Error(data.error)); else resolve(data); };
-    const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
-    s.src = GAS_URL + '?' + q + '&callback=' + cb;
+    window[cb] = (data) => { bersih(); resolve(data); };
+    s.src = url + '&callback=' + cb;
     s.onerror = () => { bersih(); reject(new Error('Gagal terhubung ke Apps Script')); };
     document.body.appendChild(s);
   });
+}
+
+async function gas(params){
+  const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+  const url = GAS_URL + '?' + q;
+  let d = null;
+  try {
+    const r = await fetch(url);
+    if(r.ok) d = await r.json();
+  } catch(e){ d = null; }
+  if(d === null) d = await jsonp(url);
+  if(d && d.error) throw new Error(d.error);
+  return d;
 }
 
 let lelangList = [], bidList = [], daftarEkspedisi = [], pendingPreview = [];
