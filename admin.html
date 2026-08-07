@@ -79,6 +79,8 @@ tr.termurah td{color:var(--teal);font-weight:700;}
 .rate-panel .hemat{color:var(--teal);font-weight:700;margin-left:6px;}
 .rate-panel .lebih{color:var(--red);font-weight:700;margin-left:6px;}
 footer{max-width:940px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
+
+input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 </style>
 </head>
 <body>
@@ -170,6 +172,23 @@ function setStatus(teks, error){
 function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
 function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
+
+/* ---- konversi tanggal untuk <input type="date"> ----
+   Sheet menyimpan dd/mm/yyyy, sedangkan input date memakai yyyy-mm-dd */
+function keISO(t){
+  if(!t) return '';
+  const s = String(t).trim();
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return '';
+}
+function keLokal(iso){
+  if(!iso) return '';
+  const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso).trim();
+}
 function formatJam(ts){
   const diff = ts - Date.now();
   if(diff <= 0) return "lewat batas";
@@ -287,7 +306,7 @@ function batalPaste(){ pendingPreview=[]; document.getElementById('paste-area').
 /* ---------- pilih pemenang ---------- */
 async function pilihPemenang(idLelang, ekspedisi){
   const inp = document.getElementById(`muat-${idLelang}`);
-  const tanggalMuat = inp ? inp.value.trim() : '';
+  const tanggalMuat = inp ? keLokal(inp.value) : '';
   try{
     setStatus('Menyimpan pemenang…');
     await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat});
@@ -379,7 +398,7 @@ function render(){
             ${ratePanel}
             <div class="muat-input">
               <label for="muat-${l.id}">Tanggal muat / pick up</label>
-              <input id="muat-${l.id}" type="text" value="${l.tanggalMuat || l.tanggal || ''}" placeholder="dd/mm/yyyy">
+              <input id="muat-${l.id}" type="date" value="${keISO(l.tanggalMuat || l.tanggal)}">
             </div>
             <table class="bidtable">
               <thead><tr><th>Ekspedisi</th><th>Penawaran</th><th>ETD</th><th>ETA</th><th>Kapal</th><th></th></tr></thead>

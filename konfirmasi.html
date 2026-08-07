@@ -59,6 +59,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--sky-deep);}
 .pesan-kosong{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;
   background:var(--panel);border:1px dashed var(--line);border-radius:14px;}
 footer{max-width:620px;margin:30px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
+
+input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 </style>
 </head>
 <body>
@@ -114,6 +116,23 @@ function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
 function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
 
+/* ---- konversi tanggal untuk <input type="date"> ----
+   Sheet menyimpan dd/mm/yyyy, sedangkan input date memakai yyyy-mm-dd */
+function keISO(t){
+  if(!t) return '';
+  const s = String(t).trim();
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return '';
+}
+function keLokal(iso){
+  if(!iso) return '';
+  const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso).trim();
+}
+
 /* Kontener kalau tipe mobil menyebut ukuran peti kemas; selain itu darat */
 function jenisKiriman(tipeMobil){
   const t = String(tipeMobil || '').toUpperCase();
@@ -167,8 +186,8 @@ async function kirimKonfirmasi(){
     hpDriver:   ambilNilai('hp'),
     noKontener: ambilNilai('nokontener'),
     namaKapal:  ambilNilai('kapal'),
-    etd:        ambilNilai('etd'),
-    eta:        ambilNilai('eta'),
+    etd:        keLokal(ambilNilai('etd')),
+    eta:        keLokal(ambilNilai('eta')),
     jamTiba:    ambilNilai('jam'),
     catatan:    ambilNilai('catatan')
   };
@@ -215,11 +234,11 @@ function render(){
           </div>
           <div>
             <label>ETD</label>
-            <input id="etd" type="text" placeholder="dd/mm/yyyy" value="${k && k.etd ? k.etd : (bidSaya ? bidSaya.etd : '')}">
+            <input id="etd" type="date" value="${keISO(k && k.etd ? k.etd : (bidSaya ? bidSaya.etd : ''))}">
           </div>
           <div>
             <label>ETA</label>
-            <input id="eta" type="text" placeholder="dd/mm/yyyy" value="${k && k.eta ? k.eta : (bidSaya ? bidSaya.eta : '')}">
+            <input id="eta" type="date" value="${keISO(k && k.eta ? k.eta : (bidSaya ? bidSaya.eta : ''))}">
           </div>` : '';
 
   const labelNopol = isKontener ? 'No. Polisi Trucking *' : 'No. Polisi *';
@@ -270,7 +289,7 @@ function render(){
           </div>
           <div class="full">
             <label>Estimasi Jam Tiba di Gudang</label>
-            <input id="jam" type="text" placeholder="mis. 08:00" value="${k ? k.jamTiba : ''}">
+            <input id="jam" type="time" value="${k ? k.jamTiba : ''}">
           </div>
           <div class="full">
             <label>Catatan</label>
