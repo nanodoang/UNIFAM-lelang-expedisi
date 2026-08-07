@@ -77,6 +77,7 @@ tr.termurah td{color:var(--teal);font-weight:700;}
 .rate-panel{font-family:var(--mono);font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:8px;margin-bottom:12px;}
 .rate-panel b{color:var(--text);}
 .rate-panel .hemat{color:var(--teal);font-weight:700;margin-left:6px;}
+.rate-panel.rate-kosong{color:#B67A16;background:rgba(242,169,59,.1);border-color:rgba(242,169,59,.4);}
 .rate-panel .lebih{color:var(--red);font-weight:700;margin-left:6px;}
 footer{max-width:940px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
 
@@ -161,7 +162,8 @@ async function gas(params){
   return d;
 }
 
-let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], pendingPreview = [];
+let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], rateList = [], pendingPreview = [];
+let versiScript = '';
 
 function setStatus(teks, error){
   const el = document.getElementById('status-bar');
@@ -212,7 +214,9 @@ async function muat(){
     bidList = d.bids || [];
     daftarEkspedisi = d.ekspedisi || [];
     konfirmasiList = d.konfirmasi || [];
-    setStatus(`Tersambung ke Sheet · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${new Date().toLocaleTimeString('id-ID')}`);
+    rateList = d.rate || [];
+    versiScript = d.versi || '(script versi lama)';
+    setStatus(`Tersambung · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${rateList.length} baris rate · ${versiScript} · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
     setStatus('Gagal memuat: ' + err.message, true);
@@ -373,6 +377,15 @@ function render(){
             </tr>`).join('');
 
         let ratePanel = '';
+        if(!l.rateExisting){
+          const adaKota = rateList.some(r => r.kota.toUpperCase() === l.kota.trim().toUpperCase());
+          const alasan = rateList.length === 0
+            ? 'tab Rate masih kosong'
+            : !adaKota
+              ? `tidak ada baris Rate untuk kota "${l.kota}"`
+              : `ada baris untuk "${l.kota}" tapi Tipe Mobil tidak cocok dengan "${l.tipeMobil}"`;
+          ratePanel = `<div class="rate-panel rate-kosong">Rate patokan belum ketemu — ${alasan}</div>`;
+        }
         if(l.rateExisting){
           let selisih = '';
           if(bids.length){
