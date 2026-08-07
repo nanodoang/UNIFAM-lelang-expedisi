@@ -31,6 +31,10 @@ main{max-width:620px;margin:0 auto;padding:0 24px;}
 .route{font-size:16px;font-weight:700;}
 .route .arrow{color:var(--sky-deep);margin:0 6px;}
 .rincian{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px;}
+.jenis-tag{display:inline-block;margin-top:9px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  padding:3px 10px;border-radius:20px;font-weight:700;}
+.jenis-tag.kontener{background:rgba(30,136,229,.12);color:var(--sky-deep);border:1px solid rgba(30,136,229,.35);}
+.jenis-tag.darat{background:rgba(15,168,148,.12);color:var(--teal);border:1px solid rgba(15,168,148,.35);}
 .rincian dt{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding-top:2px;}
 .rincian dd{margin:0;font-weight:600;}
 .muat-box{margin:14px 18px 0;background:rgba(242,169,59,.12);border:1px solid rgba(242,169,59,.4);
@@ -110,6 +114,13 @@ function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
 function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
 
+/* Kontener kalau tipe mobil menyebut ukuran peti kemas; selain itu darat */
+function jenisKiriman(tipeMobil){
+  const t = String(tipeMobil || '').toUpperCase();
+  return /\b(20|40|45)\s*(FT|FEET|')|KONTENER|CONTAINER|\bHC\b|\bREEFER\b/.test(t)
+    ? 'kontener' : 'darat';
+}
+
 async function muat(){
   if(!idLelang || !namaEkspedisi){
     setStatus('Link tidak lengkap — minta admin kirim ulang link konfirmasinya.', 'err');
@@ -129,22 +140,43 @@ async function muat(){
   }
 }
 
+function ambilNilai(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
 async function kirimKonfirmasi(){
-  const noPolisi   = document.getElementById('nopol').value.trim();
-  const namaDriver = document.getElementById('driver').value.trim();
-  const hpDriver   = document.getElementById('hp').value.trim();
-  const jamTiba    = document.getElementById('jam').value.trim();
-  const catatan    = document.getElementById('catatan').value.trim();
+  const jenis = jenisKiriman(lelang.tipeMobil);
   const btn = document.getElementById('btn-kirim');
 
+  const noPolisi = ambilNilai('nopol');
   if(!noPolisi){ document.getElementById('nopol').style.borderColor = 'var(--red)'; return; }
   document.getElementById('nopol').style.borderColor = '';
+
+  if(jenis === 'kontener'){
+    const nokon = ambilNilai('nokontener');
+    if(!nokon){ document.getElementById('nokontener').style.borderColor = 'var(--red)'; return; }
+    document.getElementById('nokontener').style.borderColor = '';
+  }
+
+  const data = {
+    action: 'konfirmasi_submit',
+    idLelang, ekspedisi: namaEkspedisi, jenis,
+    noPolisi,
+    namaDriver: ambilNilai('driver'),
+    hpDriver:   ambilNilai('hp'),
+    noKontener: ambilNilai('nokontener'),
+    namaKapal:  ambilNilai('kapal'),
+    etd:        ambilNilai('etd'),
+    eta:        ambilNilai('eta'),
+    jamTiba:    ambilNilai('jam'),
+    catatan:    ambilNilai('catatan')
+  };
 
   try{
     btn.disabled = true;
     setStatus('Mengirim konfirmasi…');
-    await gas({action:'konfirmasi_submit', idLelang, ekspedisi:namaEkspedisi,
-               noPolisi, namaDriver, hpDriver, jamTiba, catatan});
+    await gas(data);
     setStatus('Konfirmasi terkirim. Terima kasih.', 'ok');
     await muat();
   }catch(err){
@@ -168,10 +200,43 @@ function render(){
   }
 
   const k = konfirmasiSaya;
+  const jenis = jenisKiriman(lelang.tipeMobil);
+  const isKontener = jenis === 'kontener';
+
+  // field kapal: kalau kontener, ikut dikonfirmasi ulang (default dari penawaran)
+  const blokKontener = isKontener ? `
+          <div class="full">
+            <label>No. Kontener *</label>
+            <input id="nokontener" type="text" placeholder="mis. TCLU 1234567" value="${k ? k.noKontener : ''}">
+          </div>
+          <div class="full">
+            <label>Nama Kapal</label>
+            <input id="kapal" type="text" placeholder="mis. KM Meratus" value="${k && k.namaKapal ? k.namaKapal : (bidSaya ? bidSaya.namaKapal : '')}">
+          </div>
+          <div>
+            <label>ETD</label>
+            <input id="etd" type="text" placeholder="dd/mm/yyyy" value="${k && k.etd ? k.etd : (bidSaya ? bidSaya.etd : '')}">
+          </div>
+          <div>
+            <label>ETA</label>
+            <input id="eta" type="text" placeholder="dd/mm/yyyy" value="${k && k.eta ? k.eta : (bidSaya ? bidSaya.eta : '')}">
+          </div>` : '';
+
+  const labelNopol = isKontener ? 'No. Polisi Trucking *' : 'No. Polisi *';
+
+  const ringkasSudah = k ? [
+    k.noPolisi,
+    isKontener && k.noKontener ? 'Kontener ' + k.noKontener : '',
+    k.namaDriver || '',
+    k.hpDriver || '',
+    k.jamTiba ? 'tiba ' + k.jamTiba : ''
+  ].filter(x => x).join(' · ') : '';
+
   isi.innerHTML = `
     <div class="card">
       <div class="card-head">
         <div class="route">Gudang UNIFAM<span class="arrow">→</span>${lelang.kota}</div>
+        <span class="jenis-tag ${isKontener ? 'kontener' : 'darat'}">${isKontener ? 'KONTENER' : 'DARAT'}</span>
         <dl class="rincian">
           <dt>Customer</dt><dd>${lelang.customer}</dd>
           <dt>Muatan</dt><dd>${lelang.tipeMobil} · ${formatKarton(lelang.karton)} karton · ${formatCbm(lelang.cbm)} CBM</dd>
@@ -187,12 +252,12 @@ function render(){
 
       <div class="form-wrap">
         ${k ? `<div class="sudah">✓ Sudah dikonfirmasi ${new Date(k.waktu).toLocaleString('id-ID')}<br>
-                ${k.noPolisi} · ${k.namaDriver||'-'} · ${k.hpDriver||'-'}${k.jamTiba ? ' · tiba ' + k.jamTiba : ''}<br>
-                Silakan ubah di bawah kalau ada perubahan.</div>` : ''}
-        <div class="form-judul">Data Armada &amp; Driver</div>
+                ${ringkasSudah}<br>Silakan ubah di bawah kalau ada perubahan.</div>` : ''}
+        <div class="form-judul">Data Armada${isKontener ? ', Kontener' : ''} &amp; Driver</div>
         <div class="form-grid">
+          ${blokKontener}
           <div class="full">
-            <label>No. Polisi *</label>
+            <label>${labelNopol}</label>
             <input id="nopol" type="text" placeholder="B 1234 XYZ" value="${k ? k.noPolisi : ''}">
           </div>
           <div>

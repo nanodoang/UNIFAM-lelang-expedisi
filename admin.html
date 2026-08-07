@@ -399,7 +399,14 @@ function render(){
 
       const panelKonfirmasi = k
         ? `<div class="konfirmasi-ok">✓ Armada dikonfirmasi ${new Date(k.waktu).toLocaleString('id-ID')}<br>
-             <b>${k.noPolisi}</b> · ${k.namaDriver||'-'} · ${k.hpDriver||'-'}${k.jamTiba ? ' · tiba ' + k.jamTiba : ''}
+             ${[
+                k.jenis === 'kontener' && k.noKontener ? 'Kontener <b>' + k.noKontener + '</b>' : '',
+                '<b>' + (k.noPolisi || '-') + '</b>',
+                k.namaDriver || '',
+                k.hpDriver || '',
+                k.jamTiba ? 'tiba ' + k.jamTiba : ''
+              ].filter(x => x).join(' · ')}
+             ${k.jenis === 'kontener' && k.namaKapal ? '<br>Kapal ' + k.namaKapal + ' · ETD ' + (k.etd||'-') + ' · ETA ' + (k.eta||'-') : ''}
              ${k.catatan ? '<br>Catatan: ' + k.catatan : ''}</div>`
         : `<div class="konfirmasi-nunggu">⏳ Menunggu konfirmasi armada dari ${l.pemenang || '—'}</div>`;
 
