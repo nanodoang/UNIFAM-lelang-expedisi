@@ -6,90 +6,58 @@
 <title>Lelang Kiriman — UNIFAM</title>
 <style>
 :root{
-  --sky-deep:#1E88E5;
-  --sky:#3FA3F2;
-  --sky-light:#EAF4FD;
-  --panel:#FFFFFF;
-  --line:#D8E9FB;
-  --text:#14293D;
-  --muted:#5C7896;
-  --amber:#F2A93B;
-  --teal:#0FA894;
-  --red:#E1554D;
+  --sky-deep:#1E88E5; --sky:#3FA3F2; --sky-light:#EAF4FD;
+  --panel:#FFFFFF; --line:#D8E9FB; --text:#14293D; --muted:#5C7896;
+  --amber:#F2A93B; --teal:#0FA894; --red:#E1554D;
   --mono:'JetBrains Mono','Courier New',monospace;
   --sans:'Space Grotesk',Arial,sans-serif;
 }
 *{box-sizing:border-box;}
-body{
-  margin:0;
-  background:
-    linear-gradient(180deg, var(--sky-deep) 0%, var(--sky) 220px, var(--sky-light) 220px, var(--sky-light) 100%);
-  color:var(--text);
-  font-family:var(--sans);
-  min-height:100vh;
-  padding-bottom:60px;
-}
-header{
-  max-width:640px;margin:0 auto;padding:32px 24px 20px;color:#fff;
-}
+body{margin:0;background:linear-gradient(180deg,var(--sky-deep) 0%,var(--sky) 220px,var(--sky-light) 220px,var(--sky-light) 100%);
+  color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:60px;}
+header{max-width:660px;margin:0 auto;padding:32px 24px 20px;color:#fff;}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:8px;}
 h1{font-size:clamp(22px,5vw,28px);margin:0 0 6px;letter-spacing:-0.01em;}
 .sub{color:rgba(255,255,255,.85);font-size:13.5px;max-width:520px;line-height:1.55;}
-.eks-badge{
-  display:inline-flex;align-items:center;gap:6px;margin-top:14px;
-  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
-  padding:6px 14px;border-radius:20px;font-family:var(--mono);font-size:12.5px;
-}
-
-main{max-width:640px;margin:0 auto;padding:0 24px;}
+.eks-badge{display:inline-flex;align-items:center;gap:6px;margin-top:14px;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:20px;font-family:var(--mono);font-size:12.5px;}
+#status-bar{max-width:660px;margin:0 auto 10px;padding:0 24px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+#status-bar.err{color:var(--red);}
+main{max-width:660px;margin:0 auto;padding:0 24px;}
 .section-title{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 14px;}
 .section-title h2{font-size:15.5px;margin:0;color:var(--text);}
 .section-title small{color:var(--muted);font-family:var(--mono);font-size:11px;}
-
 .grid{display:flex;flex-direction:column;gap:12px;}
-.card{
-  background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
-  box-shadow:0 2px 10px rgba(30,136,229,.08);
-}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(30,136,229,.08);}
 .card-head{padding:16px 18px 10px;}
-.route{font-size:15.5px;font-weight:700;color:var(--text);}
+.route{font-size:15.5px;font-weight:700;}
 .route .arrow{color:var(--sky-deep);margin:0 6px;}
 .meta{font-size:12px;color:var(--muted);margin-top:5px;font-family:var(--mono);line-height:1.7;}
-.deadline-tag{
-  display:inline-block;margin-top:8px;font-family:var(--mono);font-size:11px;
-  color:var(--amber);background:rgba(242,169,59,.12);padding:3px 10px;border-radius:20px;
-}
+.deadline-tag{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--amber);
+  background:rgba(242,169,59,.12);padding:3px 10px;border-radius:20px;}
 .deadline-tag.lewat{color:var(--red);background:rgba(225,85,77,.1);}
-
 .card-body{border-top:1px solid var(--line);padding:14px 18px 18px;background:#FBFDFF;}
-.submitted-note{font-family:var(--mono);font-size:11.5px;color:var(--teal);margin-bottom:10px;}
-.my-bid-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}
-.my-bid-row input{
-  background:#fff;border:1.5px solid var(--line);color:var(--text);
-  padding:10px 12px;border-radius:8px;font-size:13.5px;font-family:var(--mono);width:100%;
-}
-.my-bid-row input:focus{outline:none;border-color:var(--sky-deep);}
-.my-bid-row button{
-  background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
-  font-weight:700;font-size:13px;padding:10px 18px;cursor:pointer;white-space:nowrap;
-}
-.my-bid-row button:hover{background:#1670BF;}
-
-.empty-state{
-  text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;
-  background:var(--panel);border:1px dashed var(--line);border-radius:14px;
-}
-.invalid{
-  max-width:640px;margin:60px auto;padding:24px;text-align:center;
-  background:var(--panel);border-radius:14px;color:var(--text);font-size:14px;
-}
-
-footer{max-width:640px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
+.submitted-note{font-family:var(--mono);font-size:11.5px;color:var(--teal);margin-bottom:12px;line-height:1.7;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.form-grid .full{grid-column:1 / -1;}
+.form-grid label{display:block;font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.form-grid input{background:#fff;border:1.5px solid var(--line);color:var(--text);padding:10px 12px;
+  border-radius:8px;font-size:13.5px;font-family:var(--mono);width:100%;}
+.form-grid input:focus{outline:none;border-color:var(--sky-deep);}
+.btn-ajukan{width:100%;background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
+  font-weight:700;font-size:13.5px;padding:11px 18px;cursor:pointer;margin-top:11px;font-family:var(--sans);}
+.btn-ajukan:hover{background:#1670BF;}
+.btn-ajukan:disabled{opacity:.5;cursor:default;}
+.empty-state{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;
+  background:var(--panel);border:1px dashed var(--line);border-radius:14px;}
+footer{max-width:660px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
 </style>
 </head>
 <body>
 
 <header id="header"></header>
+<div id="status-bar">Memuat data…</div>
+
 <main>
   <div class="section-title">
     <h2>Lelang Terbuka Untuk Anda</h2>
@@ -97,64 +65,84 @@ footer{max-width:640px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-s
   </div>
   <div class="grid" id="grid"></div>
 </main>
+
 <footer>Link ini tetap — begitu ada lelang baru, langsung muncul di sini. Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.</footer>
 
 <script>
-// ambil nama ekspedisi dari URL: index.html?ekspedisi=PAT
+/* ====== GANTI URL INI kalau deployment Apps Script berubah ====== */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
+
 const params = new URLSearchParams(window.location.search);
-const namaEkspedisi = params.get('ekspedisi') || 'DEMO';
+const namaEkspedisi = (params.get('ekspedisi') || 'DEMO').toUpperCase();
 
-// contoh data statis (nanti diganti fetch ke Google Sheets via GAS)
-let lelangList = [
-  {
-    id: 1, tanggal:"05/08/2026", sales:"DESTI", customer:"CV. Budiana", kota:"PANGKALAN BUN",
-    tipeMobil: "CDE 6x4", karton: 2185, cbm: 32.6,
-    batasWaktu: Date.now() + 3*3600*1000,
-    status: "terbuka", bids: {}
-  },
-  {
-    id: 2, tanggal:"05/08/2026", sales:"RIO", customer:"UD. Sinar Abadi", kota:"SAMPIT",
-    tipeMobil: "CDD 6x2", karton: 940, cbm: 15.2,
-    batasWaktu: Date.now() + 1*3600*1000,
-    status: "terbuka",
-    bids: { "PAT": {harga:3200000, waktu:Date.now()-40*60000} }
-  },
-  {
-    id: 4, tanggal:"05/08/2026", sales:"DESTI", customer:"Toko Sejahtera", kota:"KUALA KAPUAS", 
-    tipeMobil: "CDE 4x2", karton: 1120, cbm: 18.4,
-    batasWaktu: Date.now() + 5*3600*1000,
-    status: "terbuka", bids: {}
-  }
-];
+let jsonpN = 0;
+function gas(p){
+  return new Promise((resolve, reject) => {
+    const cb = 'gascb' + (++jsonpN) + '_' + Date.now();
+    const s = document.createElement('script');
+    const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server tidak merespons')); }, 25000);
+    function bersih(){ clearTimeout(t); try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = (d) => { bersih(); if(d && d.error) reject(new Error(d.error)); else resolve(d); };
+    const q = Object.keys(p).map(k => encodeURIComponent(k)+'='+encodeURIComponent(p[k])).join('&');
+    s.src = GAS_URL + '?' + q + '&callback=' + cb;
+    s.onerror = () => { bersih(); reject(new Error('Gagal terhubung ke Apps Script')); };
+    document.body.appendChild(s);
+  });
+}
 
+let lelangList = [], bidList = [];
+
+function setStatus(teks, error){
+  const el = document.getElementById('status-bar');
+  el.textContent = teks;
+  el.className = error ? 'err' : '';
+}
 function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
-function formatCbm(n){ return Number(n).toLocaleString("id-ID", {minimumFractionDigits:1}); }
+function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
 function formatJam(ts){
   const diff = ts - Date.now();
   if(diff <= 0) return "lewat batas";
-  const h = Math.floor(diff/3600000);
-  const m = Math.floor((diff%3600000)/60000);
+  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
   return h>0 ? `sisa ${h}j ${m}m` : `sisa ${m}m`;
 }
+function bidSaya(idLelang){
+  return bidList.find(b => b.idLelang === idLelang && b.ekspedisi.toUpperCase() === namaEkspedisi);
+}
 
-function ajukanBid(id){
-  const inp = document.getElementById(`bid-input-${id}`);
-  const harga = parseInt(inp.value, 10);
-  if(!harga || harga <= 0){ inp.style.borderColor = 'var(--red)'; return; }
-  
-  const etdInp = document.getElementById(`etd-input-${id}`);
-  const etd = etdInp.value.trim();
-  
-  const etaInp = document.getElementById(`eta-input-${id}`);
-  const eta = etaInp.value.trim();
-  
-  const kapalInp = document.getElementById(`kapal-input-${id}`);  
-  const namaKapal = kapalInp.value.trim();
-  
-  const l = lelangList.find(x=>x.id===id);
-  l.bids[namaEkspedisi] = {harga, etd, eta, namaKapal, waktu: Date.now()};
-  render();  
+async function muat(){
+  try{
+    setStatus('Memuat data…');
+    const d = await gas({action:'ambil_semua'});
+    lelangList = d.lelang || [];
+    bidList = d.bids || [];
+    setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
+    render();
+  }catch(err){
+    setStatus('Gagal memuat: ' + err.message, true);
+  }
+}
+
+async function ajukanBid(id){
+  const harga = parseInt(document.getElementById(`harga-${id}`).value, 10);
+  const inpHarga = document.getElementById(`harga-${id}`);
+  if(!harga || harga <= 0){ inpHarga.style.borderColor = 'var(--red)'; return; }
+  inpHarga.style.borderColor = '';
+
+  const etd = document.getElementById(`etd-${id}`).value.trim();
+  const eta = document.getElementById(`eta-${id}`).value.trim();
+  const namaKapal = document.getElementById(`kapal-${id}`).value.trim();
+  const btn = document.getElementById(`btn-${id}`);
+
+  try{
+    btn.disabled = true;
+    setStatus('Mengirim penawaran…');
+    await gas({action:'bid_submit', idLelang:id, ekspedisi:namaEkspedisi, harga, etd, eta, namaKapal});
+    await muat();
+  }catch(err){
+    setStatus('Gagal kirim penawaran: ' + err.message, true);
+    btn.disabled = false;
+  }
 }
 
 function render(){
@@ -162,12 +150,10 @@ function render(){
     <div class="eyebrow">PT. UNIFAM · Lelang Kiriman</div>
     <h1>Panel Ekspedisi</h1>
     <p class="sub">Daftar lelang pengiriman yang masih terbuka. Isi harga penawaran Anda — tidak terlihat oleh ekspedisi lain.</p>
-    <div class="eks-badge">🚚 ${namaEkspedisi}</div>
-  `;
+    <div class="eks-badge">🚚 ${namaEkspedisi}</div>`;
 
   const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  const terbuka = lelangList.filter(l=>l.status==='terbuka');
+  const terbuka = lelangList.filter(l => l.status !== 'selesai');
   document.getElementById('jumlah-lelang').textContent = `${terbuka.length} aktif`;
 
   if(terbuka.length === 0){
@@ -175,35 +161,43 @@ function render(){
     return;
   }
 
-  terbuka.forEach(l=>{
-    const card = document.createElement('div');
-    card.className = 'card';
+  grid.innerHTML = terbuka.map(l=>{
+    const mine = bidSaya(l.id);
     const lewat = l.batasWaktu - Date.now() <= 0;
-    const mine = l.bids[namaEkspedisi];
-
-    card.innerHTML = `
+    return `<div class="card">
       <div class="card-head">
         <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
         <div class="meta">${l.customer} · Sales ${l.sales}<br>${l.tipeMobil} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${l.tanggal}</div>
         <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
       </div>
       <div class="card-body">
-        ${mine ? `<div class="submitted-note">✓ Harga: ${formatRupiah(mine.harga)} · ETD: ${mine.etd} · ETA: ${mine.eta} · Kapal: ${mine.namaKapal} · ${new Date(mine.waktu).toLocaleTimeString('id-ID')}</div>` : ''}
-        <div class="my-bid-row">
-          <input id="bid-input-${l.id}" type="number" placeholder="Masukkan harga penawaran (Rp)" value="${mine ? mine.harga : ''}">
-          <input id="etd-input-${l.id}" type="text" placeholder="ETD" value="${mine ? mine.etd : ''}">
-          <input id="eta-input-${l.id}" type="text" placeholder="ETA" value="${mine ? mine.eta : ''}">
-          <input id="kapal-input-${l.id}" type="text" placeholder="Nama Kapal" value="${mine ? mine.namaKapal : ''}">
-          <button onclick="ajukanBid(${l.id})">${mine ? 'Update' : 'Ajukan'}</button>
+        ${mine ? `<div class="submitted-note">✓ Penawaran Anda: ${formatRupiah(mine.harga)}<br>ETD ${mine.etd||'-'} · ETA ${mine.eta||'-'} · Kapal ${mine.namaKapal||'-'}</div>` : ''}
+        <div class="form-grid">
+          <div class="full">
+            <label>Harga Penawaran (Rp)</label>
+            <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0" value="${mine ? mine.harga : ''}">
+          </div>
+          <div>
+            <label>ETD</label>
+            <input id="etd-${l.id}" type="text" placeholder="dd/mm/yyyy" value="${mine ? mine.etd : ''}">
+          </div>
+          <div>
+            <label>ETA</label>
+            <input id="eta-${l.id}" type="text" placeholder="dd/mm/yyyy" value="${mine ? mine.eta : ''}">
+          </div>
+          <div class="full">
+            <label>Nama Kapal</label>
+            <input id="kapal-${l.id}" type="text" placeholder="mis. KM Meratus" value="${mine ? mine.namaKapal : ''}">
+          </div>
         </div>
+        <button class="btn-ajukan" id="btn-${l.id}" onclick="ajukanBid('${l.id}')">${mine ? 'Update Penawaran' : 'Ajukan Penawaran'}</button>
       </div>
-    `;
-    grid.appendChild(card);
-  });
+    </div>`;
+  }).join('');
 }
 
-setInterval(render, 30000);
-render();
+muat();
+setInterval(muat, 60000);
 </script>
 </body>
 </html>
