@@ -41,10 +41,11 @@ textarea#paste-area:focus{outline:none;border-color:var(--sky-deep);}
 .eks-row{display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
 .eks-row:last-child{border-bottom:none;}
 .eks-row .nama{font-weight:700;}
+.kode-eks{font-family:var(--mono);font-size:10px;background:#EAF4FD;color:var(--sky-deep);padding:2px 7px;border-radius:20px;margin-left:6px;}
 .eks-row .wa{color:var(--muted);font-family:var(--mono);font-size:12px;}
 .eks-row a.link-btn{font-family:var(--mono);font-size:11px;color:var(--sky-deep);text-decoration:none;border:1.5px solid var(--sky-deep);padding:5px 10px;border-radius:8px;white-space:nowrap;}
 .eks-row a.wa-btn{font-family:var(--mono);font-size:11px;color:#1F9E52;text-decoration:none;border:1.5px solid #1F9E52;padding:5px 10px;border-radius:8px;white-space:nowrap;}
-.add-eks-form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:12px;}
+.add-eks-form{display:grid;grid-template-columns:1.4fr 1.4fr .8fr auto;gap:8px;margin-top:12px;}
 .add-eks-form input{background:#FBFDFF;border:1.5px solid var(--line);color:var(--text);padding:9px 10px;border-radius:8px;font-size:13px;}
 .add-eks-form input:focus{outline:none;border-color:var(--sky-deep);}
 .grid{display:flex;flex-direction:column;gap:12px;}
@@ -82,6 +83,10 @@ tr.termurah td{color:var(--teal);font-weight:700;}
 footer{max-width:940px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
 
 input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
+
+.alamat-box{margin-top:9px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  background:#F4F9FE;border-left:3px solid var(--sky-deep);padding:7px 10px;border-radius:0 6px 6px 0;line-height:1.6;}
+.alamat-box b{color:var(--text);font-weight:700;}
 </style>
 </head>
 <body>
@@ -104,6 +109,7 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
     <div class="add-eks-form">
       <input id="eks-nama" placeholder="Nama ekspedisi (mis. TRANS JAYA)">
       <input id="eks-wa" placeholder="No. WA (08xx atau 62xx)">
+      <input id="eks-kode" placeholder="Kode (mis. PAT)">
       <button class="btn-primary" onclick="tambahEkspedisi()">+ Tambah</button>
     </div>
   </div>
@@ -113,8 +119,8 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
     <small>paste langsung dari Excel</small>
   </div>
   <div class="panel-box">
-    <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;05/08/2026&#9;DESTI&#9;CV. Budiana - PANGKALAN BUN&#9;CDE 6x4&#9;2.185&#9;32,6"></textarea>
-    <div class="paste-hint">Format kolom (pisah tab): Tanggal · Nama Sales · Customer - Kota Tujuan · Tipe Mobil · Jumlah Karton · CBM · <b>Rate Patokan (opsional)</b>.<br>Kalau kolom rate dikosongkan, sistem cari sendiri di tab "Rate" berdasarkan Kota + Tipe Mobil (ambil rank 1). Asal selalu Gudang UNIFAM. Batas isi harga: 3 jam dari sekarang.</div>
+    <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;05/08/2026&#9;DESTI&#9;CV. Budiana&#9;PANGKALAN BUN&#9;2.185&#9;32,6&#9;CDE 6x4"></textarea>
+    <div class="paste-hint">Urutan kolom (pisah tab): Tanggal · Sales · Nama Distributor · Kota · Jumlah Karton · Kubikasi · Tipe Mobil. Kolom ke-8 opsional untuk rate patokan manual. Asal selalu Gudang UNIFAM.</div>
     <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
     <div id="preview-wrap"></div>
   </div>
@@ -227,12 +233,14 @@ async function muat(){
 async function tambahEkspedisi(){
   const nama = document.getElementById('eks-nama').value.trim();
   const wa = document.getElementById('eks-wa').value.trim();
+  const kode = document.getElementById('eks-kode').value.trim();
   if(!nama || !wa) return;
   try{
     setStatus('Menyimpan ekspedisi…');
-    await gas({action:'eks_insert', nama, wa});
+    await gas({action:'eks_insert', nama, wa, kode});
     document.getElementById('eks-nama').value = '';
     document.getElementById('eks-wa').value = '';
+    document.getElementById('eks-kode').value = '';
     await muat();
   }catch(err){ setStatus('Gagal simpan ekspedisi: ' + err.message, true); }
 }
@@ -240,15 +248,11 @@ async function tambahEkspedisi(){
 /* ---------- paste planning ---------- */
 function parseBaris(baris){
   const kol = baris.split('\t').map(s => s.trim());
-  if(kol.length < 6) return null;
-  const [tanggal, sales, customerKota, tipeMobil, kartonRaw, cbmRaw, rateRaw] = kol;
-  let customer = customerKota, kota = customerKota;
-  if(customerKota.includes(' - ')){
-    const parts = customerKota.split(' - ');
-    kota = parts.pop().trim();
-    customer = parts.join(' - ').trim();
-  }
-  const karton = parseInt(String(kartonRaw).replace(/\./g,'').replace(/,/g,''),10) || 0;
+  if(kol.length < 7) return null;
+  // Tanggal | Sales | Nama Distributor | Kota | Jumlah Karton | Kubikasi | Tipe Mobil | (opsional) Rate
+  const [tanggal, sales, customer, kota, kartonRaw, cbmRaw, tipeMobil, rateRaw] = kol;
+  if(!tanggal || !kota) return null;
+  const karton = parseInt(String(kartonRaw).replace(/[^0-9]/g,''),10) || 0;
   const cbm = parseFloat(String(cbmRaw).replace(/\./g,'').replace(',','.')) || 0;
   const rateExisting = rateRaw ? (parseInt(String(rateRaw).replace(/[^0-9]/g,''),10) || 0) : 0;
   return {tanggal, sales, customer, kota, tipeMobil, karton, cbm, rateExisting};
@@ -259,7 +263,7 @@ function prosesPaste(){
   if(!raw) return;
   pendingPreview = raw.split('\n').map(b=>b.trim()).filter(b=>b).map(parseBaris).filter(x=>x);
   if(pendingPreview.length === 0){
-    setStatus('Tidak ada baris valid. Pastikan 6 kolom dipisah TAB (paste langsung dari Excel).', true);
+    setStatus('Tidak ada baris valid. Pastikan 7 kolom dipisah TAB, urut: Tanggal, Sales, Distributor, Kota, Karton, Kubikasi, Tipe Mobil.', true);
   }
   renderPreview();
 }
@@ -273,7 +277,7 @@ function renderPreview(){
         <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota</th><th>Tipe Mobil</th><th>Karton</th><th>CBM</th><th>Rate Patokan</th></tr></thead>
         <tbody>${pendingPreview.map(p=>`<tr>
           <td>${p.tanggal}</td><td>${p.sales}</td><td>${p.customer}</td><td>${p.kota}</td>
-          <td>${p.tipeMobil}</td><td>${formatKarton(p.karton)}</td><td>${formatCbm(p.cbm)}</td>
+          <td>${formatKarton(p.karton)}</td><td>${formatCbm(p.cbm)}</td><td>${p.tipeMobil}</td>
           <td>${p.rateExisting ? formatRupiah(p.rateExisting) : '<i style="color:#5C7896">dari tab Rate</i>'}</td>
         </tr>`).join('')}</tbody>
       </table>
@@ -313,8 +317,13 @@ async function pilihPemenang(idLelang, ekspedisi){
   const tanggalMuat = inp ? keLokal(inp.value) : '';
   try{
     setStatus('Menyimpan pemenang…');
-    await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat});
+    const r = await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat});
     await muat();
+    if(r && r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
+      setStatus(`No Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
+    } else if(r && r.noOrder){
+      setStatus(`No Order ${r.noOrder} dibuat & terkirim ke planning draft Pesanan Armada.`);
+    }
   }catch(err){ setStatus('Gagal simpan pemenang: ' + err.message, true); }
 }
 
@@ -326,6 +335,7 @@ function waKonfirmasi(l, win, eks){
   const baris = [
     `Halo ${eks.nama}, penawaran Anda kami PILIH untuk pengiriman berikut:`,
     ``,
+    l.noOrder ? `No Order  : ${l.noOrder}` : '',
     `Tujuan    : Gudang UNIFAM -> ${l.kota}`,
     `Customer  : ${l.customer}`,
     `Muatan    : ${l.tipeMobil} | ${formatKarton(l.karton)} karton | ${formatCbm(l.cbm)} CBM`,
@@ -348,7 +358,7 @@ function renderEksList(){
   if(daftarEkspedisi.length === 0){ wrap.innerHTML = `<div class="empty">Belum ada ekspedisi terdaftar.</div>`; return; }
   wrap.innerHTML = daftarEkspedisi.map(e=>`
     <div class="eks-row">
-      <div class="nama">${e.nama}</div>
+      <div class="nama">${e.nama}${e.kode ? ' <span class="kode-eks">' + e.kode + '</span>' : ''}</div>
       <div class="wa">${e.wa}</div>
       <a class="link-btn" href="${linkUntuk(e.nama)}" target="_blank">Buka Link</a>
       <a class="wa-btn" href="${waUntuk(e)}" target="_blank">Kirim via WA</a>
@@ -404,6 +414,7 @@ function render(){
             <div>
               <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
               <div class="meta">${l.customer} · ${l.tipeMobil}<br>${l.tanggal} · ${bids.length} ekspedisi mengisi</div>
+              ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${l.alamat}</div>` : '<div class="alamat-box">Alamat belum ketemu di tab Alamat</div>'}
             </div>
             <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
           </div>
@@ -451,7 +462,7 @@ function render(){
           <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
           <div class="meta">${l.customer} · ${l.tipeMobil} · ${l.tanggal}</div>
         </div>
-        <div class="deadline-tag">Muat ${l.tanggalMuat || l.tanggal || '—'}</div>
+        <div class="deadline-tag">${l.noOrder ? l.noOrder + ' · ' : ''}Muat ${l.tanggalMuat || l.tanggal || '—'}</div>
         </div>
         <div class="card-body">
           <div class="pemenang-banner">🏆 Dipilih: ${l.pemenang || '—'}${win ? ' · ' + formatRupiah(win.harga) + ' · Kapal ' + (win.namaKapal||'-') + ' · ETD ' + (win.etd||'-') : ''}</div>

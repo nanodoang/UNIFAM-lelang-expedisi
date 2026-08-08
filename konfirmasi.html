@@ -61,6 +61,10 @@ input:focus,textarea:focus{outline:none;border-color:var(--sky-deep);}
 footer{max-width:620px;margin:30px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
 
 input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
+
+.alamat-box{margin-top:9px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  background:#F4F9FE;border-left:3px solid var(--sky-deep);padding:7px 10px;border-radius:0 6px 6px 0;line-height:1.6;}
+.alamat-box b{color:var(--text);font-weight:700;}
 </style>
 </head>
 <body>
@@ -258,6 +262,7 @@ function render(){
         <span class="jenis-tag ${isKontener ? 'kontener' : 'darat'}">${isKontener ? 'KONTENER' : 'DARAT'}</span>
         <dl class="rincian">
           <dt>Customer</dt><dd>${lelang.customer}</dd>
+          ${lelang.alamat ? `<dt>Alamat</dt><dd>${lelang.alamat}</dd>` : ''}
           <dt>Muatan</dt><dd>${lelang.tipeMobil} · ${formatKarton(lelang.karton)} karton · ${formatCbm(lelang.cbm)} CBM</dd>
           ${bidSaya ? `<dt>Harga Deal</dt><dd>${formatRupiah(bidSaya.harga)}</dd>` : ''}
           ${bidSaya && bidSaya.namaKapal ? `<dt>Kapal</dt><dd>${bidSaya.namaKapal} · ETD ${bidSaya.etd||'-'} · ETA ${bidSaya.eta||'-'}</dd>` : ''}
