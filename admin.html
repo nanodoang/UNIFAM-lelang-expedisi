@@ -38,10 +38,18 @@ textarea#paste-area:focus{outline:none;border-color:var(--sky-deep);}
 .preview-table th{text-align:left;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;padding:6px 7px;border-bottom:1px solid var(--line);white-space:nowrap;}
 .preview-table td{padding:8px 7px;border-bottom:1px solid var(--line);}
 .preview-actions{margin-top:12px;display:flex;gap:10px;}
-.eks-row{display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
+.eks-row{display:grid;grid-template-columns:1.4fr 1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
 .eks-row:last-child{border-bottom:none;}
 .eks-row .nama{font-weight:700;}
 .sandi{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;font-weight:400;}
+.sandi.kosong{color:var(--red);}
+.pass-btn{background:#fff;border:1.5px solid var(--line);color:var(--muted);border-radius:8px;
+  font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;white-space:nowrap;}
+.pass-btn:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+.pass-btn.perlu{border-color:var(--red);color:var(--red);font-weight:700;}
+.pass-btn.perlu:hover{background:var(--red);color:#fff;}
+.wa-mati{font-family:var(--mono);font-size:11px;color:#B8C6D8;border:1.5px dashed var(--line);
+  padding:5px 10px;border-radius:8px;white-space:nowrap;cursor:not-allowed;}
 .kode-eks{font-family:var(--mono);font-size:10px;background:#EAF4FD;color:var(--sky-deep);padding:2px 7px;border-radius:20px;margin-left:6px;}
 .eks-row .wa{color:var(--muted);font-family:var(--mono);font-size:12px;}
 .eks-row a.link-btn{font-family:var(--mono);font-size:11px;color:var(--sky-deep);text-decoration:none;border:1.5px solid var(--sky-deep);padding:5px 10px;border-radius:8px;white-space:nowrap;}
@@ -274,6 +282,18 @@ function formatJam(ts){
 function bidsUntuk(idLelang){
   return bidList.filter(b => b.idLelang === idLelang).sort((a,b) => a.harga - b.harga);
 }
+async function buatPasswordEks(nama, ganti){
+  if(ganti && !confirm(`Ganti password ${nama}?\n\nPassword lama langsung tidak berlaku, dan ${nama} harus masuk ulang dengan password baru.`)) return;
+  try{
+    setStatus(ganti ? 'Membuat password baru…' : 'Membuat password…');
+    const r = await gas({action:'eks_insert', nama, resetPassword: ganti ? '1' : '0'});
+    await muat();
+    if(r && r.password){
+      setStatus(`Password ${r.nama}: ${r.password} — kirim lewat tombol WA di baris itu.`);
+    }
+  }catch(err){ setStatus('Gagal membuat password: ' + err.message, true); }
+}
+
 function linkUntuk(nama){ return `${BASE_URL}/index.html?ekspedisi=${encodeURIComponent(nama)}`; }
 function waUntuk(e){
   const teks = [
@@ -475,10 +495,14 @@ function renderEksList(){
   wrap.innerHTML = daftarEkspedisi.map(e=>`
     <div class="eks-row">
       <div class="nama">${e.nama}${e.kode ? ' <span class="kode-eks">' + e.kode + '</span>' : ''}
-        <span class="sandi">${e.password ? 'pass: ' + e.password : 'belum ada password'}</span></div>
+        <span class="sandi ${e.password ? '' : 'kosong'}">${e.password ? 'pass: ' + e.password : 'belum ada password'}</span></div>
       <div class="wa">${e.wa}</div>
-      <a class="link-btn" href="${linkUntuk(e.nama)}" target="_blank">Buka Link</a>
-      <a class="wa-btn" href="${waUntuk(e)}" target="_blank">Kirim via WA</a>
+      ${e.password
+        ? `<button class="pass-btn" onclick="buatPasswordEks('${e.nama}', true)">Ganti Pass</button>`
+        : `<button class="pass-btn perlu" onclick="buatPasswordEks('${e.nama}', false)">Buat Password</button>`}
+      ${e.password
+        ? `<a class="wa-btn" href="${waUntuk(e)}" target="_blank">Kirim via WA</a>`
+        : `<span class="wa-mati" title="buat password dulu">Kirim via WA</span>`}
     </div>`).join('');
 }
 
