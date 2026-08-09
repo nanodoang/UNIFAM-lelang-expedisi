@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template Rate — UNIFAM</title>
+<style>
+:root{
+  --sky-deep:#1E88E5; --sky:#3FA3F2; --sky-light:#EAF4FD;
+  --panel:#FFFFFF; --line:#D8E9FB; --text:#14293D; --muted:#5C7896;
+  --amber:#F2A93B; --teal:#0FA894; --red:#E1554D;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --sans:'Space Grotesk',Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:linear-gradient(180deg,var(--sky-deep) 0%,var(--sky) 190px,var(--sky-light) 190px,var(--sky-light) 100%);
+  color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:60px;}
+header{max-width:1080px;margin:0 auto;padding:30px 24px 18px;color:#fff;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:8px;}
+h1{font-size:clamp(22px,5vw,28px);margin:0 0 6px;letter-spacing:-0.01em;}
+.sub{color:rgba(255,255,255,.85);font-size:13.5px;max-width:560px;line-height:1.55;}
+#status-bar{max-width:1080px;margin:0 auto 12px;padding:0 24px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+#status-bar.err{color:var(--red);}
+main{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+.kendali{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.tombol-jenis{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  box-shadow:0 2px 8px rgba(30,136,229,.07);}
+.tombol-jenis button{background:transparent;border:none;padding:11px 24px;font-family:var(--sans);
+  font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer;}
+.tombol-jenis button.aktif{background:var(--sky-deep);color:#fff;}
+.tombol-jenis button:not(.aktif):hover{background:#F4F9FE;color:var(--text);}
+.cari{flex:1;min-width:200px;}
+.cari input{width:100%;background:var(--panel);border:1.5px solid var(--line);color:var(--text);
+  padding:11px 14px;border-radius:10px;font-size:13.5px;font-family:var(--sans);}
+.cari input:focus{outline:none;border-color:var(--sky-deep);}
+.btn-salin{background:var(--panel);border:1.5px solid var(--line);color:var(--muted);border-radius:10px;
+  font-weight:600;font-size:12.5px;padding:11px 16px;cursor:pointer;font-family:var(--sans);white-space:nowrap;}
+.btn-salin:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+
+.kotak-tabel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(30,136,229,.07);}
+.gulir{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.06em;padding:12px 14px;border-bottom:1.5px solid var(--line);background:#FBFDFF;
+  white-space:nowrap;position:sticky;top:0;}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#FBFDFF;}
+.distributor{font-weight:700;}
+.kode-kecil{font-family:var(--mono);font-size:9.5px;background:#EAF4FD;color:var(--sky-deep);
+  padding:2px 6px;border-radius:20px;margin-left:6px;}
+.kota{font-family:var(--mono);font-size:12px;}
+.alamat{color:var(--muted);font-size:12px;max-width:280px;line-height:1.5;}
+.rate{font-family:var(--mono);font-weight:700;white-space:nowrap;}
+.leadtime{font-family:var(--mono);white-space:nowrap;}
+.kosong-sel{color:#B8C6D8;font-style:italic;font-size:12px;}
+.tak-ada{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;font-style:italic;}
+.ringkas{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+footer{max-width:1080px;margin:30px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;
+  font-family:var(--mono);border-top:1px solid var(--line);line-height:1.7;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">PT. UNIFAM · Referensi</div>
+  <h1>Template Rate</h1>
+  <p class="sub">Rate rank 1 (harga terendah) per kota, dipisah antara pengiriman darat dan laut, lengkap dengan alamat dan leadtime distributor.</p>
+</header>
+
+<div id="status-bar">Memuat data…</div>
+
+<main>
+  <div class="kendali">
+    <div class="tombol-jenis">
+      <button id="btn-darat" class="aktif" onclick="gantiJenis('darat')">DARAT</button>
+      <button id="btn-laut" onclick="gantiJenis('laut')">LAUT</button>
+    </div>
+    <div class="cari"><input id="cari" type="text" placeholder="Cari distributor, kota, atau alamat…" oninput="render()"></div>
+    <button class="btn-salin" onclick="salinTabel()">Salin Tabel</button>
+  </div>
+
+  <div class="kotak-tabel"><div class="gulir" id="wadah-tabel"></div></div>
+  <div class="ringkas" id="ringkas"></div>
+</main>
+
+<footer>
+  Rate diambil dari tab Rate (per kota), alamat dari tab Alamat, leadtime dari tab leadtim.<br>
+  Baris yang ratenya kosong berarti belum ada data rate untuk kota tersebut pada jenis pengiriman yang dipilih.
+</footer>
+
+<script>
+/* ====== GANTI URL INI kalau deployment Apps Script berubah ====== */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
+
+let jsonpN = 0;
+function jsonp(url){
+  return new Promise((resolve, reject) => {
+    const cb = 'gascb' + (++jsonpN) + '_' + Date.now();
+    const s = document.createElement('script');
+    const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server tidak merespons')); }, 25000);
+    function bersih(){ clearTimeout(t); try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = (d) => { bersih(); resolve(d); };
+    s.src = url + '&callback=' + cb;
+    s.onerror = () => { bersih(); reject(new Error('Gagal terhubung ke Apps Script')); };
+    document.body.appendChild(s);
+  });
+}
+async function gas(p){
+  const q = Object.keys(p).map(k => encodeURIComponent(k)+'='+encodeURIComponent(p[k])).join('&');
+  const url = GAS_URL + '?' + q;
+  let d = null;
+  try { const r = await fetch(url); if(r.ok) d = await r.json(); } catch(e){ d = null; }
+  if(d === null) d = await jsonp(url);
+  if(d && d.error) throw new Error(d.error);
+  return d;
+}
+
+let semuaBaris = [], jenisAktif = 'darat', adaLeadtim = true;
+
+function setStatus(teks, error){
+  const el = document.getElementById('status-bar');
+  el.textContent = teks;
+  el.className = error ? 'err' : '';
+}
+function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
+
+function gantiJenis(j){
+  jenisAktif = j;
+  document.getElementById('btn-darat').className = j === 'darat' ? 'aktif' : '';
+  document.getElementById('btn-laut').className  = j === 'laut'  ? 'aktif' : '';
+  render();
+}
+
+async function muat(){
+  try{
+    setStatus('Memuat data…');
+    const d = await gas({action:'template_rate'});
+    semuaBaris = d.baris || [];
+    adaLeadtim = d.adaLeadtim !== false;
+    setStatus(`${semuaBaris.length} distributor · ${adaLeadtim ? 'leadtim tersambung' : 'tab leadtim TIDAK ketemu'} · ${d.versi || ''} · ${new Date().toLocaleTimeString('id-ID')}`, !adaLeadtim);
+    render();
+  }catch(err){
+    setStatus('Gagal memuat: ' + err.message, true);
+  }
+}
+
+function barisTersaring(){
+  const q = document.getElementById('cari').value.trim().toLowerCase();
+  if(!q) return semuaBaris;
+  return semuaBaris.filter(b =>
+    (b.distributor + ' ' + b.kota + ' ' + b.alamat + ' ' + (b.kode||'')).toLowerCase().includes(q));
+}
+
+function render(){
+  const rows = barisTersaring();
+  const labelJenis = jenisAktif === 'darat' ? 'Rate Darat' : 'Rate Laut';
+  const wadah = document.getElementById('wadah-tabel');
+
+  if(rows.length === 0){
+    wadah.innerHTML = `<div class="tak-ada">Tidak ada data yang cocok.</div>`;
+    document.getElementById('ringkas').textContent = '';
+    return;
+  }
+
+  const isi = rows.map(b => {
+    const harga = jenisAktif === 'darat' ? b.rateDarat : b.rateLaut;
+    return `<tr>
+      <td class="distributor">${b.distributor}${b.kode ? `<span class="kode-kecil">${b.kode}</span>` : ''}</td>
+      <td class="kota">${b.kota || '<span class="kosong-sel">—</span>'}</td>
+      <td class="alamat">${b.alamat || '<span class="kosong-sel">belum ada alamat</span>'}</td>
+      <td class="rate">${harga ? formatRupiah(harga) : '<span class="kosong-sel">belum ada rate</span>'}</td>
+      <td class="leadtime">${(b.leadtime !== '' && b.leadtime !== null && b.leadtime !== undefined)
+                              ? b.leadtime + ' hari' : '<span class="kosong-sel">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  wadah.innerHTML = `<table>
+    <thead><tr>
+      <th>Distributor</th><th>Kota</th><th>Alamat</th><th>${labelJenis} (rank 1)</th><th>Leadtime</th>
+    </tr></thead>
+    <tbody>${isi}</tbody>
+  </table>`;
+
+  const adaRate = rows.filter(b => (jenisAktif === 'darat' ? b.rateDarat : b.rateLaut)).length;
+  document.getElementById('ringkas').textContent =
+    `${rows.length} baris ditampilkan · ${adaRate} punya rate ${jenisAktif} · ${rows.length - adaRate} belum ada`;
+}
+
+function salinTabel(){
+  const rows = barisTersaring();
+  const judul = jenisAktif === 'darat' ? 'Rate Darat' : 'Rate Laut';
+  const teks = ['Distributor\tKota\tAlamat\t' + judul + '\tLeadtime (hari)']
+    .concat(rows.map(b => {
+      const harga = jenisAktif === 'darat' ? b.rateDarat : b.rateLaut;
+      return [b.distributor, b.kota, b.alamat, harga || '', b.leadtime === '' ? '' : b.leadtime].join('\t');
+    })).join('\n');
+
+  navigator.clipboard.writeText(teks)
+    .then(() => setStatus(`${rows.length} baris disalin — tinggal paste ke Excel.`))
+    .catch(() => setStatus('Gagal menyalin. Coba pakai browser di laptop.', true));
+}
+
+muat();
+</script>
+</body>
+</html>
