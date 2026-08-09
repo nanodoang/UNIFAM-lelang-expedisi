@@ -52,6 +52,7 @@ tbody tr:hover{background:#FBFDFF;}
 .kode-kecil{font-family:var(--mono);font-size:9.5px;background:#EAF4FD;color:var(--sky-deep);
   padding:2px 6px;border-radius:20px;margin-left:6px;}
 .kota{font-family:var(--mono);font-size:12px;}
+.alamat{color:var(--muted);font-size:12px;max-width:240px;line-height:1.5;}
 .kol-rate{text-align:right;}
 td.rate{text-align:right;}
 .rate{font-family:var(--mono);font-weight:700;white-space:nowrap;}
@@ -85,7 +86,7 @@ footer{max-width:1080px;margin:30px auto 0;padding:16px 24px;color:#8FA7C2;font-
       <button id="btn-darat" class="aktif" onclick="gantiJenis('darat')">DARAT</button>
       <button id="btn-laut" onclick="gantiJenis('laut')">LAUT</button>
     </div>
-    <div class="cari"><input id="cari" type="text" placeholder="Cari distributor atau kota…" oninput="render()"></div>
+    <div class="cari"><input id="cari" type="text" placeholder="Cari distributor, kota, atau alamat…" oninput="render()"></div>
     <button class="btn-salin" onclick="salinTabel()">Salin Tabel</button>
   </div>
 
@@ -192,6 +193,7 @@ function render(){
     return `<tr>
       <td class="distributor">${b.distributor}${b.kode ? `<span class="kode-kecil">${b.kode}</span>` : ''}</td>
       <td class="kota">${b.kota || '<span class="kosong-sel">—</span>'}</td>
+      <td class="alamat">${b.alamat || '<span class="kosong-sel">belum ada alamat</span>'}</td>
       ${selRate}
       <td class="leadtime">${(b.leadtime !== '' && b.leadtime !== null && b.leadtime !== undefined)
                               ? b.leadtime + ' hari' : '<span class="kosong-sel">—</span>'}</td>
@@ -199,7 +201,7 @@ function render(){
   }).join('');
 
   wadah.innerHTML = `<table>
-    <thead><tr><th>Distributor</th><th>Kota</th>${kepala}<th>Leadtime</th></tr></thead>
+    <thead><tr><th>Distributor</th><th>Kota</th><th>Alamat</th>${kepala}<th>Leadtime</th></tr></thead>
     <tbody>${isi}</tbody>
   </table>`;
 
@@ -211,10 +213,10 @@ function render(){
 function salinTabel(){
   const rows = barisTersaring();
   const kolomTipe = jenisAktif === 'darat' ? tipeDarat : tipeLaut;
-  const kepala = ['Distributor','Kota'].concat(kolomTipe).concat(['Leadtime (hari)']).join('\t');
+  const kepala = ['Distributor','Kota','Alamat'].concat(kolomTipe).concat(['Leadtime (hari)']).join('\t');
   const teks = [kepala].concat(rows.map(b => {
     const rate = jenisAktif === 'darat' ? (b.darat || {}) : (b.laut || {});
-    return [b.distributor, b.kota]
+    return [b.distributor, b.kota, b.alamat]
       .concat(kolomTipe.map(t => rate[t] || ''))
       .concat([b.leadtime === '' ? '' : b.leadtime]).join('\t');
   })).join('\n');
