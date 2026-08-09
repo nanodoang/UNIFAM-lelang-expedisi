@@ -152,10 +152,10 @@ async function muat(){
   }
   try{
     setStatus('Memuat data…');
-    const d = await gas({action:'ambil_semua'});
-    lelang = (d.lelang || []).find(l => l.id === idLelang) || null;
-    bidSaya = (d.bids || []).find(b => b.idLelang === idLelang && b.ekspedisi.toUpperCase() === namaEkspedisi) || null;
-    konfirmasiSaya = (d.konfirmasi || []).find(k => k.idLelang === idLelang && k.ekspedisi.toUpperCase() === namaEkspedisi) || null;
+    const d = await gas({action:'konfirmasi_data', idLelang, ekspedisi:namaEkspedisi});
+    lelang = d.lelang || null;
+    bidSaya = d.bid || null;
+    konfirmasiSaya = d.konfirmasi || null;
     setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){

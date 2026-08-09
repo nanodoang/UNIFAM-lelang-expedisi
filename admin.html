@@ -41,6 +41,7 @@ textarea#paste-area:focus{outline:none;border-color:var(--sky-deep);}
 .eks-row{display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
 .eks-row:last-child{border-bottom:none;}
 .eks-row .nama{font-weight:700;}
+.sandi{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;font-weight:400;}
 .kode-eks{font-family:var(--mono);font-size:10px;background:#EAF4FD;color:var(--sky-deep);padding:2px 7px;border-radius:20px;margin-left:6px;}
 .eks-row .wa{color:var(--muted);font-family:var(--mono);font-size:12px;}
 .eks-row a.link-btn{font-family:var(--mono);font-size:11px;color:var(--sky-deep);text-decoration:none;border:1.5px solid var(--sky-deep);padding:5px 10px;border-radius:8px;white-space:nowrap;}
@@ -131,8 +132,8 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
     <small>paste langsung dari Excel</small>
   </div>
   <div class="panel-box">
-    <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;05/08/2026&#9;DESTI&#9;CV. Budiana&#9;PANGKALAN BUN&#9;2.185&#9;32,6&#9;CDE 6x4"></textarea>
-    <div class="paste-hint">Urutan kolom (pisah tab): Tanggal · Sales · Nama Distributor · Kota · Jumlah Karton · Kubikasi · Tipe Mobil. Kolom ke-8 opsional untuk rate patokan manual. Asal selalu Gudang UNIFAM.</div>
+    <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;13/08/2026&#9;WURY&#9;PT. Prisma Reksa Sejahtera Bersama - DUMAI&#9;1.868&#9;30,7&#9;20 ft"></textarea>
+    <div class="paste-hint">Urutan kolom (pisah tab): Tanggal · Sales · Distributor - KOTA · Jumlah Karton · Kubikasi · Tipe Mobil. Distributor dan kota disambung dengan tanda " - ". Kolom ke-7 opsional untuk rate patokan manual.</div>
     <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
     <div id="preview-wrap"></div>
   </div>
@@ -172,7 +173,13 @@ function jsonp(url){
   });
 }
 
+const KUNCI_ADMIN = 'lelang-unifam-admin';
+function ambilPassAdmin(){ try{ return localStorage.getItem(KUNCI_ADMIN) || ''; }catch(e){ return ''; } }
+function simpanPassAdmin(v){ try{ localStorage.setItem(KUNCI_ADMIN, v); }catch(e){} }
+function hapusPassAdmin(){ try{ localStorage.removeItem(KUNCI_ADMIN); }catch(e){} }
+
 async function gas(params){
+  if(!params.adminPass) params.adminPass = ambilPassAdmin();
   const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
   const url = GAS_URL + '?' + q;
   let d = null;
@@ -269,11 +276,35 @@ function bidsUntuk(idLelang){
 }
 function linkUntuk(nama){ return `${BASE_URL}/index.html?ekspedisi=${encodeURIComponent(nama)}`; }
 function waUntuk(e){
-  const teks = `Halo ${e.nama}, ini link lelang kiriman UNIFAM khusus untuk tim Anda:\n${linkUntuk(e.nama)}\nSilakan cek lelang terbuka & isi harga penawaran ya.`;
+  const teks = [
+    `Halo ${e.nama}, ini akses lelang kiriman UNIFAM untuk tim Anda:`,
+    ``,
+    linkUntuk(e.nama),
+    ``,
+    `User     : ${e.user || e.nama}`,
+    e.password ? `Password : ${e.password}` : '',
+    ``,
+    `Di dalamnya ada 2 bagian: *Lelang terbuka* untuk mengisi harga penawaran, dan *Riwayat dipakai* untuk mengisi ATD, ATA, dan tanggal dooring.`,
+    ``,
+    `Mohon password ini tidak dibagikan ke pihak lain.`
+  ].filter(x => x !== '').join('\n');
   return `https://wa.me/${e.wa}?text=${encodeURIComponent(teks)}`;
 }
 
+function mintaPassAdmin(pesan){
+  const v = prompt(pesan || 'Masukkan password admin:');
+  if(v === null) return false;
+  simpanPassAdmin(v.trim());
+  return true;
+}
+
 async function muat(){
+  if(!ambilPassAdmin()){
+    if(!mintaPassAdmin('Masukkan password admin untuk membuka panel:')){
+      setStatus('Panel terkunci — muat ulang halaman untuk memasukkan password.', true);
+      return;
+    }
+  }
   try{
     setStatus('Memuat data…');
     const d = await gas({action:'ambil_semua'});
@@ -288,7 +319,13 @@ async function muat(){
     setStatus(`Tersambung · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${rateList.length} baris rate · ${versiScript} · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
-    setStatus('Gagal memuat: ' + err.message, true);
+    if(String(err.message).toLowerCase().includes('password admin')){
+      hapusPassAdmin();
+      if(mintaPassAdmin('Password admin salah. Coba lagi:')) return muat();
+      setStatus('Panel terkunci — muat ulang halaman untuk memasukkan password.', true);
+    } else {
+      setStatus('Gagal memuat: ' + err.message, true);
+    }
   }
 }
 
@@ -300,7 +337,10 @@ async function tambahEkspedisi(){
   if(!nama || !wa) return;
   try{
     setStatus('Menyimpan ekspedisi…');
-    await gas({action:'eks_insert', nama, wa, kode});
+    const r = await gas({action:'eks_insert', nama, wa, kode});
+    if(r && r.password){
+      setStatus(`Akun ${r.nama} siap — user: ${r.user} · password: ${r.password}. Kirim lewat tombol WA.`);
+    }
     document.getElementById('eks-nama').value = '';
     document.getElementById('eks-wa').value = '';
     document.getElementById('eks-kode').value = '';
@@ -311,10 +351,23 @@ async function tambahEkspedisi(){
 /* ---------- paste planning ---------- */
 function parseBaris(baris){
   const kol = baris.split('\t').map(s => s.trim());
-  if(kol.length < 7) return null;
-  // Tanggal | Sales | Nama Distributor | Kota | Jumlah Karton | Kubikasi | Tipe Mobil | (opsional) Rate
-  const [tanggal, sales, customer, kota, kartonRaw, cbmRaw, tipeMobil, rateRaw] = kol;
-  if(!tanggal || !kota) return null;
+  if(kol.length < 6) return null;
+  // Tanggal | Sales | "Distributor - KOTA" | Jumlah Karton | Kubikasi | Tipe Mobil | (opsional) Rate
+  const [tanggal, sales, gabungan, kartonRaw, cbmRaw, tipeMobil, rateRaw] = kol;
+  if(!tanggal || !gabungan) return null;
+
+  // buang keterangan dalam kurung di belakang, mis. "CV. Garuda - NABIRE (UF-A)"
+  let bersih = gabungan.replace(/\s*\([^()]*\)\s*$/, '').trim();
+
+  // pisah pada tanda " - " TERAKHIR, supaya nama yang mengandung "-" tidak salah potong
+  let customer = bersih, kota = '';
+  const pos = bersih.lastIndexOf(' - ');
+  if(pos > -1){
+    customer = bersih.substring(0, pos).trim();
+    kota = bersih.substring(pos + 3).trim();
+  }
+  if(!kota) return null;
+
   const karton = parseInt(String(kartonRaw).replace(/[^0-9]/g,''),10) || 0;
   const cbm = parseFloat(String(cbmRaw).replace(/\./g,'').replace(',','.')) || 0;
   const rateExisting = rateRaw ? (parseInt(String(rateRaw).replace(/[^0-9]/g,''),10) || 0) : 0;
@@ -326,7 +379,7 @@ function prosesPaste(){
   if(!raw) return;
   pendingPreview = raw.split('\n').map(b=>b.trim()).filter(b=>b).map(parseBaris).filter(x=>x);
   if(pendingPreview.length === 0){
-    setStatus('Tidak ada baris valid. Pastikan 7 kolom dipisah TAB, urut: Tanggal, Sales, Distributor, Kota, Karton, Kubikasi, Tipe Mobil.', true);
+    setStatus('Tidak ada baris valid. Pastikan 6 kolom dipisah TAB, urut: Tanggal, Sales, "Distributor - KOTA", Karton, Kubikasi, Tipe Mobil.', true);
   }
   renderPreview();
 }
@@ -421,7 +474,8 @@ function renderEksList(){
   if(daftarEkspedisi.length === 0){ wrap.innerHTML = `<div class="empty">Belum ada ekspedisi terdaftar.</div>`; return; }
   wrap.innerHTML = daftarEkspedisi.map(e=>`
     <div class="eks-row">
-      <div class="nama">${e.nama}${e.kode ? ' <span class="kode-eks">' + e.kode + '</span>' : ''}</div>
+      <div class="nama">${e.nama}${e.kode ? ' <span class="kode-eks">' + e.kode + '</span>' : ''}
+        <span class="sandi">${e.password ? 'pass: ' + e.password : 'belum ada password'}</span></div>
       <div class="wa">${e.wa}</div>
       <a class="link-btn" href="${linkUntuk(e.nama)}" target="_blank">Buka Link</a>
       <a class="wa-btn" href="${waUntuk(e)}" target="_blank">Kirim via WA</a>
@@ -543,6 +597,5 @@ function render(){
 muat();
 setInterval(muat, 60000);
 </script>
-<a href="https://nanodoang.github.io/Logistic-Transportation/" style="position:fixed;bottom:18px;left:18px;display:flex;align-items:center;gap:8px;background:#1a1f1a;color:#f0efe6;text-decoration:none;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;font-weight:600;padding:10px 16px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,0.25);z-index:9999;" onmouseover="this.style.background='#b5502e'" onmouseout="this.style.background='#1a1f1a'">← Portal Utama</a>
 </body>
 </html>

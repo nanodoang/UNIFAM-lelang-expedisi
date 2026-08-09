@@ -13,77 +13,113 @@
   --sans:'Space Grotesk',Arial,sans-serif;
 }
 *{box-sizing:border-box;}
-body{margin:0;background:linear-gradient(180deg,var(--sky-deep) 0%,var(--sky) 220px,var(--sky-light) 220px,var(--sky-light) 100%);
+body{margin:0;background:linear-gradient(180deg,var(--sky-deep) 0%,var(--sky) 210px,var(--sky-light) 210px,var(--sky-light) 100%);
   color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:60px;}
-header{max-width:660px;margin:0 auto;padding:32px 24px 20px;color:#fff;}
+header{max-width:1000px;margin:0 auto;padding:30px 22px 18px;color:#fff;}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:8px;}
-h1{font-size:clamp(22px,5vw,28px);margin:0 0 6px;letter-spacing:-0.01em;}
+h1{font-size:clamp(21px,5vw,27px);margin:0 0 6px;letter-spacing:-0.01em;}
 .sub{color:rgba(255,255,255,.85);font-size:13.5px;max-width:520px;line-height:1.55;}
-.eks-badge{display:inline-flex;align-items:center;gap:6px;margin-top:14px;background:rgba(255,255,255,.16);
+.baris-badge{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:13px;}
+.eks-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);
   border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:20px;font-family:var(--mono);font-size:12.5px;}
-#status-bar{max-width:660px;margin:0 auto 10px;padding:0 24px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+.btn-keluar{background:transparent;border:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.9);
+  font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:20px;cursor:pointer;}
+.btn-keluar:hover{background:rgba(255,255,255,.16);}
+#status-bar{max-width:1000px;margin:0 auto 12px;padding:0 22px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
 #status-bar.err{color:var(--red);}
-main{max-width:660px;margin:0 auto;padding:0 24px;}
-.section-title{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 14px;}
-.section-title h2{font-size:15.5px;margin:0;color:var(--text);}
-.section-title small{color:var(--muted);font-family:var(--mono);font-size:11px;}
+#status-bar.ok{color:var(--teal);}
+main{max-width:1000px;margin:0 auto;padding:0 22px;}
+
+/* ---------- masuk ---------- */
+.kotak-masuk{max-width:360px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:22px 24px;box-shadow:0 4px 16px rgba(30,136,229,.12);}
+.kotak-masuk h2{font-size:16px;margin:0 0 4px;}
+.kotak-masuk p{font-size:12.5px;color:var(--muted);margin:0 0 16px;line-height:1.55;}
+label{display:block;font-family:var(--mono);font-size:9.5px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+input,textarea{background:#fff;border:1.5px solid var(--line);color:var(--text);padding:10px 12px;
+  border-radius:8px;font-size:13.5px;font-family:var(--mono);width:100%;}
+input:focus,textarea:focus{outline:none;border-color:var(--sky-deep);}
+input[type="date"]{min-height:42px;}
+.kotak-masuk .kolom{margin-bottom:12px;}
+.btn-utama{width:100%;background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
+  font-weight:700;font-size:14px;padding:12px;cursor:pointer;font-family:var(--sans);}
+.btn-utama:hover{background:#1670BF;}
+.btn-utama:disabled{opacity:.5;cursor:default;}
+.pesan-salah{background:rgba(225,85,77,.1);border:1px solid rgba(225,85,77,.35);color:#B33B34;
+  border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px;line-height:1.5;}
+
+/* ---------- tab ---------- */
+.tab-baris{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  overflow:hidden;box-shadow:0 2px 8px rgba(30,136,229,.07);margin-bottom:16px;width:fit-content;}
+.tab-baris button{background:transparent;border:none;padding:11px 22px;font-family:var(--sans);
+  font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;}
+.tab-baris button.aktif{background:var(--sky-deep);color:#fff;}
+.tab-baris button:not(.aktif):hover{background:#F4F9FE;color:var(--text);}
+
+/* ---------- kartu lelang ---------- */
 .grid{display:flex;flex-direction:column;gap:12px;}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(30,136,229,.08);}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(30,136,229,.08);}
 .card-head{padding:16px 18px 10px;}
 .route{font-size:15.5px;font-weight:700;}
 .route .arrow{color:var(--sky-deep);margin:0 6px;}
 .meta{font-size:12px;color:var(--muted);margin-top:5px;font-family:var(--mono);line-height:1.7;}
+.alamat-box{margin-top:9px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  background:#F4F9FE;border-left:3px solid var(--sky-deep);padding:7px 10px;border-radius:0 6px 6px 0;line-height:1.6;}
+.alamat-box b{color:var(--text);font-weight:700;}
 .deadline-tag{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--amber);
   background:rgba(242,169,59,.12);padding:3px 10px;border-radius:20px;}
 .deadline-tag.lewat{color:var(--red);background:rgba(225,85,77,.1);}
 .card-body{border-top:1px solid var(--line);padding:14px 18px 18px;background:#FBFDFF;}
-.submitted-note{font-family:var(--mono);font-size:11.5px;color:var(--teal);margin-bottom:12px;line-height:1.7;}
 .rate-patokan{display:flex;justify-content:space-between;align-items:center;gap:10px;
-  font-family:var(--mono);font-size:11.5px;color:var(--muted);background:#fff;
-  border:1.5px solid var(--sky-deep);padding:10px 13px;border-radius:8px;margin-bottom:12px;}
+  background:#EAF4FD;border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:12px;
+  font-family:var(--mono);font-size:11.5px;color:var(--muted);}
 .rate-patokan b{color:var(--sky-deep);font-size:15px;}
+.submitted-note{font-family:var(--mono);font-size:11.5px;color:var(--teal);margin-bottom:12px;line-height:1.7;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
 .form-grid .full{grid-column:1 / -1;}
-.form-grid label{display:block;font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-.form-grid input{background:#fff;border:1.5px solid var(--line);color:var(--text);padding:10px 12px;
-  border-radius:8px;font-size:13.5px;font-family:var(--mono);width:100%;}
-.form-grid input:focus{outline:none;border-color:var(--sky-deep);}
 .btn-ajukan{width:100%;background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
   font-weight:700;font-size:13.5px;padding:11px 18px;cursor:pointer;margin-top:11px;font-family:var(--sans);}
 .btn-ajukan:hover{background:#1670BF;}
 .btn-ajukan:disabled{opacity:.5;cursor:default;}
+
+/* ---------- tabel riwayat ---------- */
+.kotak-tabel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(30,136,229,.07);}
+.gulir{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:900px;}
+thead th{text-align:left;font-family:var(--mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.06em;padding:11px 12px;border-bottom:1.5px solid var(--line);background:#FBFDFF;white-space:nowrap;}
+thead th.isi{color:var(--sky-deep);}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+td.mono{font-family:var(--mono);white-space:nowrap;}
+td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
+td.tebal{font-weight:700;}
+table input{padding:6px 8px;font-size:11.5px;min-width:118px;}
+table input.ket{min-width:150px;font-family:var(--sans);}
+.tak-ada{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;font-style:italic;}
 .empty-state{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;
   background:var(--panel);border:1px dashed var(--line);border-radius:14px;}
-footer{max-width:660px;margin:36px auto 0;padding:16px 24px;color:#8FA7C2;font-size:11px;font-family:var(--mono);border-top:1px solid var(--line);}
-
-input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
-
-.alamat-box{margin-top:9px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
-  background:#F4F9FE;border-left:3px solid var(--sky-deep);padding:7px 10px;border-radius:0 6px 6px 0;line-height:1.6;}
-.alamat-box b{color:var(--text);font-weight:700;}
+.ket-bawah{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;}
+footer{max-width:1000px;margin:30px auto 0;padding:16px 22px;color:#8FA7C2;font-size:11px;
+  font-family:var(--mono);border-top:1px solid var(--line);line-height:1.7;}
 </style>
 </head>
 <body>
 
 <header id="header"></header>
-<div id="status-bar">Memuat data…</div>
-
-<main>
-  <div class="section-title">
-    <h2>Lelang Terbuka Untuk Anda</h2>
-    <small id="jumlah-lelang"></small>
-  </div>
-  <div class="grid" id="grid"></div>
-</main>
-
-<footer>Link ini tetap — begitu ada lelang baru, langsung muncul di sini. Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.</footer>
+<div id="status-bar"></div>
+<main id="isi"></main>
+<footer id="kaki"></footer>
 
 <script>
 /* ====== GANTI URL INI kalau deployment Apps Script berubah ====== */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
 
 const params = new URLSearchParams(window.location.search);
-const namaEkspedisi = (params.get('ekspedisi') || 'DEMO').toUpperCase();
+const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
 
 let jsonpN = 0;
 function jsonp(url){
@@ -98,33 +134,39 @@ function jsonp(url){
     document.body.appendChild(s);
   });
 }
-
 async function gas(p){
   const q = Object.keys(p).map(k => encodeURIComponent(k)+'='+encodeURIComponent(p[k])).join('&');
   const url = GAS_URL + '?' + q;
   let d = null;
-  try {
-    const r = await fetch(url);
-    if(r.ok) d = await r.json();
-  } catch(e){ d = null; }
+  try { const r = await fetch(url); if(r.ok) d = await r.json(); } catch(e){ d = null; }
   if(d === null) d = await jsonp(url);
   if(d && d.error) throw new Error(d.error);
   return d;
 }
 
-let lelangList = [], bidList = [];
+/* ---------- sesi ---------- */
+const KUNCI = 'lelang-unifam-sesi';
+function simpanSesi(user, pass){ try{ localStorage.setItem(KUNCI, JSON.stringify({user, pass})); }catch(e){} }
+function ambilSesi(){ try{ return JSON.parse(localStorage.getItem(KUNCI) || 'null'); }catch(e){ return null; } }
+function hapusSesi(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
 
-function setStatus(teks, error){
+let sesi = null, namaEkspedisi = '', tabAktif = 'terbuka';
+let daftarTerbuka = [], daftarRiwayat = [], pesanSalah = '';
+
+function setStatus(teks, kelas){
   const el = document.getElementById('status-bar');
-  el.textContent = teks;
-  el.className = error ? 'err' : '';
+  el.textContent = teks || '';
+  el.className = kelas || '';
 }
 function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
 function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
-
-/* ---- konversi tanggal untuk <input type="date"> ----
-   Sheet menyimpan dd/mm/yyyy, sedangkan input date memakai yyyy-mm-dd */
+function formatJam(ts){
+  const diff = ts - Date.now();
+  if(diff <= 0) return "lewat batas";
+  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
+  return h>0 ? `sisa ${h}j ${m}m` : `sisa ${m}m`;
+}
 function keISO(t){
   if(!t) return '';
   const s = String(t).trim();
@@ -139,106 +181,227 @@ function keLokal(iso){
   const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso).trim();
 }
-function formatJam(ts){
-  const diff = ts - Date.now();
-  if(diff <= 0) return "lewat batas";
-  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
-  return h>0 ? `sisa ${h}j ${m}m` : `sisa ${m}m`;
+function amanHTML(t){
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function bidSaya(idLelang){
-  return bidList.find(b => b.idLelang === idLelang && b.ekspedisi.toUpperCase() === namaEkspedisi);
+
+/* ---------- masuk & keluar ---------- */
+async function masuk(){
+  const user = document.getElementById('in-user').value.trim();
+  const pass = document.getElementById('in-pass').value.trim();
+  const btn = document.getElementById('btn-masuk');
+  if(!user || !pass){ pesanSalah = 'User dan password harus diisi.'; render(); return; }
+  try{
+    btn.disabled = true;
+    setStatus('Memeriksa…');
+    const r = await gas({action:'login', user, pass});
+    sesi = {user, pass};
+    namaEkspedisi = r.ekspedisi;
+    pesanSalah = '';
+    simpanSesi(user, pass);
+    await muat();
+  }catch(err){
+    pesanSalah = err.message;
+    setStatus('');
+    render();
+  }
+}
+function keluar(){
+  hapusSesi();
+  sesi = null; namaEkspedisi = ''; daftarTerbuka = []; daftarRiwayat = [];
+  setStatus('');
+  render();
 }
 
 async function muat(){
+  if(!sesi) { render(); return; }
   try{
     setStatus('Memuat data…');
-    const d = await gas({action:'ambil_semua'});
-    lelangList = d.lelang || [];
-    bidList = d.bids || [];
+    const d = await gas({action:'data_ekspedisi', user:sesi.user, pass:sesi.pass});
+    namaEkspedisi = d.ekspedisi;
+    daftarTerbuka = d.terbuka || [];
+    daftarRiwayat = d.riwayat || [];
     setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
-    setStatus('Gagal memuat: ' + err.message, true);
+    if(String(err.message).toLowerCase().includes('salah')){
+      hapusSesi(); sesi = null;
+      pesanSalah = 'Sesi tidak berlaku lagi, silakan masuk kembali.';
+      setStatus('');
+    } else {
+      setStatus('Gagal memuat: ' + err.message, 'err');
+    }
+    render();
   }
 }
 
+function gantiTab(t){ tabAktif = t; render(); }
+
+/* ---------- ajukan penawaran ---------- */
 async function ajukanBid(id){
-  const harga = parseInt(document.getElementById(`harga-${id}`).value, 10);
   const inpHarga = document.getElementById(`harga-${id}`);
+  const harga = parseInt(inpHarga.value, 10);
   if(!harga || harga <= 0){ inpHarga.style.borderColor = 'var(--red)'; return; }
   inpHarga.style.borderColor = '';
 
-  const etd = keLokal(document.getElementById(`etd-${id}`).value);
-  const eta = keLokal(document.getElementById(`eta-${id}`).value);
-  const namaKapal = document.getElementById(`kapal-${id}`).value.trim();
   const btn = document.getElementById(`btn-${id}`);
-
   try{
     btn.disabled = true;
     setStatus('Mengirim penawaran…');
-    await gas({action:'bid_submit', idLelang:id, ekspedisi:namaEkspedisi, harga, etd, eta, namaKapal});
+    await gas({action:'bid_submit', user:sesi.user, pass:sesi.pass, idLelang:id, harga,
+               etd: keLokal(document.getElementById(`etd-${id}`).value),
+               eta: keLokal(document.getElementById(`eta-${id}`).value),
+               namaKapal: document.getElementById(`kapal-${id}`).value.trim()});
     await muat();
   }catch(err){
-    setStatus('Gagal kirim penawaran: ' + err.message, true);
+    setStatus('Gagal kirim penawaran: ' + err.message, 'err');
     btn.disabled = false;
   }
 }
 
+/* ---------- simpan realisasi ---------- */
+let jedaSimpan = {};
+function ubahRealisasi(id){
+  clearTimeout(jedaSimpan[id]);
+  jedaSimpan[id] = setTimeout(() => simpanRealisasi(id), 700);
+}
+async function simpanRealisasi(id){
+  try{
+    setStatus('Menyimpan…');
+    await gas({action:'realisasi_submit', user:sesi.user, pass:sesi.pass, idLelang:id,
+               atd: keLokal(document.getElementById(`atd-${id}`).value),
+               ata: keLokal(document.getElementById(`ata-${id}`).value),
+               dooring: keLokal(document.getElementById(`dooring-${id}`).value),
+               keterangan: document.getElementById(`ket-${id}`).value.trim()});
+    setStatus(`Tersimpan · ${new Date().toLocaleTimeString('id-ID')}`, 'ok');
+  }catch(err){
+    setStatus('Gagal menyimpan: ' + err.message, 'err');
+  }
+}
+
+/* ---------- tampilan ---------- */
 function render(){
-  document.getElementById('header').innerHTML = `
-    <div class="eyebrow">PT. UNIFAM · Lelang Kiriman</div>
-    <h1>Panel Ekspedisi</h1>
-    <p class="sub">Daftar lelang pengiriman yang masih terbuka. Isi harga penawaran Anda — tidak terlihat oleh ekspedisi lain.</p>
-    <div class="eks-badge">🚚 ${namaEkspedisi}</div>`;
+  const isi = document.getElementById('isi');
+  const kaki = document.getElementById('kaki');
 
-  const grid = document.getElementById('grid');
-  const terbuka = lelangList.filter(l => l.status !== 'selesai');
-  document.getElementById('jumlah-lelang').textContent = `${terbuka.length} aktif`;
-
-  if(terbuka.length === 0){
-    grid.innerHTML = `<div class="empty-state">Belum ada lelang terbuka saat ini. Cek lagi nanti ya.</div>`;
+  if(!sesi){
+    document.getElementById('header').innerHTML = `
+      <div class="eyebrow">PT. UNIFAM · Lelang Kiriman</div>
+      <h1>Masuk</h1>
+      <p class="sub">Gunakan user dan password yang dikirim admin UNIFAM lewat WhatsApp.</p>`;
+    isi.innerHTML = `
+      <div class="kotak-masuk">
+        <h2>Lelang Kiriman UNIFAM</h2>
+        <p>Masuk untuk melihat lelang terbuka dan riwayat pengiriman Anda.</p>
+        ${pesanSalah ? `<div class="pesan-salah">${amanHTML(pesanSalah)}</div>` : ''}
+        <div class="kolom">
+          <label>Ekspedisi / User</label>
+          <input id="in-user" type="text" value="${amanHTML(ekspedisiDariLink)}" placeholder="NAMA EKSPEDISI">
+        </div>
+        <div class="kolom">
+          <label>Password</label>
+          <input id="in-pass" type="password" placeholder="••••••••"
+                 onkeydown="if(event.key==='Enter')masuk()">
+        </div>
+        <button class="btn-utama" id="btn-masuk" onclick="masuk()">Masuk</button>
+      </div>`;
+    kaki.textContent = 'Belum punya password? Hubungi admin UNIFAM.';
     return;
   }
 
-  grid.innerHTML = terbuka.map(l=>{
-    const mine = bidSaya(l.id);
+  document.getElementById('header').innerHTML = `
+    <div class="eyebrow">PT. UNIFAM · Lelang Kiriman</div>
+    <h1>Panel Ekspedisi</h1>
+    <p class="sub">Isi penawaran untuk lelang yang terbuka, dan lengkapi realisasi pengiriman di riwayat.</p>
+    <div class="baris-badge">
+      <span class="eks-badge">🚚 ${amanHTML(namaEkspedisi)}</span>
+      <button class="btn-keluar" onclick="keluar()">Keluar</button>
+    </div>`;
+
+  const tabHTML = `
+    <div class="tab-baris">
+      <button class="${tabAktif==='terbuka'?'aktif':''}" onclick="gantiTab('terbuka')">Lelang terbuka (${daftarTerbuka.length})</button>
+      <button class="${tabAktif==='riwayat'?'aktif':''}" onclick="gantiTab('riwayat')">Riwayat dipakai (${daftarRiwayat.length})</button>
+    </div>`;
+
+  isi.innerHTML = tabHTML + (tabAktif === 'terbuka' ? kartuTerbuka() : tabelRiwayat());
+  kaki.textContent = tabAktif === 'terbuka'
+    ? 'Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.'
+    : 'Kolom ATD, ATA, Dooring, dan Keterangan diisi oleh Anda. Tersimpan otomatis beberapa saat setelah diisi.';
+}
+
+function kartuTerbuka(){
+  if(daftarTerbuka.length === 0){
+    return `<div class="empty-state">Belum ada lelang terbuka saat ini. Cek lagi nanti ya.</div>`;
+  }
+  return '<div class="grid">' + daftarTerbuka.map(l => {
+    const b = l.bidSaya;
     const lewat = l.batasWaktu - Date.now() <= 0;
     return `<div class="card">
       <div class="card-head">
-        <div class="route">Gudang UNIFAM<span class="arrow">→</span>${l.kota}</div>
-        <div class="meta">${l.customer}<br>${l.tipeMobil} · ${l.tanggal}</div>
-        ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${l.alamat}</div>` : ''}
+        <div class="route">Gudang UNIFAM<span class="arrow">→</span>${amanHTML(l.kota)}</div>
+        <div class="meta">${amanHTML(l.customer)}<br>${amanHTML(l.tipeMobil)} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${amanHTML(l.tanggal)}</div>
+        ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${amanHTML(l.alamat)}</div>` : ''}
         <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
       </div>
       <div class="card-body">
         ${l.rateExisting ? `<div class="rate-patokan">Rate patokan UNIFAM<b>${formatRupiah(l.rateExisting)}</b></div>` : ''}
-        ${mine ? `<div class="submitted-note">✓ Penawaran Anda: ${formatRupiah(mine.harga)}<br>ETD ${mine.etd||'-'} · ETA ${mine.eta||'-'} · Kapal ${mine.namaKapal||'-'}</div>` : ''}
+        ${b ? `<div class="submitted-note">✓ Penawaran Anda: ${formatRupiah(b.harga)}<br>ETD ${amanHTML(b.etd)||'-'} · ETA ${amanHTML(b.eta)||'-'} · Kapal ${amanHTML(b.namaKapal)||'-'}</div>` : ''}
         <div class="form-grid">
           <div class="full">
             <label>Harga Penawaran (Rp)</label>
-            <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0" value="${mine ? mine.harga : ''}">
+            <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0" value="${b ? b.harga : ''}">
           </div>
-          <div>
-            <label>ETD</label>
-            <input id="etd-${l.id}" type="date" value="${keISO(mine ? mine.etd : '')}">
-          </div>
-          <div>
-            <label>ETA</label>
-            <input id="eta-${l.id}" type="date" value="${keISO(mine ? mine.eta : '')}">
-          </div>
+          <div><label>ETD</label><input id="etd-${l.id}" type="date" value="${keISO(b ? b.etd : '')}"></div>
+          <div><label>ETA</label><input id="eta-${l.id}" type="date" value="${keISO(b ? b.eta : '')}"></div>
           <div class="full">
             <label>Nama Kapal</label>
-            <input id="kapal-${l.id}" type="text" placeholder="mis. KM Meratus" value="${mine ? mine.namaKapal : ''}">
+            <input id="kapal-${l.id}" type="text" placeholder="mis. KM Meratus" value="${amanHTML(b ? b.namaKapal : '')}">
           </div>
         </div>
-        <button class="btn-ajukan" id="btn-${l.id}" onclick="ajukanBid('${l.id}')">${mine ? 'Update Penawaran' : 'Ajukan Penawaran'}</button>
+        <button class="btn-ajukan" id="btn-${l.id}" onclick="ajukanBid('${l.id}')">${b ? 'Update Penawaran' : 'Ajukan Penawaran'}</button>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 }
 
-muat();
-setInterval(muat, 60000);
+function tabelRiwayat(){
+  if(daftarRiwayat.length === 0){
+    return `<div class="empty-state">Belum ada pengiriman yang dimenangkan.</div>`;
+  }
+  const baris = daftarRiwayat.map(r => `<tr>
+    <td class="mono">${amanHTML(r.tanggalMuat)||'—'}</td>
+    <td class="tebal">${amanHTML(r.customer)}</td>
+    <td class="mono">${amanHTML(r.kota)}</td>
+    <td class="kanan">${r.rate ? formatRupiah(r.rate) : '—'}</td>
+    <td>${amanHTML(r.namaKapal)||'—'}</td>
+    <td class="mono">${amanHTML(r.etd)||'—'}</td>
+    <td class="mono">${amanHTML(r.eta)||'—'}</td>
+    <td><input id="atd-${r.id}" type="date" value="${keISO(r.atd)}" onchange="ubahRealisasi('${r.id}')"></td>
+    <td><input id="ata-${r.id}" type="date" value="${keISO(r.ata)}" onchange="ubahRealisasi('${r.id}')"></td>
+    <td><input id="dooring-${r.id}" type="date" value="${keISO(r.dooring)}" onchange="ubahRealisasi('${r.id}')"></td>
+    <td><input id="ket-${r.id}" class="ket" type="text" placeholder="catatan…" value="${amanHTML(r.keterangan)}" oninput="ubahRealisasi('${r.id}')"></td>
+  </tr>`).join('');
+
+  const belum = daftarRiwayat.filter(r => !r.ata || !r.dooring).length;
+  return `<div class="kotak-tabel"><div class="gulir">
+    <table>
+      <thead><tr>
+        <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th><th>Kapal</th>
+        <th>ETD</th><th>ETA</th>
+        <th class="isi">ATD</th><th class="isi">ATA</th><th class="isi">Dooring</th><th class="isi">Keterangan</th>
+      </tr></thead>
+      <tbody>${baris}</tbody>
+    </table>
+  </div></div>
+  <div class="ket-bawah">${daftarRiwayat.length} pengiriman · ${belum} belum lengkap ATA / Dooring</div>`;
+}
+
+/* ---------- mulai ---------- */
+sesi = ambilSesi();
+if(sesi){ muat(); } else { render(); }
+setInterval(() => { if(sesi && tabAktif === 'terbuka') muat(); }, 90000);
 </script>
 </body>
 </html>
