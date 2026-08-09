@@ -161,6 +161,11 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 .btn-kunci{background:transparent;border:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.9);
   font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;cursor:pointer;margin-top:12px;}
 .btn-kunci:hover{background:rgba(255,255,255,.16);}
+
+.peringatan-versi{max-width:940px;margin:0 auto 14px;padding:12px 16px;background:#FDECEA;
+  border:1.5px solid var(--red);border-radius:10px;color:#B33B34;font-size:13px;line-height:1.6;}
+.peringatan-versi b{display:block;font-size:13.5px;margin-bottom:3px;}
+.peringatan-versi code{font-family:var(--mono);background:rgba(225,85,77,.12);padding:1px 5px;border-radius:4px;}
 </style>
 </head>
 <body>
@@ -252,6 +257,27 @@ function waUntuk(e){
   return `https://wa.me/${e.wa}?text=${encodeURIComponent(teks)}`;
 }
 
+/* Panel hanya benar-benar terkunci kalau Code.gs versi baru sudah ter-deploy.
+   Kalau backend masih versi lama, password tidak diperiksa di server —
+   keadaan itu ditampilkan terang-terangan supaya tidak lolos tanpa disadari. */
+function cekVersiBackend(versi){
+  const lama = document.getElementById('peringatan-versi');
+  if(lama) lama.remove();
+
+  const angka = parseInt(String(versi || '').replace(/^v/, ''), 10);
+  if(angka >= 11) return;
+
+  const d = document.createElement('div');
+  d.id = 'peringatan-versi';
+  d.className = 'peringatan-versi';
+  d.innerHTML = `<b>Panel ini belum terlindungi password</b>
+    Apps Script masih versi <code>${versi || 'lama'}</code>, sedangkan pengunci password
+    baru ada sejak <code>v11</code>. Paste ulang <code>Code.gs</code> lalu
+    <code>Manage deployments &rarr; ikon pensil &rarr; Version: New version &rarr; Deploy</code>.`;
+  const bar = document.getElementById('status-bar');
+  bar.parentNode.insertBefore(d, bar.nextSibling);
+}
+
 /* ---------- gerbang masuk admin ---------- */
 function bukaGerbang(pesan){
   if(document.getElementById('gerbang')) {
@@ -314,6 +340,7 @@ async function muat(){
     setStatus('Memuat data…');
     const d = await gas({action:'ambil_semua'});
     daftar = d.ekspedisi || [];
+    cekVersiBackend(d.versi);
     setStatus(`${daftar.length} ekspedisi terdaftar · ${d.versi || ''} · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
