@@ -367,11 +367,14 @@ function render(){
     isi.innerHTML = `
       <div class="kotak-masuk">
         <h2>Lelang Kiriman UNIFAM</h2>
-        <p>Masuk untuk melihat lelang terbuka dan riwayat pengiriman Anda.</p>
+        <p>${ekspedisiDariLink
+              ? 'Masuk sebagai <b>' + amanHTML(ekspedisiDariLink) + '</b> untuk melihat lelang terbuka dan riwayat pengiriman.'
+              : 'Masuk untuk melihat lelang terbuka dan riwayat pengiriman Anda.'}</p>
         ${pesanSalah ? `<div class="pesan-salah">${amanHTML(pesanSalah)}</div>` : ''}
         <div class="kolom">
           <label>Ekspedisi / User</label>
-          <input id="in-user" type="text" value="${amanHTML(ekspedisiDariLink)}" placeholder="NAMA EKSPEDISI">
+          <input id="in-user" type="text" value="${amanHTML(ekspedisiDariLink)}"
+                 placeholder="NAMA EKSPEDISI" ${ekspedisiDariLink ? 'readonly style="background:#F4F9FE;color:var(--muted);"' : ''}>
         </div>
         <div class="kolom">
           <label>Password</label>
@@ -477,6 +480,15 @@ function tabelRiwayat(){
 
 /* ---------- mulai ---------- */
 sesi = ambilSesi();
+
+/* Kalau link menyebut ekspedisi lain daripada yang sedang masuk,
+   sesi lama dibuang — supaya tiap link membuka ekspedisinya sendiri. */
+if(sesi && ekspedisiDariLink &&
+   String(sesi.user).trim().toUpperCase() !== ekspedisiDariLink){
+  hapusSesi();
+  sesi = null;
+}
+
 if(sesi){ muat(); } else { render(); }
 setInterval(() => { if(sesi && tabAktif === 'terbuka') muat(); }, 90000);
 </script>
