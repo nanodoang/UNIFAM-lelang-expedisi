@@ -437,6 +437,10 @@ function formatJam(ts){
   if(jam > 0)  return `sisa ${jam}j ${menit%60}m`;
   return `sisa ${menit}m`;
 }
+function hitungTargetLokal(rank1){
+  const r = Number(rank1) || 0;
+  return r ? Math.ceil(r * 0.97 / 1000) * 1000 : 0;
+}
 function bidsUntuk(idLelang){
   return bidList.filter(b => b.idLelang === idLelang).sort((a,b) => a.harga - b.harga);
 }
@@ -809,19 +813,20 @@ function render(){
             : !adaKota
               ? `tidak ada baris Rate untuk kota "${l.kota}"`
               : `ada baris untuk "${l.kota}" tapi Tipe Mobil tidak cocok dengan "${l.tipeMobil}"`;
-          ratePanel = `<div class="rate-panel rate-kosong">Budget UNIFAM belum ketemu — ${alasan}</div>`;
+          ratePanel = `<div class="rate-panel rate-kosong">Target Rate UNIFAM belum ketemu — ${alasan}</div>`;
         }
         if(l.rateExisting){
+          const target = l.target || l.rateExisting;
           let selisih = '';
           if(bids.length){
-            const beda = l.rateExisting - bids[0].harga;
+            const beda = target - bids[0].harga;
             selisih = beda > 0
               ? `<span class="hemat">hemat ${formatRupiah(beda)}</span>`
               : beda < 0
                 ? `<span class="lebih">lebih mahal ${formatRupiah(-beda)}</span>`
-                : `<span>sama dengan patokan</span>`;
+                : `<span>pas di target</span>`;
           }
-          ratePanel = `<div class="rate-panel">Budget UNIFAM: <b>${formatRupiah(l.rateExisting)}</b> ${selisih}</div>`;
+          ratePanel = `<div class="rate-panel">Target Rate UNIFAM: <b>${formatRupiah(target)}</b> ${selisih}<br><span style="font-size:10.5px;">${l.target && l.target < hitungTargetLokal(l.rateExisting) ? 'turun dari penawaran lelang sebelumnya · ' : ''}rank 1 ${formatRupiah(l.rateExisting)} dipotong 3% lalu dibulatkan ke atas</span></div>`;
         }
 
         return `<div class="card">
