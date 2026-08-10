@@ -203,11 +203,30 @@ function setStatus(teks, kelas){
 function formatRupiah(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 function formatKarton(n){ return Number(n).toLocaleString("id-ID"); }
 function formatCbm(n){ return Number(n).toLocaleString("id-ID",{minimumFractionDigits:1}); }
+const HARI_SINGKAT = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+/* Tanggal & jam tutup, mis. "Sen 17/08 12.00" */
+function tanggalTutup(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  if(isNaN(d.getTime())) return '';
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const jj = String(d.getHours()).padStart(2,'0');
+  const mn = String(d.getMinutes()).padStart(2,'0');
+  return `${HARI_SINGKAT[d.getDay()]} ${dd}/${mm} ${jj}.${mn}`;
+}
+
+/* Sisa waktu. Lebih dari sehari ditulis dalam hari, bukan puluhan jam. */
 function formatJam(ts){
   const diff = ts - Date.now();
   if(diff <= 0) return "lewat batas";
-  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
-  return h>0 ? `sisa ${h}j ${m}m` : `sisa ${m}m`;
+  const menit = Math.floor(diff/60000);
+  const jam = Math.floor(menit/60);
+  const hari = Math.floor(jam/24);
+  if(hari > 0) return `sisa ${hari} hari ${jam%24} jam`;
+  if(jam > 0)  return `sisa ${jam}j ${menit%60}m`;
+  return `sisa ${menit}m`;
 }
 function keISO(t){
   if(!t) return '';
@@ -550,7 +569,7 @@ function kartuTerbuka(){
           <div class="route">Cikande<span class="arrow">→</span>${amanHTML(l.kota)}</div>
           <div class="meta">${amanHTML(l.customer)}<br>${amanHTML(l.tipeMobil)} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${amanHTML(l.tanggal)}</div>
           ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${amanHTML(l.alamat)}</div>` : ''}
-          <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
+          <div class="deadline-tag ${lewat?'lewat':''}">${lewat ? 'lewat batas' : `tutup ${tanggalTutup(l.batasWaktu)} · ${formatJam(l.batasWaktu)}`}</div>
         </div>
       </div>
       <div class="card-body">
