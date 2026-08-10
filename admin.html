@@ -702,7 +702,7 @@ function render(){
             : !adaKota
               ? `tidak ada baris Rate untuk kota "${l.kota}"`
               : `ada baris untuk "${l.kota}" tapi Tipe Mobil tidak cocok dengan "${l.tipeMobil}"`;
-          ratePanel = `<div class="rate-panel rate-kosong">Rate patokan belum ketemu — ${alasan}</div>`;
+          ratePanel = `<div class="rate-panel rate-kosong">Budget UNIFAM belum ketemu — ${alasan}</div>`;
         }
         if(l.rateExisting){
           let selisih = '';
@@ -714,7 +714,7 @@ function render(){
                 ? `<span class="lebih">lebih mahal ${formatRupiah(-beda)}</span>`
                 : `<span>sama dengan patokan</span>`;
           }
-          ratePanel = `<div class="rate-panel">Rate patokan: <b>${formatRupiah(l.rateExisting)}</b> ${selisih}</div>`;
+          ratePanel = `<div class="rate-panel">Budget UNIFAM: <b>${formatRupiah(l.rateExisting)}</b> ${selisih}</div>`;
         }
 
         return `<div class="card">

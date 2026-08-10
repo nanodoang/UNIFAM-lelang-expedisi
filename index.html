@@ -142,6 +142,11 @@ footer{max-width:1000px;margin:30px auto 0;padding:16px 22px;color:#8FA7C2;font-
 .lapor.baik{background:rgba(15,168,148,.1);border:1px solid rgba(15,168,148,.4);color:#0A7D6E;}
 .lapor.buruk{background:#FDECEA;border:1px solid var(--red);color:#B33B34;}
 body.ada-bilah{padding-bottom:100px;}
+
+.catatan-harga{margin-top:7px;background:#FFF8EC;border:1px solid rgba(242,169,59,.45);
+  border-radius:7px;padding:8px 10px;font-size:11.5px;color:#7A4E08;line-height:1.6;}
+.catatan-harga b{color:#5E3C06;}
+.catatan-harga .ppn{color:#B33B34;font-weight:700;}
 </style>
 </head>
 <body>
@@ -549,13 +554,17 @@ function kartuTerbuka(){
         </div>
       </div>
       <div class="card-body">
-        ${l.rateExisting ? `<div class="rate-patokan">Rate patokan UNIFAM<b>${formatRupiah(l.rateExisting)}</b></div>` : ''}
+        ${l.rateExisting ? `<div class="rate-patokan">Budget UNIFAM<b>${formatRupiah(l.rateExisting)}</b></div>` : ''}
         ${b ? `<div class="submitted-note">✓ Penawaran Anda: ${formatRupiah(b.harga)}<br>ETD ${amanHTML(b.etd)||'-'} · ETA ${amanHTML(b.eta)||'-'} · Kapal ${amanHTML(b.namaKapal)||'-'}</div>` : ''}
         <div class="form-grid">
           <div class="full">
             <label>Harga Penawaran (Rp)</label>
             <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0"
                    value="${b ? b.harga : ''}" oninput="isiHarga('${l.id}')">
+            <div class="catatan-harga">
+              <b>All in</b> — termasuk TKBM, stripping, krani, dll.
+              <span class="ppn">Belum termasuk PPN.</span>
+            </div>
           </div>
           <div><label>ETD</label><input id="etd-${l.id}" type="date" value="${keISO(b ? b.etd : '')}"></div>
           <div><label>ETA</label><input id="eta-${l.id}" type="date" value="${keISO(b ? b.eta : '')}"></div>
