@@ -151,6 +151,28 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
   border:1.5px solid var(--red);border-radius:10px;color:#B33B34;font-size:13px;line-height:1.6;}
 .peringatan-versi b{display:block;font-size:13.5px;margin-bottom:3px;}
 .peringatan-versi code{font-family:var(--mono);background:rgba(225,85,77,.12);padding:1px 5px;border-radius:4px;}
+
+.tirai{position:fixed;inset:0;background:rgba(20,41,61,.55);display:flex;align-items:center;
+  justify-content:center;padding:20px;z-index:150;}
+.jendela{background:var(--panel);border-radius:16px;padding:24px;max-width:400px;width:100%;
+  box-shadow:0 12px 40px rgba(20,41,61,.3);}
+.jendela .tanda-menang{display:inline-block;background:rgba(242,169,59,.15);color:#B67A16;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:4px 11px;border-radius:20px;margin-bottom:11px;}
+.jendela h2{font-size:17px;margin:0 0 4px;}
+.jendela .rinci{background:#FBFDFF;border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;margin:14px 0 16px;font-size:13px;line-height:1.75;}
+.jendela .rinci .label{font-family:var(--mono);font-size:9.5px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;}
+.jendela .rinci b{font-family:var(--mono);}
+.btn-wa-besar{display:block;text-align:center;background:#1F9E52;color:#fff;text-decoration:none;
+  border-radius:9px;font-weight:700;font-size:14px;padding:13px;font-family:var(--sans);}
+.btn-wa-besar:hover{background:#188443;}
+.btn-nanti{width:100%;background:transparent;border:1.5px solid var(--line);color:var(--muted);
+  border-radius:9px;font-weight:600;font-size:13px;padding:11px;cursor:pointer;
+  font-family:var(--sans);margin-top:9px;}
+.btn-nanti:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+.peringatan-kecil{background:#FDECEA;border:1px solid rgba(225,85,77,.4);color:#B33B34;
+  border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.5;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -588,7 +610,41 @@ async function pilihPemenang(idLelang, ekspedisi){
     } else if(r && r.noOrder){
       setStatus(`No Order ${r.noOrder} dibuat & terkirim ke planning draft Pesanan Armada.`);
     }
+    bukaJendelaMenang(idLelang, ekspedisi, r ? r.noOrder : '');
   }catch(err){ setStatus('Gagal simpan pemenang: ' + err.message, true); }
+}
+
+function bukaJendelaMenang(idLelang, namaEks, noOrder){
+  const l = lelangList.find(x => x.id === idLelang);
+  const win = bidsUntuk(idLelang).find(b => b.ekspedisi === namaEks);
+  const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === String(namaEks).toUpperCase());
+
+  const w = document.createElement('div');
+  w.className = 'tirai';
+  w.id = 'tirai-menang';
+  w.innerHTML = `
+    <div class="jendela">
+      <span class="tanda-menang">PEMENANG DIPILIH</span>
+      <h2>${namaEks}</h2>
+      <div class="rinci">
+        ${noOrder ? `<div><span class="label">No Order</span><br><b>${noOrder}</b></div>` : ''}
+        <div style="margin-top:7px;"><span class="label">Tujuan</span><br>Cikande &rarr; ${l ? l.kota : '-'}</div>
+        ${win ? `<div style="margin-top:7px;"><span class="label">Harga</span><br><b>${formatRupiah(win.harga)}</b></div>` : ''}
+        <div style="margin-top:7px;"><span class="label">Tanggal Muat</span><br><b>${l ? (l.tanggalMuat || l.tanggal || '-') : '-'}</b></div>
+      </div>
+      ${eks && eks.wa
+        ? `<a class="btn-wa-besar" href="${waKonfirmasi(l, win, eks)}" target="_blank"
+              onclick="tutupJendelaMenang()">Kirim Form Konfirmasi via WA</a>`
+        : `<div class="peringatan-kecil">Nomor WA ${namaEks} belum terdaftar. Lengkapi dulu di halaman Daftar Ekspedisi.</div>`}
+      <button class="btn-nanti" onclick="tutupJendelaMenang()">Nanti saja</button>
+    </div>`;
+  w.onclick = (ev) => { if(ev.target === w) tutupJendelaMenang(); };
+  document.body.appendChild(w);
+}
+
+function tutupJendelaMenang(){
+  const w = document.getElementById('tirai-menang');
+  if(w) w.remove();
 }
 
 function linkKonfirmasi(idLelang, ekspedisi){

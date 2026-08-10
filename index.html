@@ -121,6 +121,27 @@ footer{max-width:1000px;margin:30px auto 0;padding:16px 22px;color:#8FA7C2;font-
 .btn-batal{flex:0 0 auto;background:#fff;border:1.5px solid var(--line);color:var(--muted);
   border-radius:8px;font-weight:600;font-size:13px;padding:11px 18px;cursor:pointer;font-family:var(--sans);}
 .btn-batal:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+
+.card.terpilih{border-color:var(--sky-deep);box-shadow:0 2px 14px rgba(30,136,229,.2);}
+.card-head.dengan-cek{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;}
+.cek{width:21px;height:21px;accent-color:var(--sky-deep);cursor:pointer;margin-top:2px;flex-shrink:0;}
+.bilah{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+  box-shadow:0 -4px 20px rgba(20,41,61,.12);padding:13px 22px;z-index:60;}
+.bilah-isi{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:13px;}
+.bilah-teks{flex:1;font-size:13px;line-height:1.45;}
+.bilah-teks b{display:block;font-size:14.5px;}
+.bilah-teks small{color:var(--muted);font-family:var(--mono);font-size:11px;}
+.btn-kirim{background:var(--sky-deep);color:#fff;border:none;border-radius:9px;font-weight:700;
+  font-size:14px;padding:13px 22px;cursor:pointer;font-family:var(--sans);white-space:nowrap;}
+.btn-kirim:hover{background:#1670BF;}
+.btn-kirim:disabled{background:#C9DCF0;cursor:default;}
+.pilih-semua{background:transparent;border:1.5px solid var(--line);color:var(--muted);border-radius:8px;
+  font-family:var(--sans);font-size:12px;font-weight:600;padding:8px 13px;cursor:pointer;margin-bottom:12px;}
+.pilih-semua:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+.lapor{border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.65;}
+.lapor.baik{background:rgba(15,168,148,.1);border:1px solid rgba(15,168,148,.4);color:#0A7D6E;}
+.lapor.buruk{background:#FDECEA;border:1px solid var(--red);color:#B33B34;}
+body.ada-bilah{padding-bottom:100px;}
 </style>
 </head>
 <body>
@@ -167,7 +188,7 @@ function ambilSesi(){ try{ return JSON.parse(localStorage.getItem(KUNCI) || 'nul
 function hapusSesi(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
 
 let sesi = null, namaEkspedisi = '', tabAktif = 'terbuka';
-let daftarTerbuka = [], daftarRiwayat = [], pesanSalah = '';
+let daftarTerbuka = [], daftarRiwayat = [], pesanSalah = '', belumKonfirmasi = 0;
 
 function setStatus(teks, kelas){
   const el = document.getElementById('status-bar');
@@ -238,6 +259,9 @@ async function muat(){
     namaEkspedisi = d.ekspedisi;
     daftarTerbuka = d.terbuka || [];
     daftarRiwayat = d.riwayat || [];
+    belumKonfirmasi = d.belumKonfirmasi || 0;
+    { const ada = new Set(daftarTerbuka.map(l => l.id));
+      Array.from(terpilih).forEach(id => { if(!ada.has(id)) terpilih.delete(id); }); }
     setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
@@ -310,26 +334,95 @@ async function kirimGantiPass(){
   }
 }
 
-/* ---------- ajukan penawaran ---------- */
-async function ajukanBid(id){
-  const inpHarga = document.getElementById(`harga-${id}`);
-  const harga = parseInt(inpHarga.value, 10);
-  if(!harga || harga <= 0){ inpHarga.style.borderColor = 'var(--red)'; return; }
-  inpHarga.style.borderColor = '';
+/* ---------- ajukan penawaran (banyak sekaligus) ---------- */
+const terpilih = new Set();
+let laporan = null;
 
-  const btn = document.getElementById(`btn-${id}`);
-  try{
-    btn.disabled = true;
-    setStatus('Mengirim penawaran…');
-    await gas({action:'bid_submit', user:sesi.user, pass:sesi.pass, idLelang:id, harga,
-               etd: keLokal(document.getElementById(`etd-${id}`).value),
-               eta: keLokal(document.getElementById(`eta-${id}`).value),
-               namaKapal: document.getElementById(`kapal-${id}`).value.trim()});
-    await muat();
-  }catch(err){
-    setStatus('Gagal kirim penawaran: ' + err.message, 'err');
-    btn.disabled = false;
+function togglePilih(id, nyala){
+  if(nyala) terpilih.add(id); else terpilih.delete(id);
+  const c = document.getElementById('card-' + id);
+  if(c) c.classList.toggle('terpilih', nyala);
+  perbaruiBilah();
+}
+
+/* Mengisi harga otomatis mencentang; harga dikosongkan melepas centang */
+function isiHarga(id){
+  const v = parseInt(document.getElementById('harga-' + id).value, 10);
+  const nyala = !!v && v > 0;
+  const cek = document.getElementById('cek-' + id);
+  if(cek) cek.checked = nyala;
+  togglePilih(id, nyala);
+}
+
+function pilihSemua(){
+  daftarTerbuka.forEach(l => {
+    const inp = document.getElementById('harga-' + l.id);
+    if(!inp) return;
+    const v = parseInt(inp.value, 10);
+    if(v > 0){
+      const cek = document.getElementById('cek-' + l.id);
+      if(cek) cek.checked = true;
+      togglePilih(l.id, true);
+    }
+  });
+}
+
+function perbaruiBilah(){
+  const n = terpilih.size;
+  const btn = document.getElementById('btn-kirim');
+  const judul = document.getElementById('bilah-judul');
+  const ket = document.getElementById('bilah-ket');
+  if(!btn) return;
+
+  btn.disabled = n === 0;
+  btn.textContent = n > 1 ? `Ajukan ${n} Penawaran` : 'Ajukan Penawaran';
+
+  if(n === 0){
+    judul.textContent = 'Belum ada yang dipilih';
+    ket.textContent = 'isi harga dulu untuk mengaktifkan';
+  } else {
+    let total = 0;
+    terpilih.forEach(id => {
+      const inp = document.getElementById('harga-' + id);
+      total += (inp ? parseInt(inp.value, 10) : 0) || 0;
+    });
+    judul.textContent = `${n} lelang dipilih`;
+    ket.textContent = 'total ' + formatRupiah(total);
   }
+}
+
+async function kirimTerpilih(){
+  const daftar = Array.from(terpilih);
+  if(daftar.length === 0) return;
+
+  const btn = document.getElementById('btn-kirim');
+  btn.disabled = true;
+
+  const berhasil = [], gagal = [];
+  for(let i = 0; i < daftar.length; i++){
+    const id = daftar[i];
+    const l = daftarTerbuka.find(x => x.id === id);
+    const nama = l ? l.kota : id;
+    const harga = parseInt(document.getElementById('harga-' + id).value, 10);
+
+    if(!harga || harga <= 0){ gagal.push(`${nama} — harga belum diisi`); continue; }
+
+    setStatus(`Mengirim ${i+1} dari ${daftar.length}…`);
+    try{
+      await gas({action:'bid_submit', user:sesi.user, pass:sesi.pass, idLelang:id, harga,
+                 etd: keLokal(document.getElementById('etd-' + id).value),
+                 eta: keLokal(document.getElementById('eta-' + id).value),
+                 namaKapal: document.getElementById('kapal-' + id).value.trim()});
+      berhasil.push(nama);
+      terpilih.delete(id);
+    }catch(err){
+      gagal.push(`${nama} — ${err.message}`);
+    }
+  }
+
+  laporan = { berhasil, gagal };
+  setStatus('');
+  await muat();     // yang gagal tetap tercentang, tinggal coba lagi
 }
 
 /* ---------- simpan realisasi ---------- */
@@ -406,6 +499,27 @@ function render(){
     </div>`;
 
   isi.innerHTML = tabHTML + (tabAktif === 'terbuka' ? kartuTerbuka() : tabelRiwayat());
+
+  const bilahLama = document.getElementById('bilah');
+  if(bilahLama) bilahLama.remove();
+  document.body.classList.remove('ada-bilah');
+
+  if(tabAktif === 'terbuka' && daftarTerbuka.length > 0){
+    const bar = document.createElement('div');
+    bar.className = 'bilah';
+    bar.id = 'bilah';
+    bar.innerHTML = `
+      <div class="bilah-isi">
+        <div class="bilah-teks">
+          <b id="bilah-judul">Belum ada yang dipilih</b>
+          <small id="bilah-ket">isi harga dulu untuk mengaktifkan</small>
+        </div>
+        <button class="btn-kirim" id="btn-kirim" onclick="kirimTerpilih()" disabled>Ajukan</button>
+      </div>`;
+    document.body.appendChild(bar);
+    document.body.classList.add('ada-bilah');
+    perbaruiBilah();
+  }
   kaki.textContent = tabAktif === 'terbuka'
     ? 'Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.'
     : 'Kolom ATD, ATA, Dooring, dan Keterangan diisi oleh Anda. Tersimpan otomatis beberapa saat setelah diisi.';
@@ -415,15 +529,24 @@ function kartuTerbuka(){
   if(daftarTerbuka.length === 0){
     return `<div class="empty-state">Belum ada lelang terbuka saat ini. Cek lagi nanti ya.</div>`;
   }
-  return '<div class="grid">' + daftarTerbuka.map(l => {
+
+  const lap = laporan ? kotakLaporan() : '';
+  laporan = null;
+
+  const kartu = daftarTerbuka.map(l => {
     const b = l.bidSaya;
     const lewat = l.batasWaktu - Date.now() <= 0;
-    return `<div class="card">
-      <div class="card-head">
-        <div class="route">Cikande<span class="arrow">→</span>${amanHTML(l.kota)}</div>
-        <div class="meta">${amanHTML(l.customer)}<br>${amanHTML(l.tipeMobil)} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${amanHTML(l.tanggal)}</div>
-        ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${amanHTML(l.alamat)}</div>` : ''}
-        <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
+    const dipilih = terpilih.has(l.id);
+    return `<div class="card ${dipilih ? 'terpilih' : ''}" id="card-${l.id}">
+      <div class="card-head dengan-cek">
+        <input type="checkbox" class="cek" id="cek-${l.id}" ${dipilih ? 'checked' : ''}
+               onchange="togglePilih('${l.id}', this.checked)" title="pilih untuk diajukan">
+        <div>
+          <div class="route">Cikande<span class="arrow">→</span>${amanHTML(l.kota)}</div>
+          <div class="meta">${amanHTML(l.customer)}<br>${amanHTML(l.tipeMobil)} · ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · ${amanHTML(l.tanggal)}</div>
+          ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${amanHTML(l.alamat)}</div>` : ''}
+          <div class="deadline-tag ${lewat?'lewat':''}">${formatJam(l.batasWaktu)}</div>
+        </div>
       </div>
       <div class="card-body">
         ${l.rateExisting ? `<div class="rate-patokan">Rate patokan UNIFAM<b>${formatRupiah(l.rateExisting)}</b></div>` : ''}
@@ -431,7 +554,8 @@ function kartuTerbuka(){
         <div class="form-grid">
           <div class="full">
             <label>Harga Penawaran (Rp)</label>
-            <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0" value="${b ? b.harga : ''}">
+            <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0"
+                   value="${b ? b.harga : ''}" oninput="isiHarga('${l.id}')">
           </div>
           <div><label>ETD</label><input id="etd-${l.id}" type="date" value="${keISO(b ? b.etd : '')}"></div>
           <div><label>ETA</label><input id="eta-${l.id}" type="date" value="${keISO(b ? b.eta : '')}"></div>
@@ -440,21 +564,39 @@ function kartuTerbuka(){
             <input id="kapal-${l.id}" type="text" placeholder="mis. KM Meratus" value="${amanHTML(b ? b.namaKapal : '')}">
           </div>
         </div>
-        <button class="btn-ajukan" id="btn-${l.id}" onclick="ajukanBid('${l.id}')">${b ? 'Update Penawaran' : 'Ajukan Penawaran'}</button>
       </div>
     </div>`;
-  }).join('') + '</div>';
+  }).join('');
+
+  return lap +
+    `<button class="pilih-semua" onclick="pilihSemua()">Centang semua yang sudah ada harganya</button>` +
+    `<div class="grid">${kartu}</div>`;
+}
+
+function kotakLaporan(){
+  const { berhasil, gagal } = laporan;
+  let html = '';
+  if(berhasil.length){
+    html += `<div class="lapor baik"><b>${berhasil.length} penawaran terkirim</b><br>${berhasil.map(amanHTML).join(' · ')}</div>`;
+  }
+  if(gagal.length){
+    html += `<div class="lapor buruk"><b>${gagal.length} gagal terkirim — masih tercentang, tinggal coba lagi</b><br>• ${gagal.map(amanHTML).join('<br>• ')}</div>`;
+  }
+  return html;
 }
 
 function tabelRiwayat(){
   if(daftarRiwayat.length === 0){
-    return `<div class="empty-state">Belum ada pengiriman yang dimenangkan.</div>`;
+    return belumKonfirmasi > 0
+      ? `<div class="empty-state">Ada ${belumKonfirmasi} pengiriman yang Anda menangkan, tapi belum muncul di sini karena form konfirmasi armadanya belum diisi.<br><br>Silakan buka link konfirmasi yang dikirim admin lewat WhatsApp terlebih dahulu.</div>`
+      : `<div class="empty-state">Belum ada pengiriman yang dimenangkan.</div>`;
   }
   const baris = daftarRiwayat.map(r => `<tr>
     <td class="mono">${amanHTML(r.tanggalMuat)||'—'}</td>
     <td class="tebal">${amanHTML(r.customer)}</td>
     <td class="mono">${amanHTML(r.kota)}</td>
     <td class="kanan">${r.rate ? formatRupiah(r.rate) : '—'}</td>
+    <td class="mono">${amanHTML(r.noKontener)||'—'}</td>
     <td>${amanHTML(r.namaKapal)||'—'}</td>
     <td class="mono">${amanHTML(r.etd)||'—'}</td>
     <td class="mono">${amanHTML(r.eta)||'—'}</td>
@@ -465,17 +607,20 @@ function tabelRiwayat(){
   </tr>`).join('');
 
   const belum = daftarRiwayat.filter(r => !r.ata || !r.dooring).length;
+  const catatan = belumKonfirmasi > 0
+    ? ` · ${belumKonfirmasi} pengiriman menunggu form konfirmasi diisi`
+    : '';
   return `<div class="kotak-tabel"><div class="gulir">
     <table>
       <thead><tr>
-        <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th><th>Kapal</th>
-        <th>ETD</th><th>ETA</th>
+        <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th>
+        <th>No Kontener</th><th>Kapal</th><th>ETD</th><th>ETA</th>
         <th class="isi">ATD</th><th class="isi">ATA</th><th class="isi">Dooring</th><th class="isi">Keterangan</th>
       </tr></thead>
       <tbody>${baris}</tbody>
     </table>
   </div></div>
-  <div class="ket-bawah">${daftarRiwayat.length} pengiriman · ${belum} belum lengkap ATA / Dooring</div>`;
+  <div class="ket-bawah">${daftarRiwayat.length} pengiriman · ${belum} belum lengkap ATA / Dooring${catatan}</div>`;
 }
 
 /* ---------- mulai ---------- */
