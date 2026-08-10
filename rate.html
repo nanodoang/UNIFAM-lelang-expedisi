@@ -181,7 +181,7 @@ function barisTersaring(){
     const rate = jenisAktif === 'darat' ? (b.darat || {}) : (b.laut || {});
     if(Object.keys(rate).length === 0) return false;
     if(!q) return true;
-    return (b.distributor + ' ' + b.kota + ' ' + b.alamat + ' ' + (b.kode||'')).toLowerCase().includes(q);
+    return (b.distributor + ' ' + b.kota + ' ' + b.alamat).toLowerCase().includes(q);
   });
 }
 
@@ -202,7 +202,7 @@ function render(){
     const selRate = kolomTipe.map(t => `<td class="rate">${
       rate[t] ? formatRupiah(rate[t]) : '<span class="kosong-sel">—</span>'}</td>`).join('');
     return `<tr>
-      <td class="distributor">${b.distributor}${b.kode ? `<span class="kode-kecil">${b.kode}</span>` : ''}</td>
+      <td class="distributor">${b.distributor}</td>
       <td class="kota">${b.kota || '<span class="kosong-sel">—</span>'}</td>
       <td class="alamat">${b.alamat || '<span class="kosong-sel">belum ada alamat</span>'}</td>
       ${selRate}
