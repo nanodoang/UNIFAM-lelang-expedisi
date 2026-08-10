@@ -66,6 +66,17 @@ footer{max-width:1080px;margin:30px auto 0;padding:16px 24px;color:#8FA7C2;font-
 .logo-unifam{height:34px;width:auto;display:block;background:#fff;border-radius:8px;padding:4px 7px;}
 .baris-judul{display:flex;align-items:center;gap:13px;margin-bottom:6px;}
 .baris-judul h1{margin:0;}
+
+.tirai-salin{position:fixed;inset:0;background:rgba(20,41,61,.55);display:flex;align-items:center;
+  justify-content:center;padding:20px;z-index:120;}
+.kotak-salin{background:var(--panel);border-radius:14px;padding:20px;max-width:520px;width:100%;
+  box-shadow:0 12px 40px rgba(20,41,61,.3);}
+.kotak-salin b{font-size:15px;}
+.kotak-salin p{font-size:12.5px;color:var(--muted);margin:5px 0 11px;line-height:1.55;}
+.kotak-salin textarea{width:100%;height:190px;font-family:var(--mono);font-size:11px;
+  border:1.5px solid var(--line);border-radius:8px;padding:10px;resize:vertical;white-space:pre;}
+.kotak-salin button{margin-top:11px;width:100%;background:var(--sky-deep);color:#fff;border:none;
+  border-radius:8px;font-weight:700;font-size:13.5px;padding:11px;cursor:pointer;font-family:var(--sans);}
 </style>
 </head>
 <body>
@@ -213,17 +224,63 @@ function render(){
 function salinTabel(){
   const rows = barisTersaring();
   const kolomTipe = jenisAktif === 'darat' ? tipeDarat : tipeLaut;
-  const kepala = ['Distributor','Kota','Alamat'].concat(kolomTipe).concat(['Leadtime (hari)']).join('\t');
-  const teks = [kepala].concat(rows.map(b => {
+
+  /* Satu sel tidak boleh mengandung TAB atau ganti baris — kalau ada,
+     Excel menganggapnya kolom/baris baru dan seluruh tabel bergeser. */
+  function sel(v){
+    if(v === null || v === undefined) return '';
+    return String(v)
+      .replace(/[\t\r\n\v\f\u2028\u2029]+/g, ' ')   // tab & ganti baris -> spasi
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+  /* Angka dikirim apa adanya supaya di Excel terbaca sebagai angka, bukan teks */
+  function angka(v){
+    if(v === null || v === undefined || v === '') return '';
+    const n = Number(v);
+    return isFinite(n) && n !== 0 ? String(n) : '';
+  }
+
+  const kepala = ['Distributor','Kota','Alamat']
+    .concat(kolomTipe.map(sel))
+    .concat(['Leadtime (hari)'])
+    .join('\t');
+
+  const isi = rows.map(b => {
     const rate = jenisAktif === 'darat' ? (b.darat || {}) : (b.laut || {});
-    return [b.distributor, b.kota, b.alamat]
-      .concat(kolomTipe.map(t => rate[t] || ''))
-      .concat([b.leadtime === '' ? '' : b.leadtime]).join('\t');
-  })).join('\n');
+    return [sel(b.distributor), sel(b.kota), sel(b.alamat)]
+      .concat(kolomTipe.map(t => angka(rate[t])))
+      .concat([angka(b.leadtime)])
+      .join('\t');
+  });
+
+  const jumlahKolom = 3 + kolomTipe.length + 1;
+  const teks = [kepala].concat(isi).join('\r\n');
 
   navigator.clipboard.writeText(teks)
-    .then(() => setStatus(`${rows.length} baris disalin — tinggal paste ke Excel.`))
-    .catch(() => setStatus('Gagal menyalin. Coba pakai browser di laptop.', true));
+    .then(() => setStatus(`${rows.length} baris × ${jumlahKolom} kolom disalin — tinggal paste ke Excel.`))
+    .catch(() => {
+      /* sebagian browser HP menolak clipboard; sediakan cara manual */
+      tampilkanTeksSalin(teks);
+    });
+}
+
+/* Cadangan kalau penyalinan otomatis ditolak browser */
+function tampilkanTeksSalin(teks){
+  const w = document.createElement('div');
+  w.className = 'tirai-salin';
+  w.innerHTML = `
+    <div class="kotak-salin">
+      <b>Salin manual</b>
+      <p>Browser ini menolak penyalinan otomatis. Tekan lama di kotak bawah, pilih Select all lalu Copy.</p>
+      <textarea readonly onclick="this.select()"></textarea>
+      <button onclick="this.closest('.tirai-salin').remove()">Tutup</button>
+    </div>`;
+  w.onclick = (ev) => { if(ev.target === w) w.remove(); };
+  document.body.appendChild(w);
+  const ta = w.querySelector('textarea');
+  ta.value = teks;
+  ta.focus(); ta.select();
 }
 
 muat();
