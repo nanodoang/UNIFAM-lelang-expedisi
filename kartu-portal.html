@@ -1,0 +1,86 @@
+<!--
+  ==========================================================================
+  KARTU MENU LELANG — untuk index.html di repo Logistic-Transportation
+
+  Cara pakai:
+  1. Buka index.html di repo Logistic-Transportation
+  2. Cari blok kartu yang sudah ada (mis. kartu "Report DOT")
+  3. Salin blok itu 2 kali, tempel di bawahnya
+  4. Ganti isinya mengikuti dua kartu di bawah ini
+
+  Kalau ingin cepat, blok di bawah bisa langsung ditempel apa adanya —
+  hanya saja gayanya mungkin sedikit berbeda dari kartu yang sudah ada,
+  karena memakai gaya sendiri.
+  ==========================================================================
+-->
+
+<!-- ====== ISI YANG PERLU DIISI KE KARTU YANG SUDAH ADA ====== -->
+<!--
+  KARTU 1
+    badge     : Baru
+    emoji     : ⚖️
+    judul     : Lelang Kiriman
+    keterangan: Posting order ke beberapa ekspedisi, pilih penawaran terbaik
+    href      : https://nanodoang.github.io/UNIFAM-lelang-expedisi/admin.html
+
+  KARTU 2
+    badge     : Baru
+    emoji     : 📋
+    judul     : Template Rate
+    keterangan: Rate per kota & tipe mobil, darat dan laut
+    href      : https://nanodoang.github.io/UNIFAM-lelang-expedisi/rate.html
+-->
+
+
+<!-- ====== ATAU TEMPEL BLOK SIAP PAKAI INI ====== -->
+
+<style>
+.menu-lelang{margin:22px 0;}
+.menu-lelang .kartu-baris{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+.menu-lelang a{display:block;background:#fff;border:1px solid #D8E9FB;border-radius:12px;
+  padding:16px 18px;text-decoration:none;box-shadow:0 2px 8px rgba(30,136,229,.07);
+  font-family:'Space Grotesk',Arial,sans-serif;transition:border-color .15s,transform .15s;}
+.menu-lelang a:hover{border-color:#1E88E5;transform:translateY(-1px);}
+.menu-lelang a .atas{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.menu-lelang a .emoji{font-size:21px;}
+.menu-lelang a .cap{font-family:'JetBrains Mono','Courier New',monospace;font-size:9.5px;
+  letter-spacing:.06em;padding:3px 9px;border-radius:20px;background:#EAF4FD;color:#1E88E5;}
+.menu-lelang a .judul{font-weight:700;font-size:15px;color:#14293D;display:block;margin-bottom:3px;}
+.menu-lelang a .isi{font-size:12px;color:#5C7896;line-height:1.55;display:block;}
+</style>
+
+<div class="menu-lelang">
+  <div class="kartu-baris">
+
+    <a href="https://nanodoang.github.io/UNIFAM-lelang-expedisi/admin.html">
+      <div class="atas">
+        <span class="emoji">&#9878;&#65039;</span>
+        <span class="cap">BARU</span>
+      </div>
+      <span class="judul">Lelang Kiriman</span>
+      <span class="isi">Posting order ke beberapa ekspedisi, bandingkan penawaran, pilih pemenang</span>
+    </a>
+
+    <a href="https://nanodoang.github.io/UNIFAM-lelang-expedisi/rate.html">
+      <div class="atas">
+        <span class="emoji">&#128203;</span>
+        <span class="cap">BARU</span>
+      </div>
+      <span class="judul">Template Rate</span>
+      <span class="isi">Rate per kota &amp; tipe mobil, dipisah darat dan laut</span>
+    </a>
+
+  </div>
+</div>
+
+<!--
+  CATATAN — halaman ini SENGAJA tidak dipasang di portal:
+
+  • index.html?ekspedisi=NAMA  -> panel ekspedisi, dibuka lewat link khusus + password
+  • konfirmasi.html?id=…       -> dibuka dari link WhatsApp setelah menang
+  • ekspedisi.html             -> daftar akun mitra, dari dalam panel admin saja
+  • rekap.html                 -> rekap penghematan, dari dalam panel admin saja
+
+  Semua halaman admin sudah terkunci password, jadi aman walaupun
+  alamatnya diketahui orang lain.
+-->

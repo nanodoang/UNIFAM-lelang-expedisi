@@ -187,6 +187,26 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 .tutup-pukul.baik{color:#0A7D6E;background:rgba(15,168,148,.1);border:1px solid rgba(15,168,148,.35);}
 .tutup-pukul.buruk{color:#B33B34;background:#FDECEA;border:1px solid rgba(225,85,77,.4);}
 .tutup-pukul b{font-size:13px;}
+
+.btn-batal-menang{width:100%;background:transparent;border:1.5px solid var(--line);color:var(--muted);
+  border-radius:8px;font-weight:600;font-size:12px;padding:9px;cursor:pointer;
+  font-family:var(--sans);margin-top:8px;}
+.btn-batal-menang:hover{border-color:var(--red);color:var(--red);}
+
+.btn-siar{background:#1F9E52;border:none;color:#fff;border-radius:8px;font-weight:700;
+  font-size:12px;padding:8px 14px;cursor:pointer;font-family:var(--sans);}
+.btn-siar:hover{background:#188443;}
+.daftar-siar{max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:4px;}
+.baris-siar{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);}
+.baris-siar:last-child{border-bottom:none;}
+.baris-siar.terkirim{background:rgba(15,168,148,.08);}
+.baris-siar.terkirim .nama-siar{color:var(--teal);}
+.baris-siar.terkirim .urut::after{content:' ✓';color:var(--teal);}
+.baris-siar .urut{font-family:var(--mono);font-size:10.5px;color:var(--muted);min-width:26px;}
+.baris-siar .nama-siar{flex:1;font-size:13px;font-weight:600;}
+.btn-wa-kecil{background:#1F9E52;color:#fff;text-decoration:none;border-radius:7px;
+  font-size:11.5px;font-weight:700;padding:6px 14px;font-family:var(--sans);}
+.btn-wa-kecil:hover{background:#188443;}
 </style>
 </head>
 <body>
@@ -204,6 +224,15 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 <div id="status-bar">Memuat data…</div>
 
 <main>
+  <a class="tautan-eks" href="rekap.html">
+    <span class="ikon">&#128200;</span>
+    <span>
+      <b>Rekap Lelang</b>
+      <small>penghematan terhadap target rate &amp; realisasi pengiriman</small>
+    </span>
+    <span class="panah">&rarr;</span>
+  </a>
+
   <a class="tautan-eks" href="ekspedisi.html">
     <span class="ikon">&#128100;</span>
     <span>
@@ -242,6 +271,7 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
     <small id="jumlah-lelang"></small>
   </div>
   <div class="bar-hapus">
+    <button class="btn-siar" onclick="bukaSiaran()">Beritahu semua ekspedisi</button>
     <button class="btn-hapus" id="btn-hapus-pilih" onclick="hapusTerpilih()" disabled>Hapus Terpilih</button>
     <button class="btn-hapus-semua" onclick="hapusSemua()">Hapus Semua Lelang</button>
     <span class="pilih-info" id="pilih-info">belum ada yang dipilih</span>
@@ -725,6 +755,26 @@ async function pilihPemenang(idLelang, ekspedisi){
   }catch(err){ setStatus('Gagal simpan pemenang: ' + err.message, true); }
 }
 
+async function batalPemenang(idLelang, namaEks, noOrder){
+  const pesan = [
+    `Batalkan ${namaEks} sebagai pemenang?`, '',
+    'Yang akan terjadi:',
+    '• Lelang kembali terbuka, ekspedisi bisa menawar lagi',
+    noOrder ? `• Baris ${noOrder} DIHAPUS dari planning draft Pesanan Armada` : '',
+    noOrder ? `• Baris ${noOrder} DIHAPUS dari konfirmasi armada (kalau ada)` : '',
+    '• Data konfirmasi armada untuk lelang ini ikut terhapus', '',
+    'Penawaran harga dari semua ekspedisi TIDAK terhapus.'
+  ].filter(x => x !== '').join('\n');
+
+  if(!confirm(pesan)) return;
+  try{
+    setStatus('Membatalkan…');
+    const r = await gas({action:'batal_pemenang', idLelang});
+    await muat();
+    setStatus(`Pemenang ${r.pemenangLama || namaEks} dibatalkan. ${r.jejak ? 'Dibersihkan: ' + r.jejak + '.' : ''} Lelang kembali terbuka.`);
+  }catch(err){ setStatus('Gagal membatalkan: ' + err.message, true); }
+}
+
 function bukaJendelaMenang(idLelang, namaEks, noOrder){
   const l = lelangList.find(x => x.id === idLelang);
   const win = bidsUntuk(idLelang).find(b => b.ekspedisi === namaEks);
@@ -755,6 +805,75 @@ function bukaJendelaMenang(idLelang, namaEks, noOrder){
 
 function tutupJendelaMenang(){
   const w = document.getElementById('tirai-menang');
+  if(w) w.remove();
+}
+
+function pesanSiaran(eks){
+  const terbuka = lelangList.filter(l => l.status !== 'selesai');
+  if(terbuka.length === 0) return '';
+
+  const rincian = terbuka.slice(0, 12).map(l =>
+    `• ${l.kota} — ${l.tipeMobil} (muat ${l.tanggalMuat || l.tanggal})`).join('\n');
+  const sisa = terbuka.length > 12 ? `\n• dan ${terbuka.length - 12} lainnya` : '';
+
+  const tutup = terbuka
+    .map(l => l.batasWaktu).filter(x => x)
+    .sort((a,b) => a - b)[0];
+  const barisTutup = tutup ? `\nBatas isi harga paling dekat: ${tanggalTutup(tutup)}` : '';
+
+  return [
+    `Halo ${eks.nama}, ada ${terbuka.length} lelang kiriman terbuka di UNIFAM:`,
+    ``,
+    rincian + sisa,
+    barisTutup,
+    ``,
+    `Silakan isi harga penawaran di:`,
+    linkUntuk(eks.nama),
+    ``,
+    `User: ${eks.user || eks.nama}`,
+    `Password sudah dikirim sebelumnya. Kalau lupa, hubungi admin.`
+  ].filter(x => x !== '').join('\n');
+}
+
+function bukaSiaran(){
+  const terbuka = lelangList.filter(l => l.status !== 'selesai');
+  if(terbuka.length === 0){ setStatus('Tidak ada lelang terbuka untuk disiarkan.', true); return; }
+
+  const punyaWA = daftarEkspedisi.filter(e => e.wa);
+  const tanpaWA = daftarEkspedisi.filter(e => !e.wa);
+
+  const w = document.createElement('div');
+  w.className = 'tirai';
+  w.id = 'tirai-siar';
+  w.innerHTML = `
+    <div class="jendela" style="max-width:440px;">
+      <h2>Beritahu semua ekspedisi</h2>
+      <p style="font-size:12.5px;color:var(--muted);margin:4px 0 14px;line-height:1.6;">
+        ${terbuka.length} lelang terbuka akan diberitahukan ke ${punyaWA.length} ekspedisi.
+        WhatsApp terbuka satu per satu — tekan kirim di tiap jendela, lalu kembali ke sini.
+      </p>
+      ${tanpaWA.length ? `<div class="peringatan-kecil">${tanpaWA.length} ekspedisi dilewati karena nomor WA belum diisi: ${tanpaWA.map(e => e.nama).join(', ')}</div>` : ''}
+      <div class="daftar-siar">
+        ${punyaWA.map((e,i) => `
+          <div class="baris-siar" id="siar-${i}">
+            <span class="urut">${i+1}</span>
+            <span class="nama-siar">${e.nama}</span>
+            <a class="btn-wa-kecil" href="https://wa.me/${e.wa}?text=${encodeURIComponent(pesanSiaran(e))}"
+               target="_blank" onclick="tandaiTerkirim(${i})">Kirim</a>
+          </div>`).join('')}
+      </div>
+      <button class="btn-nanti" onclick="tutupSiaran()">Tutup</button>
+    </div>`;
+  w.onclick = (ev) => { if(ev.target === w) tutupSiaran(); };
+  document.body.appendChild(w);
+}
+
+function tandaiTerkirim(i){
+  const el = document.getElementById('siar-' + i);
+  if(el) el.classList.add('terkirim');
+}
+function tutupSiaran(){
+  const w = document.getElementById('tirai-siar');
   if(w) w.remove();
 }
 
@@ -879,6 +998,8 @@ function render(){
         ? `<a class="btn-wa-konfirmasi" href="${waKonfirmasi(l, win, eks)}" target="_blank">Kirim Form Konfirmasi via WA</a>`
         : `<div class="empty">Nomor WA ${l.pemenang || '—'} belum terdaftar — tambahkan di Daftar Ekspedisi dulu.</div>`;
 
+      const tombolBatal = `<button class="btn-batal-menang" onclick="batalPemenang('${l.id}','${(l.pemenang||'').replace(/'/g,"\\'")}','${l.noOrder||''}')">Batalkan / ganti pemenang</button>`;
+
       return `<div class="card">
         <div class="card-head dengan-cek">
         <input type="checkbox" class="cek-lelang" ${terpilih.has(l.id) ? 'checked' : ''}
@@ -893,6 +1014,7 @@ function render(){
           <div class="pemenang-banner">🏆 Dipilih: ${l.pemenang || '—'}${win ? ' · ' + formatRupiah(win.harga) + ' · Kapal ' + (win.namaKapal||'-') + ' · ETD ' + (win.etd||'-') : ''}</div>
           ${panelKonfirmasi}
           ${tombolWA}
+          ${tombolBatal}
         </div></div>`;
     }).join('')}</div>`;
 }
