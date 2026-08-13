@@ -464,7 +464,8 @@ async function kirimKeServer(params){
   }
 }
 
-let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], rateList = [], pendingPreview = [];
+let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], pendingPreview = [];
+let rateInfo = {jumlah:0, kota:[]};
 let versiScript = '';
 let terpilih = new Set();
 
@@ -664,23 +665,50 @@ function kunciPanel(){
   bukaGerbang('');
 }
 
+/* Simpanan tampilan terakhir — supaya panel langsung terisi saat dibuka,
+   lalu diperbarui begitu data baru datang. */
+const KUNCI_SIMPAN = 'lelang-unifam-panel';
+function simpanTampilan(d){
+  try{ localStorage.setItem(KUNCI_SIMPAN, JSON.stringify({waktu:Date.now(), d})); }catch(e){}
+}
+function tampilkanSimpanan(){
+  try{
+    const m = localStorage.getItem(KUNCI_SIMPAN);
+    if(!m) return false;
+    const {waktu, d} = JSON.parse(m);
+    if(!d || Date.now() - waktu > 6*3600000) return false;   // lebih dari 6 jam, abaikan
+    pakaiData(d);
+    const menit = Math.round((Date.now() - waktu)/60000);
+    setStatus(`Tampilan tersimpan ${menit < 1 ? 'baru saja' : menit + ' menit lalu'} · sedang memuat yang terbaru…`);
+    return true;
+  }catch(e){ return false; }
+}
+
+function pakaiData(d){
+  lelangList = d.lelang || [];
+  bidList = d.bids || [];
+  daftarEkspedisi = d.ekspedisi || [];
+  konfirmasiList = d.konfirmasi || [];
+  rateInfo = d.rate || {jumlah:0, kota:[]};
+  if(Array.isArray(rateInfo)) rateInfo = {jumlah:rateInfo.length, kota:rateInfo.map(r=>String(r.kota||'').toUpperCase())};
+  versiScript = d.versi || '(script versi lama)';
+  const idAda = new Set(lelangList.map(l => l.id));
+  Array.from(terpilih).forEach(id => { if(!idAda.has(id)) terpilih.delete(id); });
+  const el = document.getElementById('ket-eks');
+  if(el) el.textContent = `${daftarEkspedisi.length} ekspedisi terdaftar · kelola akun & password`;
+  cekVersiBackend(d.versi);
+  render();
+}
+
 async function muat(){
   if(!ambilPassAdmin()){ bukaGerbang(''); return; }
+  const adaSimpanan = (lelangList.length === 0) ? tampilkanSimpanan() : false;
   try{
-    setStatus('Memuat data…');
+    if(!adaSimpanan) setStatus('Memuat data…');
     const d = await gas({action:'ambil_semua'});
-    lelangList = d.lelang || [];
-    bidList = d.bids || [];
-    daftarEkspedisi = d.ekspedisi || [];
-    konfirmasiList = d.konfirmasi || [];
-    rateList = d.rate || [];
-    versiScript = d.versi || '(script versi lama)';
-    cekVersiBackend(d.versi);
-    const idAda = new Set(lelangList.map(l => l.id));
-    Array.from(terpilih).forEach(id => { if(!idAda.has(id)) terpilih.delete(id); });
-    { const el = document.getElementById('ket-eks'); if(el) el.textContent = `${daftarEkspedisi.length} ekspedisi terdaftar · kelola akun & password`; }
-    setStatus(`Tersambung · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${rateList.length} baris rate · ${versiScript} · ${new Date().toLocaleTimeString('id-ID')}`);
-    render();
+    simpanTampilan(d);
+    pakaiData(d);
+    setStatus(`Tersambung · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${rateInfo.jumlah} baris rate · ${versiScript} · ${new Date().toLocaleTimeString('id-ID')}`);
   }catch(err){
     if(String(err.message).toLowerCase().includes('password admin')){
       hapusPassAdmin();
@@ -1021,8 +1049,8 @@ function render(){
 
         let ratePanel = '';
         if(!l.rateExisting){
-          const adaKota = rateList.some(r => r.kota.toUpperCase() === l.kota.trim().toUpperCase());
-          const alasan = rateList.length === 0
+          const adaKota = (rateInfo.kota || []).indexOf(l.kota.trim().toUpperCase()) > -1;
+          const alasan = rateInfo.jumlah === 0
             ? 'tab Rate masih kosong'
             : !adaKota
               ? `tidak ada baris Rate untuk kota "${l.kota}"`
