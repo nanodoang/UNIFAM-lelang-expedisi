@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Konfirmasi Armada — UNIFAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --sky-deep:#1E88E5; --sky:#3FA3F2; --sky-light:#EAF4FD;
@@ -69,6 +72,50 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 .logo-unifam{height:34px;width:auto;display:block;background:#fff;border-radius:8px;padding:4px 7px;}
 .baris-judul{display:flex;align-items:center;gap:13px;margin-bottom:6px;}
 .baris-judul h1{margin:0;}
+
+/* ==================== TEMA BARU ==================== */
+:root{
+  --navy:#2A3180; --navy-tua:#1C2159;
+  --teal:#1596A3; --teal-tua:#0E7A85;
+  --sky-deep:#2A3180; --sky:#3A43A8; --sky-light:#EFF2F7;
+  --panel:#FFFFFF; --line:#DDE2EC; --line-tebal:#C3CAD9;
+  --text:#12172B; --tinta:#12172B; --muted:#5A6480;
+  --amber:#D9820F; --red:#C8443A;
+  --disp:'Barlow Condensed',Arial,sans-serif;
+  --sans:'Barlow',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Courier New',monospace;
+}
+body{background:#EFF2F7;font-family:var(--sans);font-size:14.5px;}
+header{background:var(--navy);}
+.baris-judul{display:flex;align-items:center;gap:11px;}
+.logo-unifam{height:29px;width:auto;background:#fff;border-radius:5px;padding:3px 5px;}
+.eyebrow{font-family:var(--disp);font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+h1{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1;margin:2px 0 0;
+  letter-spacing:.01em;text-transform:uppercase;}
+.eks-badge{border-radius:0;font-family:var(--disp);font-weight:600;font-size:15px;
+  letter-spacing:.1em;text-transform:uppercase;}
+.card,.jendela{border-radius:0!important;box-shadow:0 1px 2px rgba(18,23,43,.05);}
+.route{font-family:var(--disp);font-weight:700;font-size:22px;text-transform:uppercase;line-height:1.05;}
+.route .arrow{color:var(--teal);margin:0 7px;font-weight:500;}
+.rincian dt{font-family:var(--disp);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
+.jenis-tag{border-radius:0;font-family:var(--disp);font-weight:700;letter-spacing:.14em;}
+.jenis-tag.kontener{background:rgba(42,49,128,.1);color:var(--navy);border-color:rgba(42,49,128,.35);}
+.jenis-tag.darat{background:rgba(21,150,163,.1);color:var(--teal-tua);border-color:rgba(21,150,163,.4);}
+.muat-box{border-radius:0;background:rgba(217,130,15,.1);border-color:rgba(217,130,15,.45);}
+.muat-box .lbl{font-family:var(--disp);letter-spacing:.14em;font-weight:600;}
+.muat-box .tgl{font-family:var(--mono);}
+.form-judul{font-family:var(--disp);font-size:16px;letter-spacing:.05em;text-transform:uppercase;}
+label{font-family:var(--disp);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+input,textarea{border-radius:0!important;border:1px solid var(--line-tebal);font-family:var(--mono);}
+input:focus,textarea:focus{border-color:var(--navy);}
+.btn-kirim{border-radius:0;background:var(--navy);font-family:var(--disp);font-weight:700;
+  font-size:15px;letter-spacing:.09em;text-transform:uppercase;}
+.btn-kirim:hover{background:var(--navy-tua);}
+.sudah{border-radius:0;background:rgba(18,135,107,.08);border-color:rgba(18,135,107,.4);color:#0B6350;}
+.pesan-kosong,.alamat-box{border-radius:0;}
+footer{font-family:var(--mono);}
+
 </style>
 </head>
 <body>
