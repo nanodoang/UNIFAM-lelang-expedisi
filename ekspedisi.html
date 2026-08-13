@@ -166,6 +166,36 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
   border:1.5px solid var(--red);border-radius:10px;color:#B33B34;font-size:13px;line-height:1.6;}
 .peringatan-versi b{display:block;font-size:13.5px;margin-bottom:3px;}
 .peringatan-versi code{font-family:var(--mono);background:rgba(225,85,77,.12);padding:1px 5px;border-radius:4px;}
+
+.a-edit{background:#fff;border:1.5px solid var(--line);color:var(--muted);}
+.a-edit:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+.eks-wa{cursor:pointer;}
+.eks-wa:hover{color:var(--sky-deep);text-decoration:underline;}
+.eks-wa.kosong-wa{color:var(--red);}
+.tirai-edit{position:fixed;inset:0;background:rgba(20,41,61,.55);display:flex;align-items:center;
+  justify-content:center;padding:20px;z-index:140;}
+.jendela-edit{background:var(--panel);border-radius:16px;padding:24px;max-width:380px;width:100%;
+  box-shadow:0 12px 40px rgba(20,41,61,.3);}
+.jendela-edit h3{font-size:17px;margin:0 0 4px;}
+.jendela-edit .ket{font-size:12.5px;color:var(--muted);margin:0 0 16px;line-height:1.55;}
+.jendela-edit .kolom{margin-bottom:12px;}
+.jendela-edit label{display:block;font-family:var(--mono);font-size:9.5px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.jendela-edit input{width:100%;background:#fff;border:1.5px solid var(--line);color:var(--text);
+  padding:11px 13px;border-radius:8px;font-size:14px;font-family:var(--mono);}
+.jendela-edit input:focus{outline:none;border-color:var(--sky-deep);}
+.jendela-edit input:disabled{background:#F4F9FE;color:var(--muted);}
+.jendela-edit .bantu{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5;font-family:var(--mono);}
+.baris-tombol{display:flex;gap:9px;margin-top:6px;}
+.btn-simpan{flex:1;background:var(--sky-deep);color:#fff;border:none;border-radius:8px;
+  font-weight:700;font-size:13.5px;padding:12px;cursor:pointer;font-family:var(--sans);}
+.btn-simpan:hover{background:#1670BF;}
+.btn-simpan:disabled{opacity:.5;cursor:default;}
+.btn-batal{flex:0 0 auto;background:#fff;border:1.5px solid var(--line);color:var(--muted);
+  border-radius:8px;font-weight:600;font-size:13px;padding:12px 18px;cursor:pointer;font-family:var(--sans);}
+.btn-batal:hover{border-color:var(--sky-deep);color:var(--sky-deep);}
+.pesan-edit{background:rgba(225,85,77,.1);border:1px solid rgba(225,85,77,.35);color:#B33B34;
+  border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:12px;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -423,6 +453,83 @@ async function buatPasswordEks(nama, ganti){
   }catch(err){ setStatus('Gagal membuat password: ' + err.message, true); }
 }
 
+function bukaEdit(nama){
+  const e = daftar.find(x => x.nama === nama);
+  if(!e){ setStatus('Ekspedisi tidak ditemukan.', true); return; }
+
+  const w = document.createElement('div');
+  w.className = 'tirai-edit';
+  w.id = 'tirai-edit';
+  w.innerHTML = `
+    <div class="jendela-edit">
+      <h3>Ubah data ekspedisi</h3>
+      <p class="ket">Nama tidak bisa diubah karena dipakai sebagai user dan di link lelang.</p>
+      <div id="pesan-edit"></div>
+
+      <div class="kolom">
+        <label>Nama ekspedisi</label>
+        <input id="e-nama" type="text" value="${aman(e.nama)}" disabled>
+      </div>
+      <div class="kolom">
+        <label>No. WhatsApp</label>
+        <input id="e-wa" type="text" inputmode="numeric" value="${aman(e.wa)}" placeholder="08xx atau 62xx"
+               onkeydown="if(event.key==='Enter')simpanEdit()">
+        <div class="bantu">08xx otomatis diubah jadi 62xx</div>
+      </div>
+      <div class="kolom">
+        <label>Kode ekspedisi</label>
+        <input id="e-kode" type="text" value="${aman(e.kode)}" placeholder="mis. PAT"
+               onkeydown="if(event.key==='Enter')simpanEdit()">
+        <div class="bantu">dipakai untuk kolom Kode Eksp di Pesanan Armada</div>
+      </div>
+
+      <div class="baris-tombol">
+        <button class="btn-simpan" id="btn-simpan-edit" onclick="simpanEdit()">Simpan</button>
+        <button class="btn-batal" onclick="tutupEdit()">Batal</button>
+      </div>
+    </div>`;
+  w.onclick = (ev) => { if(ev.target === w) tutupEdit(); };
+  document.body.appendChild(w);
+  setTimeout(() => { const i = document.getElementById('e-wa'); if(i){ i.focus(); i.select(); } }, 60);
+}
+
+function tutupEdit(){
+  const w = document.getElementById('tirai-edit');
+  if(w) w.remove();
+}
+
+function pesanEdit(teks){
+  const el = document.getElementById('pesan-edit');
+  if(el) el.innerHTML = teks ? `<div class="pesan-edit">${aman(teks)}</div>` : '';
+}
+
+async function simpanEdit(){
+  const nama = document.getElementById('e-nama').value.trim();
+  const wa   = document.getElementById('e-wa').value.trim();
+  const kode = document.getElementById('e-kode').value.trim();
+  const btn  = document.getElementById('btn-simpan-edit');
+
+  const angka = wa.replace(/[^0-9]/g, '');
+  if(!angka){ pesanEdit('No. WhatsApp harus diisi.'); return; }
+  if(angka.length < 9 || angka.length > 15){
+    pesanEdit('No. WhatsApp sepertinya keliru — panjangnya ' + angka.length + ' angka.');
+    return;
+  }
+
+  try{
+    btn.disabled = true;
+    pesanEdit('');
+    setStatus('Menyimpan…');
+    await gas({action:'eks_insert', nama, wa, kode});
+    tutupEdit();
+    await muat();
+    setStatus(`Data ${nama} diperbarui.`);
+  }catch(err){
+    pesanEdit(err.message);
+    btn.disabled = false;
+  }
+}
+
 function salin(teks, label){
   navigator.clipboard.writeText(teks)
     .then(() => setStatus(`${label} disalin.`))
@@ -444,7 +551,7 @@ function render(){
       <div class="eks-atas">
         <div>
           <div class="eks-nama">${aman(e.nama)}</div>
-          <div class="eks-wa">${aman(e.wa) || 'no. WA belum diisi'}</div>
+          <div class="eks-wa ${e.wa ? '' : 'kosong-wa'}" onclick="bukaEdit('${aman(e.nama).replace(/'/g, "\\'")}')" title="klik untuk ubah">${aman(e.wa) || 'no. WA belum diisi — klik untuk isi'}</div>
         </div>
         ${e.kode ? `<span class="eks-kode">${aman(e.kode)}</span>` : ''}
       </div>
@@ -476,6 +583,7 @@ function render(){
         <button class="a-pass ${e.password ? '' : 'perlu'}" onclick="buatPasswordEks('${aman(e.nama)}', ${e.password ? 'true' : 'false'})">
           ${e.password ? 'Reset Pass' : 'Buat Password'}
         </button>
+        <button class="a-edit" onclick="bukaEdit('${aman(e.nama).replace(/'/g, "\\'")}')">Edit</button>
       </div>
     </div>`;
   }).join('');
