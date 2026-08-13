@@ -453,7 +453,7 @@ async function kirimGerbang(){
   btn.disabled = true;
   simpanPassAdmin(v);
   try{
-    await gas({action:'ambil_semua'});
+    await gas({action:'cek_admin'});   // ringan: tidak memuat data apa pun
     tutupGerbang();
     muat();
   }catch(err){
