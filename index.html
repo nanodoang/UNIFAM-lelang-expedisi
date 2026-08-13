@@ -176,7 +176,7 @@ function jsonp(url){
   return new Promise((resolve, reject) => {
     const cb = 'gascb' + (++jsonpN) + '_' + Date.now();
     const s = document.createElement('script');
-    const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server tidak merespons')); }, 25000);
+    const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server terlalu lama merespons. Coba muat ulang halaman.')); }, 60000);
     function bersih(){ clearTimeout(t); try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
     window[cb] = (d) => { bersih(); resolve(d); };
     s.src = url + '&callback=' + cb;
@@ -185,13 +185,46 @@ function jsonp(url){
   });
 }
 async function gas(p){
-  const q = Object.keys(p).map(k => encodeURIComponent(k)+'='+encodeURIComponent(p[k])).join('&');
+  return kirimKeServer(p);
+}
+
+/* Jalur utama fetch; JSONP hanya cadangan. Kalau keduanya gagal,
+   sebab dari jalur utama yang dilaporkan — bukan sekadar "timeout". */
+async function kirimKeServer(params){
+  const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
   const url = GAS_URL + '?' + q;
-  let d = null;
-  try { const r = await fetch(url); if(r.ok) d = await r.json(); } catch(e){ d = null; }
-  if(d === null) d = await jsonp(url);
-  if(d && d.error) throw new Error(d.error);
-  return d;
+
+  let sebabUtama = '';
+  try {
+    const r = await fetch(url);
+    if(!r.ok) {
+      sebabUtama = 'server menjawab ' + r.status + ' ' + r.statusText;
+    } else {
+      const teks = await r.text();
+      if(/^\s*<(!DOCTYPE|html)/i.test(teks)){
+        throw new Error('Server mengembalikan halaman web, bukan data. Biasanya berarti deployment Apps Script perlu diatur ulang ke "Who has access: Anyone".');
+      }
+      let d;
+      try { d = JSON.parse(teks); }
+      catch(e){ throw new Error('Jawaban server tidak terbaca: ' + teks.slice(0, 120)); }
+      if(d && d.error) throw new Error(d.error);
+      return d;
+    }
+  } catch(e){
+    if(!sebabUtama) sebabUtama = e.message;
+    // error dari server sendiri tidak perlu diulang lewat jalur cadangan
+    if(/password|action tidak dikenal|tidak ditemukan|halaman web|tidak terbaca/i.test(sebabUtama)){
+      throw new Error(sebabUtama);
+    }
+  }
+
+  try {
+    const d = await jsonp(url);
+    if(d && d.error) throw new Error(d.error);
+    return d;
+  } catch(e2){
+    throw new Error(sebabUtama || e2.message);
+  }
 }
 
 /* ---------- sesi ---------- */
