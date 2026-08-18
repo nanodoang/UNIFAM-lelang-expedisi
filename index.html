@@ -261,6 +261,10 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
 /* ====== GANTI URL INI kalau deployment Apps Script berubah ====== */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
 
+/* Penanda versi berkas ini — muncul di baris status supaya ketahuan
+   apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
+const VERSI_HALAMAN = 'h27';
+
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
 
@@ -438,8 +442,15 @@ async function muat(){
     belumKonfirmasi = d.belumKonfirmasi || 0;
     if(d.waktuServer) selisihJam = d.waktuServer - Date.now();
     { const ada = new Set(daftarTerbuka.map(l => l.id));
-      Array.from(terpilih).forEach(id => { if(!ada.has(id)) terpilih.delete(id); }); }
-    setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
+      Array.from(terpilih).forEach(id => { if(!ada.has(id)) terpilih.delete(id); });
+      /* draf yang lelangnya sudah tidak ada dibuang; yang masih ada dicentang */
+      Object.keys(draf).forEach(id => {
+        if(!ada.has(id)) { delete draf[id]; return; }
+        const l = daftarTerbuka.find(x => x.id === id);
+        if(l && !sudahTutup(l) && parseInt(draf[id].harga, 10) > 0) terpilih.add(id);
+      });
+      simpanDrafKeBrowser(); }
+    setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')} · ${VERSI_HALAMAN}`);
     render();
   }catch(err){
     if(String(err.message).toLowerCase().includes('salah')){
@@ -524,6 +535,7 @@ function simpanDraf(id){
   const h = amb('harga'), e1 = amb('etd'), e2 = amb('eta'), k = amb('kapal');
   if(h === undefined) return;
   draf[id] = { harga: h, etd: e1, eta: e2, kapal: k };
+  simpanDrafKeBrowser();
 }
 
 /* Kumpulkan ketikan dari semua kartu yang sedang tampil */
@@ -531,7 +543,35 @@ function simpanSemuaDraf(){
   daftarTerbuka.forEach(l => simpanDraf(l.id));
 }
 
-function hapusDraf(id){ delete draf[id]; }
+function hapusDraf(id){ delete draf[id]; simpanDrafKeBrowser(); }
+
+/* Harga yang berlaku untuk satu lelang — dari kolom kalau ada isinya,
+   kalau tidak dari draf. Dipakai bilah bawah maupun saat mengirim,
+   supaya keduanya tidak pernah berbeda. */
+function hargaBerlaku(id){
+  const inp = document.getElementById('harga-' + id);
+  const dariKolom = inp ? parseInt(inp.value, 10) : NaN;
+  if(dariKolom > 0) return dariKolom;
+  const d = draf[id];
+  const dariDraf = d ? parseInt(d.harga, 10) : NaN;
+  return dariDraf > 0 ? dariDraf : 0;
+}
+
+/* Draf ikut disimpan di browser, supaya tidak hilang walau halaman
+   ditutup, dimuat ulang, atau HP-nya sempat mati. */
+const KUNCI_DRAF = 'lelang-unifam-draf';
+function simpanDrafKeBrowser(){
+  try{ localStorage.setItem(KUNCI_DRAF, JSON.stringify({waktu:Date.now(), draf})); }catch(e){}
+}
+function muatDrafDariBrowser(){
+  try{
+    const m = localStorage.getItem(KUNCI_DRAF);
+    if(!m) return;
+    const {waktu, draf: d} = JSON.parse(m);
+    if(!d || Date.now() - waktu > 24*3600000) return;   // lebih dari sehari, abaikan
+    Object.keys(d).forEach(k => { if(!draf[k]) draf[k] = d[k]; });
+  }catch(e){}
+}
 
 /* Nilai yang dipakai saat menggambar: ketikan dulu, baru data dari server */
 function nilaiKolom(id, kunci, bawaan){
@@ -593,13 +633,15 @@ function perbaruiBilah(){
     judul.textContent = 'Belum ada yang dipilih';
     ket.textContent = 'isi harga dulu untuk mengaktifkan';
   } else {
-    let total = 0;
+    let total = 0, kosong = 0;
     terpilih.forEach(id => {
-      const inp = document.getElementById('harga-' + id);
-      total += (inp ? parseInt(inp.value, 10) : 0) || 0;
+      const h = hargaBerlaku(id);
+      if(h > 0) total += h; else kosong++;
     });
     judul.textContent = `${n} lelang dipilih`;
-    ket.textContent = 'total ' + formatRupiah(total);
+    ket.textContent = kosong > 0
+      ? `total ${formatRupiah(total)} · ${kosong} belum ada harganya`
+      : 'total ' + formatRupiah(total);
   }
 }
 
@@ -616,7 +658,7 @@ async function kirimTerpilih(){
     const id = daftar[i];
     const l = daftarTerbuka.find(x => x.id === id);
     const nama = l ? l.kota : id;
-    const harga = parseInt(document.getElementById('harga-' + id).value, 10);
+    const harga = hargaBerlaku(id);
 
     if(l && sudahTutup(l)){ gagal.push(`${nama} — batas waktu sudah lewat`); terpilih.delete(id); continue; }
     if(!harga || harga <= 0){ gagal.push(`${nama} — harga belum diisi`); continue; }
@@ -917,6 +959,7 @@ function tabelRiwayat(){
 
 /* ---------- mulai ---------- */
 sesi = ambilSesi();
+muatDrafDariBrowser();
 
 /* Kalau link menyebut ekspedisi lain daripada yang sedang masuk,
    sesi lama dibuang — supaya tiap link membuka ekspedisinya sendiri. */
