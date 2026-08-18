@@ -267,6 +267,9 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
   padding:9px 12px;margin-bottom:12px;font-size:12px;color:#7A4E08;line-height:1.6;}
 .sedang-ubah b{color:#5E3C06;}
 .sedang-ubah a{color:#7A4E08;text-decoration:underline;}
+
+.cap-selesai{font-family:var(--mono);font-size:10px;padding:2px 8px;
+  border:1px solid var(--line-tebal);color:var(--muted);background:#F4F6FA;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -282,7 +285,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h30';
+const VERSI_HALAMAN = 'h33';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -350,7 +353,7 @@ function ambilSesi(){ try{ return JSON.parse(localStorage.getItem(KUNCI) || 'nul
 function hapusSesi(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
 
 let sesi = null, namaEkspedisi = '', tabAktif = 'terbuka';
-let daftarTerbuka = [], daftarRiwayat = [], pesanSalah = '', belumKonfirmasi = 0;
+let daftarTerbuka = [], daftarRiwayat = [], daftarTidakMenang = [], pesanSalah = '', belumKonfirmasi = 0;
 
 /* Selisih jam HP terhadap jam server. Hitung mundur memakai jam server,
    supaya HP yang jamnya meleset tidak salah menghitung batas waktu. */
@@ -459,6 +462,7 @@ async function muat(){
     daftarTerbuka = d.terbuka || [];
     daftarRiwayat = d.riwayat || [];
     belumKonfirmasi = d.belumKonfirmasi || 0;
+    daftarTidakMenang = d.tidakMenang || [];
     if(d.waktuServer) selisihJam = d.waktuServer - Date.now();
     { const ada = new Set(daftarTerbuka.map(l => l.id));
       Array.from(terpilih).forEach(id => { if(!ada.has(id)) terpilih.delete(id); });
@@ -844,9 +848,12 @@ function render(){
     <div class="tab-baris">
       <button class="${tabAktif==='terbuka'?'aktif':''}" onclick="gantiTab('terbuka')">Lelang terbuka (${daftarTerbuka.length})</button>
       <button class="${tabAktif==='riwayat'?'aktif':''}" onclick="gantiTab('riwayat')">Riwayat dipakai (${daftarRiwayat.length})</button>
+      <button class="${tabAktif==='selesai'?'aktif':''}" onclick="gantiTab('selesai')">Sudah selesai (${daftarTidakMenang.length})</button>
     </div>`;
 
-  isi.innerHTML = tabHTML + (tabAktif === 'terbuka' ? kartuTerbuka() : tabelRiwayat());
+  isi.innerHTML = tabHTML + (
+      tabAktif === 'terbuka' ? kartuTerbuka() :
+      tabAktif === 'selesai' ? tabelSelesai() : tabelRiwayat());
 
   const bilahLama = document.getElementById('bilah');
   if(bilahLama) bilahLama.remove();
@@ -879,6 +886,9 @@ function render(){
     }
   }
 
+  if(tabAktif === 'selesai'){
+    kaki.textContent = 'Lelang yang sudah ditutup. Harga penawaran ekspedisi lain tidak pernah ditampilkan.';
+  } else
   kaki.textContent = tabAktif === 'terbuka'
     ? 'Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.'
     : 'Kolom ATD, ATA, Dooring, dan Keterangan diisi oleh Anda. Tersimpan otomatis beberapa saat setelah diisi.';
@@ -1019,6 +1029,37 @@ function kotakLaporan(){
       <div class="jejak-versi">halaman ${VERSI_HALAMAN}</div></div>`;
   }
   return html;
+}
+
+/* Lelang yang diikuti tapi dimenangkan pihak lain.
+   Harga pemenang dan namanya tidak pernah dikirim ke sini. */
+function tabelSelesai(){
+  if(daftarTidakMenang.length === 0){
+    return `<div class="empty-state">Belum ada lelang yang sudah selesai.<br><br>
+      Di sini nanti muncul lelang yang Anda ikuti tapi dimenangkan ekspedisi lain,
+      supaya jelas kenapa lelangnya hilang dari daftar terbuka.</div>`;
+  }
+
+  const baris = daftarTidakMenang.map(r => `<tr>
+    <td class="mono">${amanHTML(r.tanggalMuat)||'—'}</td>
+    <td class="tebal">${amanHTML(r.customer)}</td>
+    <td>${amanHTML(r.kota)}</td>
+    <td class="mono">${amanHTML(r.tipeMobil)}</td>
+    <td class="kanan">${formatRupiah(r.hargaSaya)}</td>
+    <td><span class="cap-selesai">Sudah ditutup</span></td>
+  </tr>`).join('');
+
+  return `<div class="kotak-tabel"><div class="gulir">
+    <table style="min-width:640px;">
+      <thead><tr>
+        <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Tipe</th>
+        <th style="text-align:right;">Penawaran Anda</th><th>Status</th>
+      </tr></thead>
+      <tbody>${baris}</tbody>
+    </table>
+  </div></div>
+  <div class="ket-bawah">${daftarTidakMenang.length} lelang · dimenangkan ekspedisi lain.
+    Harga pemenang tidak ditampilkan.</div>`;
 }
 
 function tabelRiwayat(){

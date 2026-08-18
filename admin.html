@@ -887,12 +887,12 @@ function pakaiData(d){
   render();
 }
 
-async function muat(){
+async function muat(segar){
   if(!ambilPassAdmin()){ bukaGerbang(''); return; }
   const adaSimpanan = (lelangList.length === 0) ? tampilkanSimpanan() : false;
   try{
     if(!adaSimpanan) setStatus('Memuat data…');
-    const d = await gas({action:'ambil_semua'});
+    const d = await gas(segar ? {action:'ambil_semua', segar:'1'} : {action:'ambil_semua'});
     simpanTampilan(d);
     pakaiData(d);
     setStatus(`Tersambung · ${lelangList.length} lelang · ${bidList.length} penawaran · ${daftarEkspedisi.length} ekspedisi · ${rateInfo.jumlah} baris rate · ${versiScript} · ${new Date().toLocaleTimeString('id-ID')}`);
@@ -1066,7 +1066,7 @@ async function batalPemenang(idLelang, namaEks, noOrder){
   try{
     setStatus('Membatalkan…');
     const r = await gas({action:'batal_pemenang', idLelang});
-    await muat();
+    await muat(true);
     setStatus(`Pemenang ${r.pemenangLama || namaEks} dibatalkan. ${r.jejak ? 'Dibersihkan: ' + r.jejak + '.' : ''} Lelang kembali terbuka.`);
   }catch(err){ setStatus('Gagal membatalkan: ' + err.message, true); }
 }
@@ -1092,7 +1092,21 @@ async function lanjutPilihPemenang(idLelang, ekspedisi, alasan){
   try{
     setStatus('Menyimpan pemenang…');
     const r = await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat, alasan});
-    await muat();
+
+    /* Pindahkan kartunya seketika ke Riwayat Selesai, tanpa menunggu
+       pulang-pergi ke server lagi. */
+    { const l = lelangList.find(x => x.id === idLelang);
+      if(l){
+        l.status = 'selesai';
+        l.pemenang = ekspedisi;
+        if(r && r.noOrder) l.noOrder = r.noOrder;
+        if(tanggalMuat) l.tanggalMuat = tanggalMuat;
+        if(alasan) l.alasanPilih = alasan;
+      }
+      terpilih.delete(idLelang);
+      render(); }
+
+    await muat(true);          // ambil data segar, lewati simpanan sementara
     if(r && r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
       setStatus(`No Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
     } else if(r && r.noOrder){
@@ -1426,7 +1440,7 @@ async function terapkanUsulRate(){
     setStatus(`Menulis ${pilih.length} baris ke tab Rate…`);
     const r = await gas({action:'rate_terapkan', kunci: pilih.map(u => u.kunci).join('||')});
     tutupUsulRate();
-    await muat();
+    await muat(true);
     setStatus(`Tab Rate diperbarui — ${r.diubah} diubah, ${r.ditambah} ditambahkan.`);
   }catch(err){
     setStatus('Gagal memperbarui: ' + err.message, true);
@@ -1462,7 +1476,7 @@ async function perpanjang(idLelang){
   try{
     setStatus('Memperpanjang batas waktu…');
     const r = await gas({action:'ubah_batas', idLelang, batasWaktu: baru.getTime()});
-    await muat();
+    await muat(true);
     setStatus(r.dibukaLagi
       ? `Lelang ${nama} dibuka lagi sampai ${tanggalTutup(baru.getTime())}.`
       : `Batas waktu ${nama} diubah jadi ${tanggalTutup(baru.getTime())}.`);
