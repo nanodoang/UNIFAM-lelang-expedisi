@@ -1108,7 +1108,11 @@ async function lanjutPilihPemenang(idLelang, ekspedisi, alasan){
 
     await muat(true);          // ambil data segar, lewati simpanan sementara
     if(r && r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
-      setStatus(`No Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
+      setStatus(`Pemenang TERSIMPAN, tapi ${r.kirim}`, true);
+      alert('Pemenang sudah tersimpan dan lelang pindah ke Riwayat Selesai.\n\n' +
+            'TAPI: ' + r.kirim + '\n\n' +
+            'Artinya baris ini BELUM masuk ke Pesanan Armada. Periksa akses ke ' +
+            'spreadsheet Pesanan Armada, lalu batalkan dan pilih ulang pemenangnya.');
     } else if(r && r.noOrder){
       setStatus(`No Order ${r.noOrder} dibuat & terkirim ke planning draft Pesanan Armada.`);
     }
