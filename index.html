@@ -248,6 +248,25 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
   padding:4px 10px;white-space:nowrap;}
 .stempel-tutup .isi{flex:1;font-family:var(--mono);font-size:11.5px;line-height:1.6;}
 .card.sudah-tutup input{background:#F1F3F7;color:#9AA3B8;cursor:not-allowed;}
+
+.jejak-versi{margin-top:8px;font-family:var(--mono);font-size:10px;opacity:.65;}
+
+.terkunci-kotak{display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  background:#fff;border:1px solid var(--line-tebal);padding:12px 14px;}
+.tk-isi{flex:1;min-width:0;}
+.tk-l{display:block;font-family:var(--disp);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
+.tk-n{display:block;font-family:var(--mono);font-size:20px;font-weight:600;
+  color:var(--tinta);line-height:1.2;margin-top:2px;}
+.tk-r{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;}
+.btn-ubah{background:#fff;border:1.5px solid var(--navy);color:var(--navy);
+  font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.09em;
+  text-transform:uppercase;padding:10px 20px;cursor:pointer;white-space:nowrap;}
+.btn-ubah:hover{background:var(--navy);color:#fff;}
+.sedang-ubah{background:rgba(217,130,15,.09);border:1px solid rgba(217,130,15,.4);
+  padding:9px 12px;margin-bottom:12px;font-size:12px;color:#7A4E08;line-height:1.6;}
+.sedang-ubah b{color:#5E3C06;}
+.sedang-ubah a{color:#7A4E08;text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -263,7 +282,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h27';
+const VERSI_HALAMAN = 'h30';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -447,7 +466,7 @@ async function muat(){
       Object.keys(draf).forEach(id => {
         if(!ada.has(id)) { delete draf[id]; return; }
         const l = daftarTerbuka.find(x => x.id === id);
-        if(l && !sudahTutup(l) && parseInt(draf[id].harga, 10) > 0) terpilih.add(id);
+        if(l && !sudahTutup(l) && angkaSaja(draf[id].harga) > 0) terpilih.add(id);
       });
       simpanDrafKeBrowser(); }
     setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')} · ${VERSI_HALAMAN}`);
@@ -530,11 +549,37 @@ let laporan = null;
    otomatis tiap menit akan menimpa angka yang sedang diketik. */
 const draf = {};
 
+/* Lelang yang penawarannya sedang dibuka untuk diubah. Kartu yang sudah
+   punya penawaran tampil terkunci dulu, supaya isinya tidak tersenggol. */
+const sedangUbah = new Set();
+
+function bukaUbah(id){
+  sedangUbah.add(id);
+  render();
+  setTimeout(() => {
+    const e = document.getElementById('harga-' + id);
+    if(e){ e.focus(); e.select && e.select(); }
+  }, 40);
+}
+
+function batalUbah(id){
+  sedangUbah.delete(id);
+  hapusDraf(id);          // buang ketikan, kembali ke angka yang tersimpan
+  terpilih.delete(id);
+  render();
+}
+
 function simpanDraf(id){
   const amb = x => { const e = document.getElementById(x + '-' + id); return e ? e.value : undefined; };
   const h = amb('harga'), e1 = amb('etd'), e2 = amb('eta'), k = amb('kapal');
   if(h === undefined) return;
-  draf[id] = { harga: h, etd: e1, eta: e2, kapal: k };
+
+  /* jangan timpa draf yang sudah berisi dengan kolom yang kebetulan kosong */
+  const bersih = angkaSaja(h);
+  const lama = draf[id];
+  if(bersih === 0 && lama && angkaSaja(lama.harga) > 0 && String(h).trim() === '') return;
+
+  draf[id] = { harga: bersih > 0 ? String(bersih) : '', etd: e1, eta: e2, kapal: k };
   simpanDrafKeBrowser();
 }
 
@@ -548,13 +593,35 @@ function hapusDraf(id){ delete draf[id]; simpanDrafKeBrowser(); }
 /* Harga yang berlaku untuk satu lelang — dari kolom kalau ada isinya,
    kalau tidak dari draf. Dipakai bilah bawah maupun saat mengirim,
    supaya keduanya tidak pernah berbeda. */
+/* Ambil angkanya saja dari apa pun yang diketik: "7.900.000", "Rp 7900000",
+   "7,900,000" — semuanya jadi 7900000. Kolom bertipe angka dulu menolak
+   titik/koma dan mengembalikan nilai KOSONG, itu sumber masalahnya. */
+function angkaSaja(v){
+  const digit = String(v == null ? '' : v).replace(/[^0-9]/g, '');
+  return digit ? parseInt(digit, 10) : 0;
+}
+
+/* Tampilkan dengan pemisah ribuan supaya mudah dibaca */
+function tampilAngka(v){
+  const n = angkaSaja(v);
+  return n > 0 ? n.toLocaleString('id-ID') : '';
+}
+
+/* Rapikan tampilan kolom setelah selesai diketik */
+function rapikanHarga(id){
+  const inp = document.getElementById('harga-' + id);
+  if(!inp) return;
+  const n = angkaSaja(inp.value);
+  inp.value = n > 0 ? n.toLocaleString('id-ID') : '';
+  simpanDraf(id);
+}
+
 function hargaBerlaku(id){
   const inp = document.getElementById('harga-' + id);
-  const dariKolom = inp ? parseInt(inp.value, 10) : NaN;
+  const dariKolom = inp ? angkaSaja(inp.value) : 0;
   if(dariKolom > 0) return dariKolom;
   const d = draf[id];
-  const dariDraf = d ? parseInt(d.harga, 10) : NaN;
-  return dariDraf > 0 ? dariDraf : 0;
+  return d ? angkaSaja(d.harga) : 0;
 }
 
 /* Draf ikut disimpan di browser, supaya tidak hilang walau halaman
@@ -598,8 +665,7 @@ function isiHarga(id){
   const l = daftarTerbuka.find(x => x.id === id);
   if(l && sudahTutup(l)) return;
   simpanDraf(id);
-  const v = parseInt(document.getElementById('harga-' + id).value, 10);
-  const nyala = !!v && v > 0;
+  const nyala = hargaBerlaku(id) > 0;
   const cek = document.getElementById('cek-' + id);
   if(cek) cek.checked = nyala;
   togglePilih(id, nyala);
@@ -608,10 +674,7 @@ function isiHarga(id){
 function pilihSemua(){
   daftarTerbuka.forEach(l => {
     if(sudahTutup(l)) return;
-    const inp = document.getElementById('harga-' + l.id);
-    if(!inp) return;
-    const v = parseInt(inp.value, 10);
-    if(v > 0){
+    if(hargaBerlaku(l.id) > 0){
       const cek = document.getElementById('cek-' + l.id);
       if(cek) cek.checked = true;
       togglePilih(l.id, true);
@@ -653,6 +716,17 @@ async function kirimTerpilih(){
   btn.disabled = true;
 
   simpanSemuaDraf();
+
+  /* Pengaman: kalau ada kolom yang kosong di layar padahal drafnya berisi,
+     isikan kembali dulu — jangan langsung dianggap belum diisi. */
+  daftar.forEach(id => {
+    const inp = document.getElementById('harga-' + id);
+    const d = draf[id];
+    if(inp && String(inp.value).trim() === '' && d && angkaSaja(d.harga) > 0){
+      inp.value = tampilAngka(d.harga);
+    }
+  });
+
   const berhasil = [], gagal = [];
   for(let i = 0; i < daftar.length; i++){
     const id = daftar[i];
@@ -661,7 +735,17 @@ async function kirimTerpilih(){
     const harga = hargaBerlaku(id);
 
     if(l && sudahTutup(l)){ gagal.push(`${nama} — batas waktu sudah lewat`); terpilih.delete(id); continue; }
-    if(!harga || harga <= 0){ gagal.push(`${nama} — harga belum diisi`); continue; }
+    if(!harga || harga <= 0){
+      /* sebutkan sebabnya, supaya kalau terulang langsung ketahuan letaknya */
+      const inp = document.getElementById('harga-' + id);
+      const d = draf[id];
+      const sebab = !inp ? 'kolom harganya tidak ditemukan di halaman'
+                  : String(inp.value).trim() === ''
+                      ? (d && String(d.harga).trim() !== '' ? 'kolom kosong, draf juga tidak terbaca' : 'kolom masih kosong')
+                      : `isi kolom "${String(inp.value).slice(0,20)}" tidak terbaca sebagai angka`;
+      gagal.push(`${nama} — ${sebab}`);
+      continue;
+    }
 
     setStatus(`Mengirim ${i+1} dari ${daftar.length}…`);
     try{
@@ -672,6 +756,7 @@ async function kirimTerpilih(){
       berhasil.push(nama);
       terpilih.delete(id);
       hapusDraf(id);          // sudah tersimpan di server, draf tidak perlu lagi
+      sedangUbah.delete(id);
     }catch(err){
       gagal.push(`${nama} — ${err.message}`);
     }
@@ -816,6 +901,11 @@ function kartuTerbuka(){
 
     const mati = tutup ? 'disabled' : '';
 
+    /* Terkunci kalau sudah pernah menawar, belum ditekan Ubah, dan tidak ada
+       ketikan yang belum dikirim. Lelang yang sudah tutup selalu terkunci. */
+    const adaDraf = draf[l.id] && angkaSaja(draf[l.id].harga) > 0;
+    const terkunci = !!b && !tutup && !sedangUbah.has(l.id) && !adaDraf;
+
     /* dua kotak harga: target dari UNIFAM, dan terendah dari seluruh peserta */
     const kotakHarga = `<div class="harga-baris">
       <div class="kotak-harga kh-target">
@@ -873,13 +963,24 @@ function kartuTerbuka(){
       <div class="card-body">
         ${kotakHarga}
         ${posisi}
-        ${b && !posisi ? `<div class="submitted-note">✓ Penawaran Anda: ${formatRupiah(b.harga)}<br>ETD ${amanHTML(b.etd)||'-'} · ETA ${amanHTML(b.eta)||'-'} · Kapal ${amanHTML(b.namaKapal)||'-'}</div>` : ''}
+        ${terkunci ? `
+        <div class="terkunci-kotak">
+          <div class="tk-isi">
+            <span class="tk-l">Penawaran Anda</span>
+            <span class="tk-n">${formatRupiah(b.harga)}</span>
+            <span class="tk-r">ETD ${amanHTML(b.etd)||'-'} · ETA ${amanHTML(b.eta)||'-'} · Kapal ${amanHTML(b.namaKapal)||'-'}</span>
+          </div>
+          <button class="btn-ubah" onclick="bukaUbah('${l.id}')">Ubah</button>
+        </div>` : `
+        ${b ? `<div class="sedang-ubah">Sedang mengubah penawaran ${formatRupiah(b.harga)} —
+                 tekan <b>Ajukan</b> di bawah untuk menyimpan, atau
+                 <a href="#" onclick="event.preventDefault();batalUbah('${l.id}')">batal</a>.</div>` : ''}
         <div class="form-grid">
           <div class="full">
             <label>Harga Penawaran (Rp)</label>
-            <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0" ${mati}
-                   value="${amanHTML(nilaiKolom(l.id, 'harga', b ? b.harga : ''))}"
-                   oninput="isiHarga('${l.id}')">
+            <input id="harga-${l.id}" type="text" inputmode="numeric" placeholder="0" ${mati}
+                   value="${amanHTML(tampilAngka(nilaiKolom(l.id, 'harga', b ? b.harga : '')))}"
+                   oninput="isiHarga('${l.id}')" onblur="rapikanHarga('${l.id}')">
             <div class="catatan-harga">
               <b>All in</b> — termasuk TKBM, stripping, krani, dll.
               <span class="ppn">Belum termasuk PPN.</span>
@@ -897,7 +998,7 @@ function kartuTerbuka(){
                    value="${amanHTML(nilaiKolom(l.id, 'kapal', b ? b.namaKapal : ''))}"
                    oninput="simpanDraf('${l.id}')">
           </div>
-        </div>
+        </div>`}
       </div>
     </div>`;
   }).join('');
@@ -914,7 +1015,8 @@ function kotakLaporan(){
     html += `<div class="lapor baik"><b>${berhasil.length} penawaran terkirim</b><br>${berhasil.map(amanHTML).join(' · ')}</div>`;
   }
   if(gagal.length){
-    html += `<div class="lapor buruk"><b>${gagal.length} gagal terkirim — masih tercentang, tinggal coba lagi</b><br>• ${gagal.map(amanHTML).join('<br>• ')}</div>`;
+    html += `<div class="lapor buruk"><b>${gagal.length} gagal terkirim — masih tercentang, tinggal coba lagi</b><br>• ${gagal.map(amanHTML).join('<br>• ')}
+      <div class="jejak-versi">halaman ${VERSI_HALAMAN}</div></div>`;
   }
   return html;
 }

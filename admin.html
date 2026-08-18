@@ -399,6 +399,28 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   font-weight:700;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;
   padding:10px 16px;cursor:pointer;}
 .btn-buka:hover{background:#B76D0B;color:#fff;}
+
+.banding-harga{background:#FAFBFD;border:1px solid var(--line);padding:13px 15px;margin-top:14px;}
+.bh-baris{display:flex;align-items:baseline;gap:11px;padding:5px 0;}
+.bh-l{font-family:var(--disp);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;min-width:92px;}
+.bh-n{font-family:var(--mono);font-size:16px;font-weight:600;flex:1;}
+.bh-e{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.bh-baris.pilih .bh-n{color:var(--navy);}
+.bh-selisih{margin-top:8px;padding-top:9px;border-top:1px dashed var(--line-tebal);
+  font-family:var(--mono);font-size:12px;color:var(--red);}
+.bh-selisih b{font-size:13.5px;}
+.kotak-approval{background:#FFF8EC;border:1px solid rgba(217,130,15,.45);padding:11px 13px;
+  margin-bottom:10px;font-size:12.5px;color:#7A4E08;line-height:1.6;}
+.kotak-approval b{display:block;font-family:var(--disp);font-size:14px;letter-spacing:.05em;
+  text-transform:uppercase;color:#5E3C06;margin-bottom:3px;}
+.btn-wa-approval{display:block;text-align:center;background:var(--amber);color:#3D2607;
+  text-decoration:none;font-family:var(--disp);font-weight:700;font-size:13.5px;
+  letter-spacing:.09em;text-transform:uppercase;padding:12px;margin-bottom:9px;}
+.btn-wa-approval:hover{background:#B76D0B;color:#fff;}
+
+.ket-grup{font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  line-height:1.6;margin:-4px 0 9px;text-align:center;}
 </style>
 </head>
 <body>
@@ -854,6 +876,7 @@ function pakaiData(d){
   daftarEkspedisi = d.ekspedisi || [];
   konfirmasiList = d.konfirmasi || [];
   rateInfo = d.rate || {jumlah:0, kota:[]};
+  approvalInfo = d.approval || {wa:'', nama:'', keGrup:false};
   if(Array.isArray(rateInfo)) rateInfo = {jumlah:rateInfo.length, kota:rateInfo.map(r=>String(r.kota||'').toUpperCase())};
   versiScript = d.versi || '(script versi lama)';
   const idAda = new Set(lelangList.map(l => l.id));
@@ -1026,21 +1049,7 @@ async function konfirmasiPaste(){
 function batalPaste(){ pendingPreview=[]; document.getElementById('paste-area').value=''; renderPreview(); }
 
 /* ---------- pilih pemenang ---------- */
-async function pilihPemenang(idLelang, ekspedisi){
-  const inp = document.getElementById(`muat-${idLelang}`);
-  const tanggalMuat = inp ? keLokal(inp.value) : '';
-  try{
-    setStatus('Menyimpan pemenang…');
-    const r = await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat});
-    await muat();
-    if(r && r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
-      setStatus(`No Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
-    } else if(r && r.noOrder){
-      setStatus(`No Order ${r.noOrder} dibuat & terkirim ke planning draft Pesanan Armada.`);
-    }
-    bukaJendelaMenang(idLelang, ekspedisi, r ? r.noOrder : '');
-  }catch(err){ setStatus('Gagal simpan pemenang: ' + err.message, true); }
-}
+let approvalInfo = { wa:'', nama:'', keGrup:false };
 
 async function batalPemenang(idLelang, namaEks, noOrder){
   const pesan = [
@@ -1062,10 +1071,160 @@ async function batalPemenang(idLelang, namaEks, noOrder){
   }catch(err){ setStatus('Gagal membatalkan: ' + err.message, true); }
 }
 
-function bukaJendelaMenang(idLelang, namaEks, noOrder){
+/* Kalau yang dipilih BUKAN penawar termurah, minta alasan dulu lalu
+   tawarkan kirim permintaan persetujuan lewat WA. */
+async function pilihPemenang(idLelang, ekspedisi){
+  const bids = bidsUntuk(idLelang);
+  const termurah = bids.length ? bids[0] : null;
+  const dipilih = bids.find(b => b.ekspedisi === ekspedisi);
+
+  const bukanTermurah = !!(termurah && dipilih && dipilih.harga > termurah.harga);
+  if(bukanTermurah){
+    bukaJendelaAlasan(idLelang, ekspedisi, dipilih, termurah);
+    return;
+  }
+  lanjutPilihPemenang(idLelang, ekspedisi, '');
+}
+
+async function lanjutPilihPemenang(idLelang, ekspedisi, alasan){
+  const inp = document.getElementById(`muat-${idLelang}`);
+  const tanggalMuat = inp ? keLokal(inp.value) : '';
+  try{
+    setStatus('Menyimpan pemenang…');
+    const r = await gas({action:'pilih_pemenang', idLelang, pemenang:ekspedisi, tanggalMuat, alasan});
+    await muat();
+    if(r && r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
+      setStatus(`No Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
+    } else if(r && r.noOrder){
+      setStatus(`No Order ${r.noOrder} dibuat & terkirim ke planning draft Pesanan Armada.`);
+    }
+    bukaJendelaMenang(idLelang, ekspedisi, r ? r.noOrder : '', alasan);
+  }catch(err){ setStatus('Gagal simpan pemenang: ' + err.message, true); }
+}
+
+function bukaJendelaAlasan(idLelang, ekspedisi, dipilih, termurah){
+  const l = lelangList.find(x => x.id === idLelang);
+  const selisih = dipilih.harga - termurah.harga;
+  const persen = termurah.harga ? (selisih / termurah.harga * 100) : 0;
+
+  const w = document.createElement('div');
+  w.className = 'tirai';
+  w.id = 'tirai-alasan';
+  w.innerHTML = `
+    <div class="jendela">
+      <span class="tanda-menang" style="background:rgba(217,130,15,.16);color:#8A5A0A;">Bukan penawar termurah</span>
+      <h2>${ekspedisi}</h2>
+      <div class="banding-harga">
+        <div class="bh-baris">
+          <span class="bh-l">Termurah</span>
+          <span class="bh-n">${formatRupiah(termurah.harga)}</span>
+          <span class="bh-e">${termurah.ekspedisi}</span>
+        </div>
+        <div class="bh-baris pilih">
+          <span class="bh-l">Yang dipilih</span>
+          <span class="bh-n">${formatRupiah(dipilih.harga)}</span>
+          <span class="bh-e">${ekspedisi}</span>
+        </div>
+        <div class="bh-selisih">Selisih <b>${formatRupiah(selisih)}</b> (${persen.toFixed(1)}% lebih mahal)</div>
+      </div>
+
+      <div class="kolom" style="margin-top:14px;">
+        <label>Alasan tidak memilih yang termurah</label>
+        <input id="alasan-pilih" type="text" placeholder="mis. jadwal kapal SPA belum ada"
+               onkeydown="if(event.key==='Enter')kirimAlasan('${idLelang}','${ekspedisi}')">
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;font-family:var(--mono);line-height:1.5;">
+          Tercatat di sheet dan ikut terkirim di permintaan persetujuan.</div>
+      </div>
+
+      <div class="baris-tombol">
+        <button class="btn-primary" style="flex:1;" id="btn-alasan"
+                onclick="kirimAlasan('${idLelang}','${ekspedisi}')">Lanjut pilih</button>
+        <button class="btn-nanti" style="width:auto;margin:0;" onclick="tutupAlasan()">Batal</button>
+      </div>
+    </div>`;
+  w.onclick = ev => { if(ev.target === w) tutupAlasan(); };
+  document.body.appendChild(w);
+  setTimeout(() => { const i = document.getElementById('alasan-pilih'); if(i) i.focus(); }, 50);
+}
+
+function tutupAlasan(){
+  const w = document.getElementById('tirai-alasan');
+  if(w) w.remove();
+}
+
+function kirimAlasan(idLelang, ekspedisi){
+  const inp = document.getElementById('alasan-pilih');
+  const alasan = inp ? inp.value.trim() : '';
+  if(!alasan){
+    if(inp) inp.style.borderColor = 'var(--red)';
+    setStatus('Alasan harus diisi kalau tidak memilih yang termurah.', true);
+    return;
+  }
+  const btn = document.getElementById('btn-alasan');
+  if(btn) btn.disabled = true;
+  tutupAlasan();
+  lanjutPilihPemenang(idLelang, ekspedisi, alasan);
+}
+
+/* Pesan WA permintaan persetujuan */
+function waApproval(l, dipilih, termurah, alasan, noOrder){
+  const selisih = dipilih.harga - termurah.harga;
+  const teks = [
+    `Mohon persetujuan pemilihan ekspedisi di luar penawaran termurah.`,
+    ``,
+    noOrder ? `No Order  : ${noOrder}` : '',
+    `Tujuan    : Cikande -> ${l.kota}`,
+    `Customer  : ${l.customer}`,
+    `Muatan    : ${l.tipeMobil}`,
+    `Tgl muat  : ${l.tanggalMuat || l.tanggal || '-'}`,
+    ``,
+    `Termurah     : ${termurah.ekspedisi} — ${formatRupiah(termurah.harga)}`,
+    `*Yang dipilih : ${dipilih.ekspedisi} — ${formatRupiah(dipilih.harga)}*`,
+    `Selisih      : ${formatRupiah(selisih)} lebih mahal`,
+    ``,
+    `Alasan: ${alasan || '-'}`,
+    ``,
+    `Mohon konfirmasi persetujuannya. Terima kasih.`
+  ].filter(x => x !== '').join('\n');
+
+  /* Ke grup: buka WhatsApp tanpa nomor tujuan supaya muncul pemilih chat,
+     lalu grupnya dipilih sendiri. WhatsApp tidak punya tautan langsung ke grup. */
+  if(approvalInfo.keGrup) return `https://wa.me/?text=${encodeURIComponent(teks)}`;
+
+  const nomor = (approvalInfo.wa || '').replace(/[^0-9]/g, '');
+  if(!nomor) return `https://wa.me/?text=${encodeURIComponent(teks)}`;
+  return `https://wa.me/${nomor}?text=${encodeURIComponent(teks)}`;
+}
+
+function bukaJendelaMenang(idLelang, namaEks, noOrder, alasan){
   const l = lelangList.find(x => x.id === idLelang);
   const win = bidsUntuk(idLelang).find(b => b.ekspedisi === namaEks);
   const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === String(namaEks).toUpperCase());
+
+  /* kalau bukan penawar termurah, tawarkan kirim permintaan persetujuan dulu */
+  const semuaBid = bidsUntuk(idLelang);
+  const termurah = semuaBid.length ? semuaBid[0] : null;
+  const bukanTermurah = !!(termurah && win && win.harga > termurah.harga);
+  const bisaKirim = approvalInfo.keGrup || !!approvalInfo.wa;
+  const blokApproval = (bukanTermurah && bisaKirim)
+    ? `<div class="kotak-approval">
+         <b>Perlu persetujuan</b>
+         Yang dipilih ${formatRupiah(win.harga - termurah.harga)} lebih mahal dari penawaran termurah
+         (${termurah.ekspedisi} ${formatRupiah(termurah.harga)}).
+         ${alasan ? `<br>Alasan: <i>${alasan}</i>` : ''}
+       </div>
+       <a class="btn-wa-approval" target="_blank"
+          href="${waApproval(l, win, termurah, alasan, noOrder)}">
+          Minta persetujuan via WA</a>
+       ${approvalInfo.keGrup
+          ? `<div class="ket-grup">WhatsApp akan terbuka dengan pesan siap kirim —
+               pilih ${approvalInfo.nama || 'grup management'} dari daftar chat.</div>`
+          : ''}`
+    : (bukanTermurah
+        ? `<div class="peringatan-kecil">Bukan penawar termurah, tapi tujuan persetujuan belum
+             diatur di Code.gs — isi WA_APPROVAL, atau set APPROVAL_KE_GRUP = true
+             kalau mau dikirim ke grup.</div>`
+        : '');
 
   const w = document.createElement('div');
   w.className = 'tirai';
@@ -1080,6 +1239,7 @@ function bukaJendelaMenang(idLelang, namaEks, noOrder){
         ${win ? `<div style="margin-top:7px;"><span class="label">Harga</span><br><b>${formatRupiah(win.harga)}</b></div>` : ''}
         <div style="margin-top:7px;"><span class="label">Tanggal Muat</span><br><b>${l ? (l.tanggalMuat || l.tanggal || '-') : '-'}</b></div>
       </div>
+      ${blokApproval}
       ${eks && eks.wa
         ? `<a class="btn-wa-besar" href="${waKonfirmasi(l, win, eks)}" target="_blank"
               onclick="tutupJendelaMenang()">Kirim Form Konfirmasi via WA</a>`
