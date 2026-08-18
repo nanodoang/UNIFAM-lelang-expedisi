@@ -358,6 +358,47 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   .isi{padding:15px 16px 40px;}
 }
 
+
+.btn-rate{background:#fff;border:1px solid var(--navy);color:var(--navy);
+  font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;
+  text-transform:uppercase;padding:10px 15px;cursor:pointer;}
+.btn-rate:hover{background:var(--navy);color:#fff;}
+.jendela.lebar{max-width:620px;}
+.tabel-usul{max-height:340px;overflow:auto;border:1px solid var(--line);margin-bottom:14px;}
+.tabel-usul table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tabel-usul th{position:sticky;top:0;background:#FAFBFD;text-align:left;
+  font-family:var(--disp);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);
+  font-weight:600;white-space:nowrap;}
+.tabel-usul td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.tabel-usul tr:last-child td{border-bottom:none;}
+.tabel-usul .cek-usul{width:17px;height:17px;accent-color:var(--navy);cursor:pointer;}
+.tabel-usul .kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
+.tag-turun{font-family:var(--mono);font-size:10px;color:#0B6350;
+  background:rgba(18,135,107,.12);padding:2px 7px;white-space:nowrap;}
+.tag-naik{font-family:var(--mono);font-size:10px;color:#A5352C;
+  background:rgba(200,68,58,.1);padding:2px 7px;white-space:nowrap;}
+.tag-baru{font-family:var(--mono);font-size:10px;color:var(--navy);
+  background:rgba(42,49,128,.1);padding:2px 7px;white-space:nowrap;}
+.usul-kop{display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap;}
+.usul-kop .pilih-cepat{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;}
+.usul-kop .pilih-cepat:hover{border-color:var(--navy);color:var(--navy);}
+
+.kotak-tutup{background:#FFF8EC;border:1px solid rgba(217,130,15,.45);
+  padding:12px 14px;margin-bottom:13px;}
+.kt-teks{font-size:12.5px;color:#7A4E08;line-height:1.6;}
+.kt-teks b{display:block;font-family:var(--disp);font-size:14.5px;letter-spacing:.05em;
+  text-transform:uppercase;color:#5E3C06;margin-bottom:3px;}
+.kt-isian{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap;margin-top:11px;}
+.kt-isian label{display:block;font-family:var(--disp);font-size:9.5px;color:#8A5A0A;
+  text-transform:uppercase;letter-spacing:.13em;margin-bottom:4px;font-weight:600;}
+.kt-isian input{background:#fff;border:1px solid rgba(217,130,15,.5);padding:8px 10px;
+  font-family:var(--mono);font-size:13px;min-height:38px;}
+.btn-buka{background:var(--amber);color:#3D2607;border:none;font-family:var(--disp);
+  font-weight:700;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;
+  padding:10px 16px;cursor:pointer;}
+.btn-buka:hover{background:#B76D0B;color:#fff;}
 </style>
 </head>
 <body>
@@ -454,6 +495,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   </div>
   <div class="bar-hapus">
     <button class="btn-siar" onclick="bukaSiaran()">Beritahu semua ekspedisi</button>
+    <button class="btn-rate" onclick="bukaUsulRate()">Perbarui tab Rate</button>
     <button class="btn-hapus" id="btn-hapus-pilih" onclick="hapusTerpilih()" disabled>Hapus Terpilih</button>
     <button class="btn-hapus-semua" onclick="hapusSemua()">Hapus Semua Lelang</button>
     <span class="pilih-info" id="pilih-info">belum ada yang dipilih</span>
@@ -1122,6 +1164,151 @@ function tutupSiaran(){
   if(w) w.remove();
 }
 
+let usulRate = [];
+
+async function bukaUsulRate(){
+  try{
+    setStatus('Menyusun usulan dari hasil lelang…');
+    const r = await gas({action:'rate_usul'});
+    usulRate = r.usul || [];
+    setStatus(`${usulRate.length} usulan perubahan rate · ${r.jumlahRate} baris di tab Rate`);
+    gambarUsulRate();
+  }catch(err){ setStatus('Gagal menyusun usulan: ' + err.message, true); }
+}
+
+function gambarUsulRate(){
+  const w = document.createElement('div');
+  w.className = 'tirai';
+  w.id = 'tirai-rate';
+
+  if(usulRate.length === 0){
+    w.innerHTML = `<div class="jendela">
+      <h2>Perbarui tab Rate</h2>
+      <p style="font-size:13px;color:var(--muted);margin:6px 0 16px;line-height:1.6;">
+        Tidak ada yang perlu diubah — harga pemenang di semua rute sudah sama dengan
+        isi tab Rate.</p>
+      <button class="btn-nanti" onclick="tutupUsulRate()">Tutup</button>
+    </div>`;
+  } else {
+    const baris = usulRate.map((u,i) => {
+      const tag = u.jenis === 'turun' ? `<span class="tag-turun">turun ${formatRupiah(Math.abs(u.selisih))}</span>`
+                : u.jenis === 'naik'  ? `<span class="tag-naik">naik ${formatRupiah(u.selisih)}</span>`
+                : `<span class="tag-baru">rute baru</span>`;
+      return `<tr>
+        <td><input type="checkbox" class="cek-usul" id="u-${i}" ${u.jenis === 'turun' ? 'checked' : ''}></td>
+        <td><b>${u.kota}</b><br><span style="font-family:var(--mono);font-size:10.5px;color:var(--muted);">${u.tipeMobil || '(semua tipe)'}</span></td>
+        <td class="kanan">${u.hargaLama ? formatRupiah(u.hargaLama) : '—'}</td>
+        <td class="kanan"><b>${formatRupiah(u.hargaBaru)}</b></td>
+        <td>${tag}</td>
+        <td style="font-family:var(--mono);font-size:10.5px;color:var(--muted);">${u.ekspedisi}<br>${u.tanggal}</td>
+      </tr>`;
+    }).join('');
+
+    const turun = usulRate.filter(u => u.jenis === 'turun').length;
+    const naik  = usulRate.filter(u => u.jenis === 'naik').length;
+    const baru  = usulRate.filter(u => u.jenis === 'baru').length;
+
+    w.innerHTML = `<div class="jendela lebar">
+      <h2>Perbarui tab Rate</h2>
+      <p style="font-size:13px;color:var(--muted);margin:6px 0 14px;line-height:1.6;">
+        Diambil dari <b>harga pemenang</b> lelang terakhir tiap rute — bukan penawaran
+        termurah yang tidak jadi dipakai. Yang turun sudah dicentang; yang naik dan rute
+        baru sengaja tidak, silakan periksa dulu.</p>
+
+      <div class="usul-kop">
+        <span style="font-family:var(--mono);font-size:11.5px;color:var(--muted);">
+          ${turun} turun · ${naik} naik · ${baru} rute baru</span>
+        <button class="pilih-cepat" onclick="centangUsul(true)">Centang semua</button>
+        <button class="pilih-cepat" onclick="centangUsul(false)">Kosongkan</button>
+      </div>
+
+      <div class="tabel-usul">
+        <table>
+          <thead><tr><th></th><th>Rute</th><th class="kanan">Rate lama</th>
+            <th class="kanan">Rate baru</th><th>Perubahan</th><th>Sumber</th></tr></thead>
+          <tbody>${baris}</tbody>
+        </table>
+      </div>
+
+      <div class="baris-tombol">
+        <button class="btn-primary" style="flex:1;" id="btn-terap" onclick="terapkanUsulRate()">Terapkan yang dicentang</button>
+        <button class="btn-nanti" style="width:auto;margin:0;" onclick="tutupUsulRate()">Batal</button>
+      </div>
+    </div>`;
+  }
+
+  w.onclick = ev => { if(ev.target === w) tutupUsulRate(); };
+  document.body.appendChild(w);
+}
+
+function centangUsul(on){
+  usulRate.forEach((u,i) => {
+    const c = document.getElementById('u-' + i);
+    if(c) c.checked = on;
+  });
+}
+
+function tutupUsulRate(){
+  const w = document.getElementById('tirai-rate');
+  if(w) w.remove();
+}
+
+async function terapkanUsulRate(){
+  const pilih = usulRate.filter((u,i) => {
+    const c = document.getElementById('u-' + i);
+    return c && c.checked;
+  });
+  if(pilih.length === 0){ setStatus('Belum ada baris yang dicentang.', true); return; }
+
+  const btn = document.getElementById('btn-terap');
+  if(btn) btn.disabled = true;
+  try{
+    setStatus(`Menulis ${pilih.length} baris ke tab Rate…`);
+    const r = await gas({action:'rate_terapkan', kunci: pilih.map(u => u.kunci).join('||')});
+    tutupUsulRate();
+    await muat();
+    setStatus(`Tab Rate diperbarui — ${r.diubah} diubah, ${r.ditambah} ditambahkan.`);
+  }catch(err){
+    setStatus('Gagal memperbarui: ' + err.message, true);
+    if(btn) btn.disabled = false;
+  }
+}
+
+/* tanggal hari ini/besok dalam bentuk yyyy-mm-dd untuk kolom tanggal */
+function sokISO(d){
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+
+async function perpanjang(idLelang){
+  const tgl = document.getElementById('pjg-tgl-' + idLelang);
+  const jam = document.getElementById('pjg-jam-' + idLelang);
+  if(!tgl || !jam || !tgl.value || !jam.value){
+    setStatus('Tanggal dan jam tutup baru harus diisi.', true); return;
+  }
+  const [th, bl, hr] = tgl.value.split('-').map(Number);
+  const [jj, mm] = jam.value.split(':').map(Number);
+  const baru = new Date(th, bl - 1, hr, jj, mm, 0, 0);
+
+  if(isNaN(baru.getTime())){ setStatus('Tanggal tidak terbaca.', true); return; }
+  if(baru.getTime() <= Date.now()){
+    if(!confirm('Waktu yang dipilih sudah lewat.\n\nLelang akan tetap tertutup. Lanjutkan?')) return;
+  }
+
+  const l = lelangList.find(x => x.id === idLelang);
+  const nama = l ? l.kota : idLelang;
+  if(!confirm(`Buka lagi lelang ${nama}?\n\nTutup baru: ${tanggalTutup(baru.getTime())}\n\nEkspedisi bisa mengisi harga lagi sampai waktu itu.`)) return;
+
+  try{
+    setStatus('Memperpanjang batas waktu…');
+    const r = await gas({action:'ubah_batas', idLelang, batasWaktu: baru.getTime()});
+    await muat();
+    setStatus(r.dibukaLagi
+      ? `Lelang ${nama} dibuka lagi sampai ${tanggalTutup(baru.getTime())}.`
+      : `Batas waktu ${nama} diubah jadi ${tanggalTutup(baru.getTime())}.`);
+  }catch(err){ setStatus('Gagal memperpanjang: ' + err.message, true); }
+}
+
 function linkKonfirmasi(idLelang, ekspedisi){
   return `${BASE_URL}/konfirmasi.html?id=${encodeURIComponent(idLelang)}&ekspedisi=${encodeURIComponent(ekspedisi)}`;
 }
@@ -1171,12 +1358,22 @@ function render(){
 
         let ratePanel = '';
         if(!l.rateExisting){
-          const adaKota = (rateInfo.kota || []).indexOf(l.kota.trim().toUpperCase()) > -1;
-          const alasan = rateInfo.jumlah === 0
-            ? 'tab Rate masih kosong'
-            : !adaKota
-              ? `tidak ada baris Rate untuk kota "${l.kota}"`
-              : `ada baris untuk "${l.kota}" tapi Tipe Mobil tidak cocok dengan "${l.tipeMobil}"`;
+          const rapi = t => String(t||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+          const kNorm = rapi(l.kota), tNorm = rapi(l.tipeMobil);
+          const adaKota = (rateInfo.kota || []).indexOf(kNorm) > -1;
+
+          let alasan;
+          if(rateInfo.jumlah === 0){
+            alasan = 'tab Rate masih kosong';
+          } else if(!adaKota){
+            alasan = `belum ada baris Rate untuk kota "${l.kota}"`;
+          } else {
+            // kotanya ada — tunjukkan tipe apa saja yang tersedia untuk kota itu
+            const tipeAda = (rateInfo.pasangan || [])
+              .filter(x => x.split('::')[0].split('|')[0] === kNorm)
+              .map(x => x.split('::')[1]);
+            alasan = `ada rate untuk "${l.kota}" tapi tipe mobilnya ${tipeAda.length ? tipeAda.map(x=>`"${x}"`).join(' / ') : '(kosong)'}, sedangkan lelang ini "${l.tipeMobil}"`;
+          }
           ratePanel = `<div class="rate-panel rate-kosong">Target Rate UNIFAM belum ketemu — ${alasan}</div>`;
         }
         if(l.rateExisting){
@@ -1205,10 +1402,24 @@ function render(){
               <div class="meta">${l.customer} · ${l.tipeMobil}<br>${l.tanggal} · ${bids.length} ekspedisi mengisi</div>
               ${l.alamat ? `<div class="alamat-box"><b>Alamat:</b> ${l.alamat}</div>` : '<div class="alamat-box">Alamat belum ketemu di tab Alamat</div>'}
             </div>
-            <div class="deadline-tag ${lewat?'lewat':''}">${lewat ? 'lewat batas' : `tutup ${tanggalTutup(l.batasWaktu)}<br>${formatJam(l.batasWaktu)}`}</div>
+            <div class="deadline-tag ${lewat?'lewat':''}">${lewat
+              ? `sudah tutup<br>${tanggalTutup(l.batasWaktu)}`
+              : `tutup ${tanggalTutup(l.batasWaktu)}<br>${formatJam(l.batasWaktu)}`}</div>
           </div>
           <div class="card-body">
             ${ratePanel}
+            ${lewat ? `<div class="kotak-tutup">
+              <div class="kt-teks">
+                <b>Lelang sudah tutup</b>
+                Ekspedisi tidak bisa lagi mengisi harga. Penawaran yang sudah masuk tetap ada,
+                dan kamu tetap bisa memilih pemenang. Perpanjang kalau mau dibuka lagi.
+              </div>
+              <div class="kt-isian">
+                <div><label>Tutup baru</label><input id="pjg-tgl-${l.id}" type="date" value="${sokISO(new Date(Date.now()+86400000))}"></div>
+                <div><label>Pukul</label><input id="pjg-jam-${l.id}" type="time" value="12:00"></div>
+                <button class="btn-buka" onclick="perpanjang('${l.id}')">Buka lagi</button>
+              </div>
+            </div>` : ''}
             <div class="muat-input">
               <label for="muat-${l.id}">Tanggal muat / pick up</label>
               <input id="muat-${l.id}" type="date" value="${keISO(l.tanggalMuat || l.tanggal)}">

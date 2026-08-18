@@ -428,6 +428,7 @@ function keluar(){
 
 async function muat(){
   if(!sesi) { render(); return; }
+  simpanSemuaDraf();          // amankan dulu sebelum data diganti
   try{
     setStatus('Memuat data…');
     const d = await gas({action:'data_ekspedisi', user:sesi.user, pass:sesi.pass});
@@ -514,6 +515,37 @@ async function kirimGantiPass(){
 const terpilih = new Set();
 let laporan = null;
 
+/* Ketikan yang belum dikirim, disimpan per lelang. Tanpa ini, muat ulang
+   otomatis tiap menit akan menimpa angka yang sedang diketik. */
+const draf = {};
+
+function simpanDraf(id){
+  const amb = x => { const e = document.getElementById(x + '-' + id); return e ? e.value : undefined; };
+  const h = amb('harga'), e1 = amb('etd'), e2 = amb('eta'), k = amb('kapal');
+  if(h === undefined) return;
+  draf[id] = { harga: h, etd: e1, eta: e2, kapal: k };
+}
+
+/* Kumpulkan ketikan dari semua kartu yang sedang tampil */
+function simpanSemuaDraf(){
+  daftarTerbuka.forEach(l => simpanDraf(l.id));
+}
+
+function hapusDraf(id){ delete draf[id]; }
+
+/* Nilai yang dipakai saat menggambar: ketikan dulu, baru data dari server */
+function nilaiKolom(id, kunci, bawaan){
+  const d = draf[id];
+  if(d && d[kunci] !== undefined && d[kunci] !== null) return d[kunci];
+  return bawaan;
+}
+
+/* Jangan gambar ulang saat orangnya sedang mengetik — cukup tunda sebentar */
+function sedangMengetik(){
+  const a = document.activeElement;
+  return !!(a && a.tagName === 'INPUT' && a.closest('.card'));
+}
+
 function togglePilih(id, nyala){
   if(nyala) terpilih.add(id); else terpilih.delete(id);
   const c = document.getElementById('card-' + id);
@@ -525,6 +557,7 @@ function togglePilih(id, nyala){
 function isiHarga(id){
   const l = daftarTerbuka.find(x => x.id === id);
   if(l && sudahTutup(l)) return;
+  simpanDraf(id);
   const v = parseInt(document.getElementById('harga-' + id).value, 10);
   const nyala = !!v && v > 0;
   const cek = document.getElementById('cek-' + id);
@@ -577,6 +610,7 @@ async function kirimTerpilih(){
   const btn = document.getElementById('btn-kirim');
   btn.disabled = true;
 
+  simpanSemuaDraf();
   const berhasil = [], gagal = [];
   for(let i = 0; i < daftar.length; i++){
     const id = daftar[i];
@@ -595,6 +629,7 @@ async function kirimTerpilih(){
                  namaKapal: document.getElementById('kapal-' + id).value.trim()});
       berhasil.push(nama);
       terpilih.delete(id);
+      hapusDraf(id);          // sudah tersimpan di server, draf tidak perlu lagi
     }catch(err){
       gagal.push(`${nama} — ${err.message}`);
     }
@@ -627,6 +662,12 @@ async function simpanRealisasi(id){
 
 /* ---------- tampilan ---------- */
 function render(){
+  /* amankan ketikan yang belum dikirim, lalu ingat kolom mana yang sedang aktif */
+  simpanSemuaDraf();
+  const aktifId = (document.activeElement && document.activeElement.id) || '';
+  const posisiKursor = (document.activeElement && typeof document.activeElement.selectionStart === 'number')
+    ? document.activeElement.selectionStart : null;
+
   const isi = document.getElementById('isi');
   const kaki = document.getElementById('kaki');
 
@@ -700,6 +741,17 @@ function render(){
     document.body.classList.add('ada-bilah');
     perbaruiBilah();
   }
+  /* kembalikan fokus ke kolom yang tadi sedang diisi */
+  if(aktifId){
+    const el = document.getElementById(aktifId);
+    if(el){
+      el.focus();
+      if(posisiKursor !== null && typeof el.setSelectionRange === 'function'){
+        try{ el.setSelectionRange(posisiKursor, posisiKursor); }catch(e){}
+      }
+    }
+  }
+
   kaki.textContent = tabAktif === 'terbuka'
     ? 'Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.'
     : 'Kolom ATD, ATA, Dooring, dan Keterangan diisi oleh Anda. Tersimpan otomatis beberapa saat setelah diisi.';
@@ -784,17 +836,24 @@ function kartuTerbuka(){
           <div class="full">
             <label>Harga Penawaran (Rp)</label>
             <input id="harga-${l.id}" type="number" inputmode="numeric" placeholder="0" ${mati}
-                   value="${b ? b.harga : ''}" oninput="isiHarga('${l.id}')">
+                   value="${amanHTML(nilaiKolom(l.id, 'harga', b ? b.harga : ''))}"
+                   oninput="isiHarga('${l.id}')">
             <div class="catatan-harga">
               <b>All in</b> — termasuk TKBM, stripping, krani, dll.
               <span class="ppn">Belum termasuk PPN.</span>
             </div>
           </div>
-          <div><label>ETD</label><input id="etd-${l.id}" type="date" ${mati} value="${keISO(b ? b.etd : '')}"></div>
-          <div><label>ETA</label><input id="eta-${l.id}" type="date" ${mati} value="${keISO(b ? b.eta : '')}"></div>
+          <div><label>ETD</label><input id="etd-${l.id}" type="date" ${mati}
+                 value="${amanHTML(nilaiKolom(l.id, 'etd', keISO(b ? b.etd : '')))}"
+                 onchange="simpanDraf('${l.id}')"></div>
+          <div><label>ETA</label><input id="eta-${l.id}" type="date" ${mati}
+                 value="${amanHTML(nilaiKolom(l.id, 'eta', keISO(b ? b.eta : '')))}"
+                 onchange="simpanDraf('${l.id}')"></div>
           <div class="full">
             <label>Nama Kapal</label>
-            <input id="kapal-${l.id}" type="text" ${mati} placeholder="mis. KM Meratus" value="${amanHTML(b ? b.namaKapal : '')}">
+            <input id="kapal-${l.id}" type="text" ${mati} placeholder="mis. KM Meratus"
+                   value="${amanHTML(nilaiKolom(l.id, 'kapal', b ? b.namaKapal : ''))}"
+                   oninput="simpanDraf('${l.id}')">
           </div>
         </div>
       </div>
@@ -877,7 +936,7 @@ setInterval(() => {
 
   if(kini !== jumlahTutupTerakhir){
     jumlahTutupTerakhir = kini;
-    render();                       // ada yang baru tutup — gambar ulang
+    if(!sedangMengetik()) render();   // ada yang baru tutup — gambar ulang
     return;
   }
   // cukup perbarui teks hitung mundurnya saja, tidak menggambar ulang kartu
@@ -893,7 +952,13 @@ setInterval(() => {
   });
 }, 1000);
 
-setInterval(() => { if(sesi && tabAktif === 'terbuka' && !document.hidden) muat(); }, 60000);
+/* Muat ulang otomatis dilewati kalau orangnya sedang mengetik — supaya
+   angka yang sedang diisi tidak terganggu. Dicoba lagi di putaran berikutnya. */
+setInterval(() => {
+  if(!sesi || tabAktif !== 'terbuka' || document.hidden) return;
+  if(sedangMengetik()) return;
+  muat();
+}, 60000);
 document.addEventListener('visibilitychange', () => {
   if(!document.hidden && sesi && tabAktif === 'terbuka') muat();
 });
