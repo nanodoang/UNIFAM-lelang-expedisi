@@ -359,7 +359,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
       <button class="menu" onclick="document.getElementById('sisi').classList.toggle('buka')">☰</button>
       <div class="tajuk">
         <h1>Rekap &amp; Realisasi</h1>
-        <div class="ket">Penghematan terhadap target rate dan data pengiriman</div>
+        <div class="ket">Penghematan terhadap rate rank 1 dan data pengiriman</div>
       </div>
       <div class="aksi">
         <div class="aku"><div class="bulat">N</div><div><div class="n">Nano</div><div class="r">Admin</div></div></div>
@@ -385,7 +385,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   <div class="kotak-tabel"><div class="gulir" id="wadah"></div></div>
 </main>
 
-<footer>Penghematan dihitung dari selisih Target Rate UNIFAM terhadap harga pemenang. Hanya lelang yang sudah selesai dan punya pemenang yang ikut dihitung.</footer>
+<footer>Penghematan dihitung dari selisih <b>rate rank 1</b> (harga termurah di tab Rate, apa adanya tanpa potongan 3%) terhadap harga pemenang. Hanya lelang yang sudah selesai dan punya pemenang yang ikut dihitung.</footer>
 
     </div>
   </div>
@@ -636,13 +636,13 @@ function render(){
   document.getElementById('ringkas').innerHTML = `
     <div class="kartu-angka"><div class="label">Lelang selesai</div>
       <div class="nilai">${data.jumlah}</div></div>
-    <div class="kartu-angka"><div class="label">Total target rate</div>
+    <div class="kartu-angka"><div class="label">Total rate rank 1</div>
       <div class="nilai">${rp(data.totalTarget)}</div></div>
     <div class="kartu-angka"><div class="label">Total harga pemenang</div>
       <div class="nilai">${rp(data.totalMenang)}</div></div>
     <div class="kartu-angka"><div class="label">Penghematan</div>
       <div class="nilai ${data.totalHemat >= 0 ? 'hemat' : 'rugi'}">${rp(data.totalHemat)}</div>
-      <div class="ket">${pct(data.persen)} dari target</div></div>`;
+      <div class="ket">${pct(data.persen)} dari rate rank 1</div></div>`;
 
   const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi'};
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
@@ -658,7 +658,7 @@ function tabelKelompok(daftar, jenis){
   document.getElementById('ket-tabel').textContent = `${daftar.length} baris`;
   return `<table class="rekap">
     <thead><tr><th>${kepalaNama}</th><th style="text-align:right;">Lelang</th>
-      <th style="text-align:right;">Target</th><th style="text-align:right;">Pemenang</th>
+      <th style="text-align:right;">Rank 1</th><th style="text-align:right;">Pemenang</th>
       <th style="text-align:right;">Hemat</th><th style="text-align:right;">%</th></tr></thead>
     <tbody>${daftar.map(b => `<tr>
       <td style="font-weight:700;">${jenis === 'bulan' ? namaBulan(b.nama) : aman(b.nama)}</td>
@@ -678,7 +678,7 @@ function tabelRinci(){
   return `<table class="rekap" style="min-width:1150px;">
     <thead><tr>
       <th>Tgl Muat</th><th>No Order</th><th>Distributor</th><th>Kota</th><th>Tipe</th><th>Ekspedisi</th>
-      <th style="text-align:right;">Target</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Hemat</th>
+      <th style="text-align:right;">Rank 1</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Hemat</th>
       <th>Kontener</th><th>Kapal</th><th>ETD</th><th>ETA</th><th>ATD</th><th>ATA</th><th>Dooring</th><th>Keterangan</th>
     </tr></thead>
     <tbody>${r.map(x => `<tr>
@@ -711,7 +711,7 @@ function salin(){
   if(!data) return;
   let baris = [];
   if(tabAktif === 'rinci'){
-    baris.push(['Tgl Muat','No Order','Distributor','Kota','Tipe','Ekspedisi','Target','Harga','Hemat',
+    baris.push(['Tgl Muat','No Order','Distributor','Kota','Tipe','Ekspedisi','Rank 1','Harga','Hemat',
                 'No Kontener','Kapal','ETD','ETA','ATD','ATA','Dooring','Keterangan'].join('\t'));
     (data.rinci||[]).forEach(x => baris.push([
       bersih(x.tanggal), bersih(x.noOrder), bersih(x.customer), bersih(x.kota), bersih(x.tipeMobil),
@@ -720,7 +720,7 @@ function salin(){
     ].join('\t')));
   } else {
     const d = tabAktif === 'bulan' ? data.perBulan : data.perEkspedisi;
-    baris.push([tabAktif === 'bulan' ? 'Bulan' : 'Ekspedisi','Lelang','Target','Pemenang','Hemat','Persen'].join('\t'));
+    baris.push([tabAktif === 'bulan' ? 'Bulan' : 'Ekspedisi','Lelang','Rank 1','Pemenang','Hemat','Persen'].join('\t'));
     (d||[]).forEach(b => baris.push([
       tabAktif === 'bulan' ? namaBulan(b.nama) : bersih(b.nama),
       b.jumlah, b.target, b.menang, b.hemat, b.persen.toFixed(1)
