@@ -130,7 +130,8 @@ footer{font-family:var(--mono);}
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
 
 const params = new URLSearchParams(window.location.search);
-const idLelang = params.get('id') || '';
+const idOrder  = params.get('order') || '';
+const idLelang = params.get('id') || '';       // link lama tetap dilayani
 const namaEkspedisi = (params.get('ekspedisi') || '').toUpperCase();
 
 let jsonpN = 0;
@@ -190,7 +191,7 @@ async function kirimKeServer(params){
   }
 }
 
-let lelang = null, bidSaya = null, konfirmasiSaya = null;
+let lelang = null, bidSaya = null, konfirmasiSaya = null, orderIni = null;
 
 function setStatus(teks, kelas){
   const el = document.getElementById('status-bar');
@@ -226,14 +227,15 @@ function jenisKiriman(tipeMobil){
 }
 
 async function muat(){
-  if(!idLelang || !namaEkspedisi){
+  if((!idOrder && !idLelang) || !namaEkspedisi){
     setStatus('Link tidak lengkap — minta admin kirim ulang link konfirmasinya.', 'err');
     document.getElementById('isi').innerHTML = `<div class="pesan-kosong">Link konfirmasi tidak valid.</div>`;
     return;
   }
   try{
     setStatus('Memuat data…');
-    const d = await gas({action:'konfirmasi_data', idLelang, ekspedisi:namaEkspedisi});
+    const d = await gas({action:'konfirmasi_data', idOrder, idLelang, ekspedisi:namaEkspedisi});
+    orderIni = d.order || null;
     lelang = d.lelang || null;
     bidSaya = d.bid || null;
     konfirmasiSaya = d.konfirmasi || null;
@@ -265,7 +267,7 @@ async function kirimKonfirmasi(){
 
   const data = {
     action: 'konfirmasi_submit',
-    idLelang, ekspedisi: namaEkspedisi, jenis,
+    idOrder: (orderIni ? orderIni.id : idOrder), idLelang, ekspedisi: namaEkspedisi, jenis,
     noPolisi,
     namaDriver: ambilNilai('driver'),
     hpDriver:   ambilNilai('hp'),

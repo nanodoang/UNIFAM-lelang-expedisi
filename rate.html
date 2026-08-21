@@ -166,6 +166,8 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   .isi{padding:15px 16px 40px;}
 }
 
+
+.yatim{font-family:var(--mono);font-size:10.5px;color:var(--amber);font-weight:400;font-style:italic;}
 </style>
 </head>
 <body>
@@ -353,7 +355,8 @@ function render(){
     const selRate = kolomTipe.map(t => `<td class="rate">${
       rate[t] ? formatRupiah(rate[t]) : '<span class="kosong-sel">—</span>'}</td>`).join('');
     return `<tr>
-      <td class="distributor">${b.distributor}</td>
+      <td class="distributor">${b.distributor
+        || '<span class="yatim">belum ada di tab Alamat</span>'}</td>
       <td class="kota">${b.kota || '<span class="kosong-sel">—</span>'}</td>
       <td class="alamat">${b.alamat || '<span class="kosong-sel">belum ada alamat</span>'}</td>
       ${selRate}

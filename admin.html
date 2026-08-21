@@ -421,6 +421,61 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 
 .ket-grup{font-family:var(--mono);font-size:10.5px;color:var(--muted);
   line-height:1.6;margin:-4px 0 9px;text-align:center;}
+
+.ket-gabung{background:rgba(21,150,163,.08);border:1px solid rgba(21,150,163,.4);
+  padding:10px 13px;margin-bottom:12px;font-size:12.5px;color:#0B6E77;line-height:1.6;}
+.cap-jumlah{font-family:var(--mono);background:var(--teal);color:#fff;padding:2px 8px;font-size:11.5px;}
+
+.panel-order{background:#FAFBFD;border:1px solid var(--line);margin-top:11px;}
+.po-kop{display:flex;align-items:baseline;gap:10px;padding:10px 13px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.po-jdl{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;}
+.po-ket{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+.po-kosong{padding:12px 13px;font-size:12.5px;color:var(--muted);line-height:1.6;font-style:italic;}
+table.tabel-order{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.tabel-order th{font-family:var(--disp);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 11px;
+  border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap;}
+table.tabel-order td{padding:8px 11px;border-bottom:1px solid var(--line);}
+table.tabel-order tr:last-child td{border-bottom:none;}
+table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
+.pil-ok{font-family:var(--mono);font-size:9.5px;padding:2px 8px;
+  background:rgba(18,135,107,.13);color:#0B6350;white-space:nowrap;}
+.pil-nunggu{font-family:var(--mono);font-size:9.5px;padding:2px 8px;
+  background:rgba(217,130,15,.14);color:#8A5A0A;white-space:nowrap;}
+.tautan-kecil{font-family:var(--mono);font-size:10.5px;color:#1F9E52;
+  text-decoration:underline;margin-right:9px;}
+.btn-x{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  width:22px;height:22px;line-height:1;cursor:pointer;font-size:14px;}
+.btn-x:hover{border-color:var(--red);color:var(--red);}
+.btn-order{width:100%;background:var(--navy);color:#fff;border:none;
+  font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.09em;
+  text-transform:uppercase;padding:11px;cursor:pointer;}
+.btn-order:hover{background:var(--navy-tua);}
+
+.btn-segar{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;}
+.btn-segar:hover{border-color:var(--navy);color:var(--navy);}
+.btn-segar:disabled{opacity:.5;cursor:default;}
+
+.tab-admin{display:flex;background:var(--panel);border:1px solid var(--line);
+  width:fit-content;margin:4px 0 16px;}
+.tab-admin button{background:transparent;border:none;padding:11px 20px;
+  font-family:var(--disp);font-weight:600;font-size:13.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap;
+  display:flex;align-items:center;gap:8px;}
+.tab-admin button.aktif{background:var(--navy);color:#fff;}
+.tab-admin button:not(.aktif):hover{background:#F4F6FA;color:var(--tinta);}
+.tab-admin .hit{font-family:var(--mono);font-size:10.5px;background:rgba(0,0,0,.09);
+  padding:1px 7px;font-weight:500;}
+.tab-admin button.aktif .hit{background:rgba(255,255,255,.22);}
+.sembunyi{display:none !important;}
+
+.aksi-bid{white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;}
+.btn-nego{background:#fff;border:1px solid var(--amber);color:#8A5A0A;
+  font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.09em;
+  text-transform:uppercase;padding:7px 12px;cursor:pointer;}
+.btn-nego:hover{background:var(--amber);color:#fff;}
 </style>
 </head>
 <body>
@@ -450,7 +505,8 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
         <h1>Panel Lelang</h1>
         <div class="ket">Posting lelang, lihat penawaran, pilih pemenang</div>
       </div>
-      <div class="aksi"><button class="btn-kunci" onclick="kunciPanel()">Kunci</button>
+      <div class="aksi"><button class="btn-segar" onclick="segarkanSekarang()" title="Ambil ulang data dari spreadsheet, lewati simpanan sementara">Segarkan</button>
+        <button class="btn-kunci" onclick="kunciPanel()">Kunci</button>
         <div class="aku"><div class="bulat">N</div><div><div class="n">Nano</div><div class="r">Admin</div></div></div>
       </div>
     </div>
@@ -487,44 +543,55 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
     <span class="panah">&rarr;</span>
   </a>
 
-  <div class="section-title">
-    <h2>Tambah Lelang dari Planning</h2>
-    <small>paste langsung dari Excel</small>
+  <div class="tab-admin">
+    <button id="t-lelang" class="aktif" onclick="gantiTabAdmin('lelang')">
+      Lelang <span class="hit" id="hit-lelang">0</span></button>
+    <button id="t-kiriman" onclick="gantiTabAdmin('kiriman')">
+      Kiriman &amp; Order <span class="hit" id="hit-kiriman">0</span></button>
   </div>
-  <div class="panel-box">
-    <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;13/08/2026&#9;WURY&#9;PT. Prisma Reksa Sejahtera Bersama - DUMAI&#9;1.868&#9;30,7&#9;20 ft"></textarea>
-    <div class="paste-hint">Urutan kolom (pisah tab): Tanggal · Sales · Distributor - KOTA · Jumlah Karton · Kubikasi · Tipe Mobil. Distributor dan kota disambung dengan tanda " - ". Kolom ke-7 opsional untuk rate patokan manual.</div>
 
-    <div class="baris-batas">
-      <div class="kolom">
-        <label>Lelang tutup tanggal</label>
-        <input id="tutup-tgl" type="date" onchange="hitungTutup()">
+  <div id="tab-isi-lelang">
+    <div class="section-title">
+      <h2>Tambah Lelang dari Planning</h2>
+      <small>paste langsung dari Excel</small>
+    </div>
+    <div class="panel-box">
+      <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;13/08/2026&#9;WURY&#9;PT. Prisma Reksa Sejahtera Bersama - DUMAI&#9;1.868&#9;30,7&#9;20 ft"></textarea>
+      <div class="paste-hint">Urutan kolom (pisah tab): Tanggal · Sales · Distributor - KOTA · Jumlah Karton · Kubikasi · Tipe Mobil. Distributor dan kota disambung dengan tanda " - ". Kolom ke-7 opsional untuk rate patokan manual.</div>
+
+      <div class="baris-batas">
+        <div class="kolom">
+          <label>Lelang tutup tanggal</label>
+          <input id="tutup-tgl" type="date" onchange="hitungTutup()">
+        </div>
+        <div class="kolom">
+          <label>Pukul</label>
+          <input id="tutup-jam" type="time" value="12:00" onchange="hitungTutup()">
+        </div>
+        <div class="tutup-pukul baik" id="tutup-info"></div>
       </div>
-      <div class="kolom">
-        <label>Pukul</label>
-        <input id="tutup-jam" type="time" value="12:00" onchange="hitungTutup()">
-      </div>
-      <div class="tutup-pukul baik" id="tutup-info"></div>
+
+      <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
+      <div id="preview-wrap"></div>
     </div>
 
-    <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
-    <div id="preview-wrap"></div>
+    <div class="section-title">
+      <h2>Lelang Terbuka</h2>
+      <small id="jumlah-lelang"></small>
+    </div>
+    <div class="bar-hapus">
+      <button class="btn-siar" onclick="bukaSiaran()">Beritahu semua ekspedisi</button>
+      <button class="btn-rate" onclick="bukaUsulRate()">Perbarui tab Rate</button>
+      <button class="btn-hapus" id="btn-hapus-pilih" onclick="hapusTerpilih()" disabled>Hapus Terpilih</button>
+      <button class="btn-hapus-semua" onclick="hapusSemua()">Hapus Semua Lelang</button>
+      <span class="pilih-info" id="pilih-info">belum ada yang dipilih</span>
+    </div>
+    <div class="grid" id="grid"></div>
   </div>
 
-  <div class="section-title">
-    <h2>Lelang Terbuka</h2>
-    <small id="jumlah-lelang"></small>
+  <div id="tab-isi-kiriman" class="sembunyi">
+    <div id="riwayat-wrap"></div>
   </div>
-  <div class="bar-hapus">
-    <button class="btn-siar" onclick="bukaSiaran()">Beritahu semua ekspedisi</button>
-    <button class="btn-rate" onclick="bukaUsulRate()">Perbarui tab Rate</button>
-    <button class="btn-hapus" id="btn-hapus-pilih" onclick="hapusTerpilih()" disabled>Hapus Terpilih</button>
-    <button class="btn-hapus-semua" onclick="hapusSemua()">Hapus Semua Lelang</button>
-    <span class="pilih-info" id="pilih-info">belum ada yang dipilih</span>
-  </div>
-  <div class="grid" id="grid"></div>
-
-  <div id="riwayat-wrap"></div>
 </main>
 
 <footer>Begitu pemenang dipilih, lelang otomatis hilang dari link semua ekspedisi.</footer>
@@ -651,6 +718,8 @@ async function kirimKeServer(params){
 }
 
 let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], pendingPreview = [];
+let jumlahBarisMentah = 0;
+let daftarOrder = [];
 let rateInfo = {jumlah:0, kota:[]};
 let versiScript = '';
 let terpilih = new Set();
@@ -875,6 +944,7 @@ function pakaiData(d){
   bidList = d.bids || [];
   daftarEkspedisi = d.ekspedisi || [];
   konfirmasiList = d.konfirmasi || [];
+  daftarOrder = d.order || [];
   rateInfo = d.rate || {jumlah:0, kota:[]};
   approvalInfo = d.approval || {wa:'', nama:'', keGrup:false};
   if(Array.isArray(rateInfo)) rateInfo = {jumlah:rateInfo.length, kota:rateInfo.map(r=>String(r.kota||'').toUpperCase())};
@@ -885,6 +955,20 @@ function pakaiData(d){
   if(el) el.textContent = `${daftarEkspedisi.length} ekspedisi terdaftar · kelola akun & password`;
   cekVersiBackend(d.versi);
   render();
+}
+
+/* Paksa ambil ulang dari spreadsheet — dipakai setelah mengedit tab Rate,
+   Alamat, atau leadtim langsung di Google Sheets. */
+async function segarkanSekarang(){
+  const b = document.querySelector('.btn-segar');
+  if(b){ b.disabled = true; b.textContent = 'Mengambil…'; }
+  try{
+    await muat(true);
+    setStatus('Data diambil ulang dari spreadsheet · ' + new Date().toLocaleTimeString('id-ID'));
+  }catch(err){
+    setStatus('Gagal menyegarkan: ' + err.message, true);
+  }
+  if(b){ b.disabled = false; b.textContent = 'Segarkan'; }
 }
 
 async function muat(segar){
@@ -988,10 +1072,52 @@ function hitungTutup(){
   info.innerHTML = `Lelang tutup<br><b>${teks}</b> · ${durasi}`;
 }
 
+/* Kunci minggu (Senin sebagai awal minggu) dari "dd/mm/yyyy" */
+function mingguDari(teks){
+  const m = String(teks||'').trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(!m) return '';
+  const d = new Date(+m[3], +m[2]-1, +m[1]);
+  const h = d.getDay();
+  d.setDate(d.getDate() - (h === 0 ? 6 : h - 1));
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+
+/* Rencana kirim yang sama (distributor + kota + tipe mobil + minggu yang sama)
+   digabung jadi SATU lelang. Ekspedisi cukup memberi satu harga per unit,
+   jumlahnya disebutkan sebagai keterangan. */
+function gabungkanRencana(daftar){
+  const peta = new Map();
+  daftar.forEach(p => {
+    const k = [p.customer.trim().toUpperCase(), p.kota.trim().toUpperCase(),
+               p.tipeMobil.trim().toUpperCase(), mingguDari(p.tanggal)].join('|');
+    if(!peta.has(k)){
+      peta.set(k, Object.assign({}, p, { jumlah: 1, tanggalSemua: [p.tanggal] }));
+    } else {
+      const g = peta.get(k);
+      g.jumlah++;
+      g.karton += p.karton;
+      g.cbm    += p.cbm;
+      g.tanggalSemua.push(p.tanggal);
+      /* tanggal muat dipakai yang paling awal */
+      if(urutTanggal(p.tanggal) < urutTanggal(g.tanggal)) g.tanggal = p.tanggal;
+      if(!g.rateExisting && p.rateExisting) g.rateExisting = p.rateExisting;
+    }
+  });
+  return Array.from(peta.values());
+}
+
+function urutTanggal(teks){
+  const m = String(teks||'').trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  return m ? new Date(+m[3], +m[2]-1, +m[1]).getTime() : 0;
+}
+
 function prosesPaste(){
   const raw = document.getElementById('paste-area').value.trim();
   if(!raw) return;
-  pendingPreview = raw.split('\n').map(b=>b.trim()).filter(b=>b).map(parseBaris).filter(x=>x);
+  const mentah = raw.split('\n').map(b=>b.trim()).filter(b=>b).map(parseBaris).filter(x=>x);
+  pendingPreview = gabungkanRencana(mentah);
+  jumlahBarisMentah = mentah.length;
   if(pendingPreview.length === 0){
     setStatus('Tidak ada baris valid. Pastikan 6 kolom dipisah TAB, urut: Tanggal, Sales, "Distributor - KOTA", Karton, Kubikasi, Tipe Mobil.', true);
   }
@@ -1001,13 +1127,20 @@ function prosesPaste(){
 function renderPreview(){
   const wrap = document.getElementById('preview-wrap');
   if(pendingPreview.length === 0){ wrap.innerHTML=''; return; }
+  const digabung = jumlahBarisMentah - pendingPreview.length;
   wrap.innerHTML = `
     <div class="preview-table">
+      ${digabung > 0 ? `<div class="ket-gabung">${jumlahBarisMentah} baris planning digabung jadi
+        <b>${pendingPreview.length} lelang</b> — rencana kirim yang sama (distributor, kota,
+        tipe mobil, dan minggu yang sama) cukup dilelang sekali.</div>` : ''}
       <table>
-        <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota</th><th>Tipe Mobil</th><th>Karton</th><th>CBM</th><th>Rate Patokan</th></tr></thead>
+        <thead><tr><th>Tanggal</th><th>Sales</th><th>Customer</th><th>Kota</th>
+          <th>Tipe Mobil</th><th>Jumlah</th><th>Karton</th><th>CBM</th><th>Rate Patokan</th></tr></thead>
         <tbody>${pendingPreview.map(p=>`<tr>
           <td>${p.tanggal}</td><td>${p.sales}</td><td>${p.customer}</td><td>${p.kota}</td>
-          <td>${formatKarton(p.karton)}</td><td>${formatCbm(p.cbm)}</td><td>${p.tipeMobil}</td>
+          <td>${p.tipeMobil}</td>
+          <td>${p.jumlah > 1 ? `<b class="cap-jumlah">${p.jumlah}x</b>` : '1x'}</td>
+          <td>${formatKarton(p.karton)}</td><td>${formatCbm(p.cbm)}</td>
           <td>${p.rateExisting ? formatRupiah(p.rateExisting) : '<i style="color:#5C7896">dari tab Rate</i>'}</td>
         </tr>`).join('')}</tbody>
       </table>
@@ -1035,6 +1168,7 @@ async function konfirmasiPaste(){
       setStatus(`Menyimpan lelang ${i+1} dari ${pendingPreview.length}…`);
       await gas({action:'lelang_insert', tanggal:p.tanggal, sales:p.sales, customer:p.customer,
                  kota:p.kota, tipeMobil:p.tipeMobil, karton:p.karton, cbm:p.cbm,
+                 jumlah:p.jumlah || 1, tanggalSemua:(p.tanggalSemua||[]).join(', '),
                  rateExisting:p.rateExisting, batasWaktu:batas});
     }
     pendingPreview = [];
@@ -1487,6 +1621,80 @@ async function perpanjang(idLelang){
   }catch(err){ setStatus('Gagal memperpanjang: ' + err.message, true); }
 }
 
+/* Link konfirmasi untuk SATU order */
+function linkKonfirmasiOrder(order, ekspedisi){
+  return `${BASE_URL}/konfirmasi.html?order=${encodeURIComponent(order.id)}` +
+         `&ekspedisi=${encodeURIComponent(ekspedisi)}`;
+}
+
+function waKonfirmasiOrder(l, order, eks){
+  const teks = [
+    `Halo ${eks.nama}, order kiriman UNIFAM:`, ``,
+    `No Order  : ${order.noOrder}`,
+    `Tujuan    : Cikande -> ${l.kota}`,
+    `Distributor: ${l.customer}`,
+    `Tipe      : ${l.tipeMobil}`,
+    `Tgl muat  : ${order.tanggalMuat}`,
+    `Harga     : ${formatRupiah(order.harga)}`, ``,
+    `Mohon isi data armada di link berikut:`,
+    linkKonfirmasiOrder(order, eks.nama), ``,
+    `Terima kasih.`
+  ].filter(x => x !== '').join('\n');
+  return `https://wa.me/${eks.wa}?text=${encodeURIComponent(teks)}`;
+}
+
+function orderUntuk(idLelang){
+  return daftarOrder.filter(o => o.idLelang === idLelang)
+                    .sort((a,b) => urutTanggal(a.tanggalMuat) - urutTanggal(b.tanggalMuat));
+}
+
+async function buatOrder(idLelang){
+  const l = lelangList.find(x => x.id === idLelang);
+  if(!l) return;
+
+  /* tawarkan tanggal rencana dari planning yang belum dipakai */
+  const dipakai = new Set(orderUntuk(idLelang).map(o => o.tanggalMuat));
+  const rencana = String(l.tanggalSemua || '').split(',').map(x => x.trim())
+                    .filter(x => x && !dipakai.has(x));
+  const usul = rencana[0] || l.tanggalMuat || l.tanggal || '';
+
+  const isi = prompt(
+    `Buat order baru untuk ${l.kota} — ${l.tipeMobil}\n` +
+    `Ekspedisi: ${l.pemenang}\n\n` +
+    (rencana.length ? `Tanggal rencana yang belum dipakai: ${rencana.join(', ')}\n\n` : '') +
+    `Tanggal muat (dd/mm/yyyy):`, usul);
+
+  if(isi === null) return;
+  const tgl = String(isi).trim();
+  if(!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(tgl)){
+    setStatus('Tanggal harus berbentuk dd/mm/yyyy, contoh 14/08/2026.', true);
+    return;
+  }
+
+  try{
+    setStatus('Membuat order…');
+    const r = await gas({action:'order_buat', idLelang, tanggalMuat: tgl});
+    await muat(true);
+    if(r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
+      setStatus(`Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
+    } else {
+      setStatus(`Order ${r.noOrder} dibuat untuk muat ${r.tanggalMuat} & terkirim ke planning draft.`);
+    }
+  }catch(err){ setStatus('Gagal membuat order: ' + err.message, true); }
+}
+
+async function hapusOrder(idOrder, noOrder, kota){
+  if(!confirm(`Hapus order ${noOrder} (${kota})?\n\n` +
+              `Barisnya juga dihapus dari planning draft dan konfirmasi armada di Pesanan Armada.\n` +
+              `Data konfirmasi dari ekspedisi untuk order ini ikut terhapus.`)) return;
+  try{
+    setStatus('Menghapus order…');
+    const r = await gas({action:'order_hapus', idOrder});
+    await muat(true);
+    setStatus(`Order ${r.noOrder} dihapus.${r.jejak ? ' Dibersihkan: ' + r.jejak + '.' : ''}`);
+  }catch(err){ setStatus('Gagal menghapus order: ' + err.message, true); }
+}
+
 function linkKonfirmasi(idLelang, ekspedisi){
   return `${BASE_URL}/konfirmasi.html?id=${encodeURIComponent(idLelang)}&ekspedisi=${encodeURIComponent(ekspedisi)}`;
 }
@@ -1514,11 +1722,123 @@ function waKonfirmasi(l, win, eks){
 
 /* ---------- render ---------- */
 
+let tabAdmin = 'lelang';
+/* ---------- nego harga ---------- */
+function bukaNego(idLelang, ekspedisi){
+  const l = lelangList.find(x => x.id === idLelang);
+  const b = bidsUntuk(idLelang).find(x => x.ekspedisi === ekspedisi);
+  const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === String(ekspedisi).toUpperCase());
+  if(!l || !b) return;
+
+  if(!eks || !eks.wa){
+    setStatus(`Nomor WA ${ekspedisi} belum terdaftar — lengkapi di Daftar Ekspedisi dulu.`, true);
+    return;
+  }
+
+  const semua = bidsUntuk(idLelang);
+  const termurah = semua.length ? semua[0] : null;
+  const target = l.target || 0;
+  const usul = target || (termurah ? termurah.harga : b.harga);
+
+  const w = document.createElement('div');
+  w.className = 'tirai';
+  w.id = 'tirai-nego';
+  w.innerHTML = `
+    <div class="jendela">
+      <span class="tanda-menang">Nego Harga</span>
+      <h2>${ekspedisi}</h2>
+      <div class="rinci">
+        <div><span class="label">Tujuan</span><br>Cikande &rarr; ${l.kota} &middot; ${l.tipeMobil}</div>
+        <div style="margin-top:7px;"><span class="label">Penawaran sekarang</span><br><b>${formatRupiah(b.harga)}</b></div>
+        ${target ? `<div style="margin-top:7px;"><span class="label">Target rate</span><br><b>${formatRupiah(target)}</b></div>` : ''}
+        ${termurah && termurah.ekspedisi !== ekspedisi
+          ? `<div style="margin-top:7px;"><span class="label">Selisih dari termurah</span><br><b>${formatRupiah(b.harga - termurah.harga)}</b> lebih mahal</div>`
+          : ''}
+      </div>
+
+      <div class="kolom" style="margin-bottom:12px;">
+        <label>Harga yang diminta (Rp)</label>
+        <input id="nego-harga" type="text" inputmode="numeric" value="${Number(usul).toLocaleString('id-ID')}"
+               oninput="rapikanNego()">
+      </div>
+      <div class="kolom" style="margin-bottom:14px;">
+        <label>Catatan tambahan (boleh kosong)</label>
+        <input id="nego-catatan" type="text" placeholder="mis. untuk kiriman rutin mingguan">
+      </div>
+
+      <a class="btn-wa-besar" id="btn-nego-wa" target="_blank" href="#"
+         onclick="return siapkanNego('${idLelang}','${ekspedisi}')">Kirim permintaan via WA</a>
+      <button class="btn-nanti" onclick="tutupNego()">Batal</button>
+    </div>`;
+  w.onclick = ev => { if(ev.target === w) tutupNego(); };
+  document.body.appendChild(w);
+  setTimeout(() => { const i = document.getElementById('nego-harga'); if(i){ i.focus(); i.select(); } }, 50);
+}
+
+function rapikanNego(){
+  const i = document.getElementById('nego-harga');
+  if(!i) return;
+  const n = String(i.value).replace(/[^0-9]/g, '');
+  i.value = n ? Number(n).toLocaleString('id-ID') : '';
+}
+
+function tutupNego(){
+  const w = document.getElementById('tirai-nego');
+  if(w) w.remove();
+}
+
+/* dipanggil saat tombol WA ditekan — menyusun pesannya lalu membuka WhatsApp */
+function siapkanNego(idLelang, ekspedisi){
+  const l = lelangList.find(x => x.id === idLelang);
+  const b = bidsUntuk(idLelang).find(x => x.ekspedisi === ekspedisi);
+  const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === String(ekspedisi).toUpperCase());
+  const minta = Number(String(document.getElementById('nego-harga').value).replace(/[^0-9]/g,'')) || 0;
+  const catatan = document.getElementById('nego-catatan').value.trim();
+
+  if(!minta){ setStatus('Harga yang diminta belum diisi.', true); return false; }
+
+  const bagian = [
+    `Halo ${ekspedisi}, terima kasih penawarannya untuk:`,
+    [`Tujuan     : Cikande -> ${l.kota}`,
+     `Distributor: ${l.customer}`,
+     `Tipe       : ${l.tipeMobil}`,
+     `Tgl muat   : ${l.tanggalMuat || l.tanggal || '-'}`].join('\n'),
+    [`Penawaran Anda    : ${formatRupiah(b.harga)}`,
+     `*Kami mengharapkan : ${formatRupiah(minta)}*`].join('\n'),
+    catatan,
+    `Apakah harga tersebut bisa? Kalau bisa, mohon perbarui harganya lewat link lelang.\nTerima kasih.`
+  ].filter(x => x);
+  const teks = bagian.join('\n\n');
+
+  const el = document.getElementById('btn-nego-wa');
+  el.href = `https://wa.me/${eks.wa}?text=${encodeURIComponent(teks)}`;
+  setStatus(`Permintaan nego ke ${ekspedisi}: ${formatRupiah(minta)}. Setelah mereka memperbarui harga, tekan Segarkan.`);
+  tutupNego();
+  return true;
+}
+
+function gantiTabAdmin(t){
+  tabAdmin = t;
+  document.getElementById('tab-isi-lelang').classList.toggle('sembunyi', t !== 'lelang');
+  document.getElementById('tab-isi-kiriman').classList.toggle('sembunyi', t !== 'kiriman');
+  document.getElementById('t-lelang').className  = t === 'lelang'  ? 'aktif' : '';
+  document.getElementById('t-kiriman').className = t === 'kiriman' ? 'aktif' : '';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
 function render(){
 
   const grid = document.getElementById('grid');
   const terbuka = lelangList.filter(l => l.status !== 'selesai');
   document.getElementById('jumlah-lelang').textContent = `${terbuka.length} aktif`;
+
+  { /* angka di tab */
+    const selesaiN = lelangList.filter(l => l.status === 'selesai').length;
+    const el1 = document.getElementById('hit-lelang');
+    const el2 = document.getElementById('hit-kiriman');
+    if(el1) el1.textContent = terbuka.length;
+    if(el2) el2.textContent = selesaiN;
+  }
 
   grid.innerHTML = terbuka.length === 0
     ? `<div class="empty">Belum ada lelang terbuka saat ini.</div>`
@@ -1531,7 +1851,10 @@ function render(){
               <td>${b.ekspedisi}${i===0?'<span class="badge-termurah">TERMURAH</span>':''}</td>
               <td class="harga">${formatRupiah(b.harga)}</td>
               <td>${b.etd||'-'}</td><td>${b.eta||'-'}</td><td>${b.namaKapal||'-'}</td>
-              <td><button class="btn-pilih" onclick="pilihPemenang('${l.id}','${b.ekspedisi}')">Pilih Ini</button></td>
+              <td class="aksi-bid">
+                <button class="btn-nego" onclick="bukaNego('${l.id}','${b.ekspedisi}')" title="minta harga lebih baik">Nego</button>
+                <button class="btn-pilih" onclick="pilihPemenang('${l.id}','${b.ekspedisi}')">Pilih Ini</button>
+              </td>
             </tr>`).join('');
 
         let ratePanel = '';
@@ -1565,7 +1888,7 @@ function render(){
                 ? `<span class="lebih">lebih mahal ${formatRupiah(-beda)}</span>`
                 : `<span>pas di target</span>`;
           }
-          ratePanel = `<div class="rate-panel">Target Rate UNIFAM: <b>${formatRupiah(target)}</b> ${selisih}<br><span style="font-size:10.5px;">${l.target && l.target < hitungTargetLokal(l.rateExisting) ? 'turun dari penawaran lelang sebelumnya · ' : ''}rank 1 ${formatRupiah(l.rateExisting)} dipotong 3% lalu dibulatkan ke atas kelipatan 50 ribu</span></div>`;
+          ratePanel = `<div class="rate-panel">Target Rate UNIFAM: <b>${formatRupiah(target)}</b> ${selisih}<br><span style="font-size:10.5px;">${l.target && l.target < hitungTargetLokal(l.rateExisting) ? 'turun dari penawaran lelang sebelumnya · ' : ''}rank 1 ${formatRupiah(l.rateExisting)}${l.asalRate ? ' (' + l.asalRate + ')' : ''} dipotong 3% lalu dibulatkan ke atas kelipatan 50 ribu</span></div>`;
         }
 
         return `<div class="card">
@@ -1612,30 +1935,54 @@ function render(){
 
   const selesai = lelangList.filter(l => l.status === 'selesai');
   document.getElementById('riwayat-wrap').innerHTML = `
-    <div class="section-title"><h2>Riwayat Selesai</h2><small>${selesai.length} lelang</small></div>
+    <div class="section-title"><h2>Kiriman &amp; Order</h2>
+      <small>${selesai.length} lelang sudah ada pemenangnya · ${daftarOrder.length} order dibuat</small></div>
     <div class="grid">${selesai.length === 0 ? '<div class="empty">Belum ada.</div>' : selesai.map(l=>{
       const win = bidsUntuk(l.id).find(b => b.ekspedisi === l.pemenang);
-      const k = konfirmasiList.find(x => x.idLelang === l.id && x.ekspedisi.toUpperCase() === (l.pemenang||'').toUpperCase());
       const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === (l.pemenang||'').toUpperCase());
+      const orders = orderUntuk(l.id);
+      const rencana = String(l.tanggalSemua || '').split(',').map(x=>x.trim()).filter(x=>x);
+      const belumDipakai = rencana.filter(t => !orders.some(o => o.tanggalMuat === t));
 
-      const panelKonfirmasi = k
-        ? `<div class="konfirmasi-ok">✓ Armada dikonfirmasi ${new Date(k.waktu).toLocaleString('id-ID')}<br>
-             ${[
-                k.jenis === 'kontener' && k.noKontener ? 'Kontener <b>' + k.noKontener + '</b>' : '',
-                '<b>' + (k.noPolisi || '-') + '</b>',
-                k.namaDriver || '',
-                k.hpDriver || '',
-                k.jamTiba ? 'tiba ' + k.jamTiba : ''
-              ].filter(x => x).join(' · ')}
-             ${k.jenis === 'kontener' && k.namaKapal ? '<br>Kapal ' + k.namaKapal + ' · ETD ' + (k.etd||'-') + ' · ETA ' + (k.eta||'-') : ''}
-             ${k.catatan ? '<br>Catatan: ' + k.catatan : ''}</div>`
-        : `<div class="konfirmasi-nunggu">⏳ Menunggu konfirmasi armada dari ${l.pemenang || '—'}</div>`;
+      const barisOrder = orders.map(o => {
+        const k = konfirmasiList.find(x => x.idLelang === o.id);
+        const sudah = !!k;
+        return `<tr>
+          <td class="mono">${o.noOrder}</td>
+          <td class="mono">${o.tanggalMuat}</td>
+          <td class="mono">${k && k.noKontener ? k.noKontener : (k && k.noPolisi ? k.noPolisi : '—')}</td>
+          <td>${sudah
+              ? `<span class="pil-ok">Sudah konfirmasi</span>`
+              : `<span class="pil-nunggu">Menunggu</span>`}</td>
+          <td class="kanan">
+            ${eks && !sudah
+              ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>`
+              : ''}
+            <button class="btn-x" title="hapus order"
+              onclick="hapusOrder('${o.id}','${o.noOrder}','${l.kota}')">&times;</button>
+          </td>
+        </tr>`;
+      }).join('');
 
-      const tombolWA = eks
-        ? `<a class="btn-wa-konfirmasi" href="${waKonfirmasi(l, win, eks)}" target="_blank">Kirim Form Konfirmasi via WA</a>`
-        : `<div class="empty">Nomor WA ${l.pemenang || '—'} belum terdaftar — tambahkan di Daftar Ekspedisi dulu.</div>`;
+      const panelOrder = `<div class="panel-order">
+        <div class="po-kop">
+          <span class="po-jdl">Kiriman</span>
+          <span class="po-ket">${orders.length} order dibuat${
+            belumDipakai.length ? ` · rencana belum dipakai: ${belumDipakai.join(', ')}` : ''}</span>
+        </div>
+        ${orders.length === 0
+          ? `<div class="po-kosong">Belum ada order. Tekan tombol di bawah tiap kali mau kirim —
+               boleh tanggal berbeda, boleh sama, sebanyak yang diperlukan.</div>`
+          : `<table class="tabel-order">
+               <thead><tr><th>No Order</th><th>Tgl Muat</th><th>Kontener / Polisi</th>
+                 <th>Status</th><th></th></tr></thead>
+               <tbody>${barisOrder}</tbody>
+             </table>`}
+        <button class="btn-order" onclick="buatOrder('${l.id}')">+ Buat order baru</button>
+        ${!eks ? `<div class="po-kosong">Nomor WA ${l.pemenang || '—'} belum terdaftar — lengkapi di Daftar Ekspedisi supaya link konfirmasi bisa dikirim.</div>` : ''}
+      </div>`;
 
-      const tombolBatal = `<button class="btn-batal-menang" onclick="batalPemenang('${l.id}','${(l.pemenang||'').replace(/'/g,"\\'")}','${l.noOrder||''}')">Batalkan / ganti pemenang</button>`;
+      const tombolBatal = `<button class="btn-batal-menang" onclick="batalPemenang('${l.id}','${(l.pemenang||'').replace(/'/g,"\\'")}','')">Batalkan / ganti pemenang</button>`;
 
       return `<div class="card">
         <div class="card-head dengan-cek">
@@ -1646,14 +1993,13 @@ function render(){
         </div>
         <div class="kepala-isi">
           <div class="route"><span class="dari">Cikande</span><span class="arrow">→</span>${l.kota}</div>
-          <div class="meta">${l.customer} · ${l.tipeMobil} · ${l.tanggal}</div>
+          <div class="meta">${l.customer} · ${l.tipeMobil} · minggu ${l.tanggal}</div>
         </div>
-        <div class="deadline-tag">${l.noOrder ? l.noOrder + ' · ' : ''}Muat ${l.tanggalMuat || l.tanggal || '—'}</div>
+        <div class="deadline-tag">${orders.length} kiriman</div>
         </div>
         <div class="card-body">
-          <div class="pemenang-banner">🏆 Dipilih: ${l.pemenang || '—'}${win ? ' · ' + formatRupiah(win.harga) + ' · Kapal ' + (win.namaKapal||'-') + ' · ETD ' + (win.etd||'-') : ''}</div>
-          ${panelKonfirmasi}
-          ${tombolWA}
+          <div class="pemenang-banner">🏆 ${l.pemenang || '—'}${win ? ' · ' + formatRupiah(win.harga) + ' /unit' : ''}</div>
+          ${panelOrder}
           ${tombolBatal}
         </div></div>`;
     }).join('')}</div>`;
