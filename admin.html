@@ -476,6 +476,9 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
   font-family:var(--disp);font-weight:700;font-size:11.5px;letter-spacing:.09em;
   text-transform:uppercase;padding:7px 12px;cursor:pointer;}
 .btn-nego:hover{background:var(--amber);color:#fff;}
+
+.cap-lama{font-family:var(--mono);font-size:9.5px;padding:2px 7px;
+  background:#F4F6FA;border:1px solid var(--line-tebal);color:var(--muted);white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -1623,8 +1626,10 @@ async function perpanjang(idLelang){
 
 /* Link konfirmasi untuk SATU order */
 function linkKonfirmasiOrder(order, ekspedisi){
-  return `${BASE_URL}/konfirmasi.html?order=${encodeURIComponent(order.id)}` +
-         `&ekspedisi=${encodeURIComponent(ekspedisi)}`;
+  const kunci = order.caraLama
+    ? `id=${encodeURIComponent(order.idLelang)}`      // link cara lama
+    : `order=${encodeURIComponent(order.id)}`;
+  return `${BASE_URL}/konfirmasi.html?${kunci}&ekspedisi=${encodeURIComponent(ekspedisi)}`;
 }
 
 function waKonfirmasiOrder(l, order, eks){
@@ -1644,8 +1649,26 @@ function waKonfirmasiOrder(l, order, eks){
 }
 
 function orderUntuk(idLelang){
-  return daftarOrder.filter(o => o.idLelang === idLelang)
-                    .sort((a,b) => urutTanggal(a.tanggalMuat) - urutTanggal(b.tanggalMuat));
+  const asli = daftarOrder.filter(o => o.idLelang === idLelang);
+  if(asli.length) return asli.sort((a,b) => urutTanggal(a.tanggalMuat) - urutTanggal(b.tanggalMuat));
+
+  /* Lelang dari sebelum ada tab Order tidak punya baris Order, tapi No Order
+     dan konfirmasinya sudah ada. Tampilkan sebagai satu baris supaya datanya
+     tidak hilang dari panel. */
+  const l = lelangList.find(x => x.id === idLelang);
+  if(!l || !l.noOrder) return [];
+
+  return String(l.noOrder).split(',').map(n => n.trim()).filter(n => n).map((no, i) => ({
+    id: l.id,                       // konfirmasi lama dikunci pakai ID lelang
+    idLelang: l.id,
+    noOrder: no,
+    ekspedisi: l.pemenang || '',
+    tanggalMuat: l.tanggalMuat || l.tanggal || '',
+    harga: 0,
+    status: 'lama',
+    caraLama: true,
+    urutan: i
+  }));
 }
 
 async function buatOrder(idLelang){
@@ -1958,8 +1981,10 @@ function render(){
             ${eks && !sudah
               ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>`
               : ''}
-            <button class="btn-x" title="hapus order"
-              onclick="hapusOrder('${o.id}','${o.noOrder}','${l.kota}')">&times;</button>
+            ${o.caraLama
+              ? `<span class="cap-lama" title="dibuat sebelum ada tab Order">lama</span>`
+              : `<button class="btn-x" title="hapus order"
+                   onclick="hapusOrder('${o.id}','${o.noOrder}','${l.kota}')">&times;</button>`}
           </td>
         </tr>`;
       }).join('');
