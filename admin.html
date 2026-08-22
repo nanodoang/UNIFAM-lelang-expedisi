@@ -479,6 +479,16 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 
 .cap-lama{font-family:var(--mono);font-size:9.5px;padding:2px 7px;
   background:#F4F6FA;border:1px solid var(--line-tebal);color:var(--muted);white-space:nowrap;}
+
+.baris-rinci td{background:#F4F7FB;padding:10px 12px 11px !important;}
+.rinci-kisi{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px 16px;}
+.rinci-kisi .rl{display:block;font-family:var(--disp);font-size:9px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
+.rinci-kisi .rv{display:block;font-size:13px;font-weight:600;line-height:1.35;}
+.rinci-kisi .rv.mono{font-family:var(--mono);font-weight:500;font-size:12.5px;}
+.rinci-catatan{margin-top:9px;font-size:12px;color:var(--muted);line-height:1.55;
+  padding-left:9px;border-left:2px solid var(--line-tebal);}
+.rinci-waktu{margin-top:8px;font-family:var(--mono);font-size:10px;color:#8D96AC;}
 </style>
 </head>
 <body>
@@ -1970,6 +1980,23 @@ function render(){
       const barisOrder = orders.map(o => {
         const k = konfirmasiList.find(x => x.idLelang === o.id);
         const sudah = !!k;
+
+        /* baris rincian: hanya muncul kalau ekspedisi sudah mengisi konfirmasi */
+        const rinci = sudah ? `<tr class="baris-rinci"><td colspan="5">
+          <div class="rinci-kisi">
+            ${k.namaDriver ? `<div><span class="rl">Sopir</span><span class="rv">${k.namaDriver}</span></div>` : ''}
+            ${k.hpDriver   ? `<div><span class="rl">No HP</span><span class="rv mono">${k.hpDriver}</span></div>` : ''}
+            ${k.noPolisi   ? `<div><span class="rl">No Polisi</span><span class="rv mono">${k.noPolisi}</span></div>` : ''}
+            ${k.noKontener ? `<div><span class="rl">No Kontener</span><span class="rv mono">${k.noKontener}</span></div>` : ''}
+            ${k.namaKapal  ? `<div><span class="rl">Kapal</span><span class="rv">${k.namaKapal}</span></div>` : ''}
+            ${k.etd        ? `<div><span class="rl">ETD</span><span class="rv mono">${k.etd}</span></div>` : ''}
+            ${k.eta        ? `<div><span class="rl">ETA</span><span class="rv mono">${k.eta}</span></div>` : ''}
+            ${k.jamTiba    ? `<div><span class="rl">Est. tiba</span><span class="rv mono">${k.jamTiba}</span></div>` : ''}
+          </div>
+          ${k.catatan ? `<div class="rinci-catatan">Catatan: ${k.catatan}</div>` : ''}
+          <div class="rinci-waktu">dikonfirmasi ${k.waktu ? new Date(k.waktu).toLocaleString('id-ID') : '-'}</div>
+        </td></tr>` : '';
+
         return `<tr>
           <td class="mono">${o.noOrder}</td>
           <td class="mono">${o.tanggalMuat}</td>
@@ -1986,7 +2013,7 @@ function render(){
               : `<button class="btn-x" title="hapus order"
                    onclick="hapusOrder('${o.id}','${o.noOrder}','${l.kota}')">&times;</button>`}
           </td>
-        </tr>`;
+        </tr>${rinci}`;
       }).join('');
 
       const panelOrder = `<div class="panel-order">
