@@ -278,6 +278,23 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
   color:var(--muted);margin-top:2px;}
 .kotak-jumlah .ket-harga{display:block;font-size:11.5px;margin-top:4px;}
 .cap-jumlah{font-family:var(--mono);background:var(--teal);color:#fff;padding:2px 8px;font-size:11.5px;}
+
+/* ---------- kartu combo ---------- */
+.kartu-combo .punggung.combo{background:var(--teal-tua);}
+.kartu-combo .route{font-size:19px;}
+.combo-info{margin-top:8px;font-size:12px;color:var(--teal-tua);
+  background:rgba(21,150,163,.08);border:1px solid rgba(21,150,163,.35);
+  padding:7px 10px;line-height:1.55;}
+.combo-tujuan{border:1px solid var(--line-tebal);background:#fff;
+  padding:11px 13px;margin-bottom:10px;}
+.ct-rute{font-family:var(--disp);font-weight:700;font-size:17px;text-transform:uppercase;line-height:1.1;}
+.ct-rute .arrow{color:var(--teal);margin:0 6px;}
+.ct-rute .dari{color:var(--muted);}
+.ct-meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.6;}
+.ct-alamat{font-size:11.5px;color:var(--muted);margin-top:5px;padding-left:9px;
+  border-left:2px solid var(--line-tebal);line-height:1.5;}
+.ct-isian{margin-top:9px;}
+.ct-isian label{margin-bottom:4px;}
 </style>
 </head>
 <body>
@@ -293,7 +310,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h36';
+const VERSI_HALAMAN = 'h46';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -761,10 +778,17 @@ async function kirimTerpilih(){
 
     setStatus(`Mengirim ${i+1} dari ${daftar.length}…`);
     try{
+      /* untuk combo, kolom ETD/ETA/kapal ada di kartu induk, bukan tiap tujuan */
+      const d = draf[id] || {};
+      const amb = (x) => {
+        const e = document.getElementById(x + '-' + id);
+        if(e) return e.value;
+        return d[x === 'kapal' ? 'kapal' : x] || '';
+      };
       await gas({action:'bid_submit', user:sesi.user, pass:sesi.pass, idLelang:id, harga,
-                 etd: keLokal(document.getElementById('etd-' + id).value),
-                 eta: keLokal(document.getElementById('eta-' + id).value),
-                 namaKapal: document.getElementById('kapal-' + id).value.trim()});
+                 etd: keLokal(amb('etd')),
+                 eta: keLokal(amb('eta')),
+                 namaKapal: String(amb('kapal')).trim()});
       berhasil.push(nama);
       terpilih.delete(id);
       hapusDraf(id);          // sudah tersimpan di server, draf tidak perlu lagi
@@ -910,7 +934,24 @@ function kartuTerbuka(){
   const lap = laporan ? kotakLaporan() : '';
   laporan = null;
 
-  const kartu = daftarTerbuka.map(l => {
+  /* combo digabung jadi satu kartu; sisanya satu kartu per lelang */
+  const kelompok = [];
+  const sudahMasuk = new Set();
+  daftarTerbuka.forEach(l => {
+    if(sudahMasuk.has(l.id)) return;
+    if(l.combo){
+      const anggota = daftarTerbuka.filter(x => x.combo === l.combo);
+      anggota.forEach(x => sudahMasuk.add(x.id));
+      kelompok.push({ combo: l.combo, anggota });
+    } else {
+      sudahMasuk.add(l.id);
+      kelompok.push({ combo: '', anggota: [l] });
+    }
+  });
+
+  const kartuCombo = kelompok.filter(g => g.combo).map(g => kartuGabungan(g)).join('');
+
+  const kartu = kartuCombo + kelompok.filter(g => !g.combo).map(g => g.anggota[0]).map(l => {
     const b = l.bidSaya;
     const tutup = sudahTutup(l);
     const s = sisaRinci(l.batasWaktu);
@@ -1029,6 +1070,102 @@ function kartuTerbuka(){
   return lap +
     `<button class="pilih-semua" onclick="pilihSemua()">Centang semua yang sudah ada harganya</button>` +
     `<div class="grid">${kartu}</div>`;
+}
+
+/* Satu kartu untuk beberapa tujuan yang diangkut bersama.
+   Harga diisi PER TUJUAN, sudah termasuk potongan combo. */
+function kartuGabungan(g){
+  const anggota = g.anggota;
+  const l0 = anggota[0];
+  const tutup = sudahTutup(l0);
+  const s = sisaRinci(l0.batasWaktu);
+
+  const adaIsi = anggota.some(l => angkaSaja(nilaiKolom(l.id,'harga', l.bidSaya ? l.bidSaya.harga : '')) > 0);
+  const dipilih = anggota.some(l => terpilih.has(l.id));
+
+  const barisTujuan = anggota.map(l => {
+    const b = l.bidSaya;
+    const mati = tutup ? 'disabled' : '';
+    return `<div class="combo-tujuan">
+      <div class="ct-kepala">
+        <div class="ct-rute"><span class="dari">Cikande</span><span class="arrow">→</span>${amanHTML(l.kota)}</div>
+        <div class="ct-meta">${amanHTML(l.customer)} · ${amanHTML(l.tipeMobil)} ·
+          ${formatKarton(l.karton)} karton · ${formatCbm(l.cbm)} CBM · muat ${amanHTML(l.tanggal)}</div>
+        ${l.alamat ? `<div class="ct-alamat">${amanHTML(l.alamat)}</div>` : ''}
+      </div>
+      <div class="ct-isian">
+        <label>Harga untuk tujuan ini (Rp)</label>
+        <input id="harga-${l.id}" type="text" inputmode="numeric" placeholder="0" ${mati}
+               value="${amanHTML(tampilAngka(nilaiKolom(l.id,'harga', b ? b.harga : '')))}"
+               oninput="isiHarga('${l.id}')" onblur="rapikanHarga('${l.id}')">
+      </div>
+    </div>`;
+  }).join('');
+
+  /* ETD, ETA, kapal cukup sekali — dipakai untuk semua tujuan dalam combo */
+  const bAwal = l0.bidSaya;
+  const mati = tutup ? 'disabled' : '';
+
+  return `<div class="card kartu-combo ${dipilih ? 'terpilih' : ''} ${tutup ? 'sudah-tutup' : ''}" id="card-${l0.id}">
+    <div class="card-head dengan-cek">
+      <div class="punggung combo">
+        ${tutup ? '' : `<input type="checkbox" class="cek" ${dipilih ? 'checked' : ''}
+               onchange="toggleCombo('${g.combo}', this.checked)" title="pilih untuk diajukan">`}
+        <span class="kode">Combo</span>
+      </div>
+      <div class="kepala-isi">
+        <div class="route">${anggota.length} Tujuan Sekaligus</div>
+        <div class="meta">${anggota.map(a => amanHTML(a.kota)).join(' + ')}</div>
+        <div class="combo-info">Diangkut bersama — isi harga tiap tujuan, sudah termasuk potongan combo.</div>
+        ${tutup
+          ? `<div class="deadline-tag lewat">sudah tutup · ${amanHTML(tanggalTutup(l0.batasWaktu))}</div>`
+          : `<div class="deadline-tag ${s && s.mendesak ? 'mendesak' : ''}">tutup ${amanHTML(tanggalTutup(l0.batasWaktu))} · sisa <b>${s ? s.teks : '—'}</b></div>`}
+      </div>
+    </div>
+    ${tutup ? `<div class="stempel-tutup"><span class="cap">Lelang tutup</span>
+        <span class="isi">Batas waktu habis pada ${amanHTML(tanggalTutup(l0.batasWaktu))}.</span></div>` : ''}
+    <div class="card-body">
+      ${barisTujuan}
+      <div class="catatan-harga" style="margin-top:2px;">
+        <b>All in</b> — termasuk TKBM, stripping, krani, dll.
+        <span class="ppn">Belum termasuk PPN.</span>
+      </div>
+      <div class="form-grid" style="margin-top:12px;">
+        <div><label>ETD</label><input id="etd-${l0.id}" type="date" ${mati}
+               value="${amanHTML(nilaiKolom(l0.id,'etd', keISO(bAwal ? bAwal.etd : '')))}"
+               onchange="samakanCombo('${g.combo}')"></div>
+        <div><label>ETA</label><input id="eta-${l0.id}" type="date" ${mati}
+               value="${amanHTML(nilaiKolom(l0.id,'eta', keISO(bAwal ? bAwal.eta : '')))}"
+               onchange="samakanCombo('${g.combo}')"></div>
+        <div class="full"><label>Nama Kapal</label>
+          <input id="kapal-${l0.id}" type="text" ${mati} placeholder="mis. KM Meratus"
+                 value="${amanHTML(nilaiKolom(l0.id,'kapal', bAwal ? bAwal.namaKapal : ''))}"
+                 oninput="samakanCombo('${g.combo}')"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* centang combo = centang semua tujuannya sekaligus */
+function toggleCombo(comboId, nyala){
+  daftarTerbuka.filter(l => l.combo === comboId).forEach(l => {
+    if(nyala) terpilih.add(l.id); else terpilih.delete(l.id);
+  });
+  render();
+}
+
+/* ETD, ETA, kapal combo disalin ke semua tujuannya saat dikirim */
+function samakanCombo(comboId){
+  const anggota = daftarTerbuka.filter(l => l.combo === comboId);
+  if(anggota.length === 0) return;
+  const l0 = anggota[0];
+  const amb = x => { const e = document.getElementById(x + '-' + l0.id); return e ? e.value : ''; };
+  const etd = amb('etd'), eta = amb('eta'), kapal = amb('kapal');
+  anggota.forEach(l => {
+    const lama = draf[l.id] || {};
+    draf[l.id] = { harga: lama.harga, etd, eta, kapal };
+  });
+  simpanDrafKeBrowser();
 }
 
 function kotakLaporan(){

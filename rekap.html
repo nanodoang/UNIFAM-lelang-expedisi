@@ -379,13 +379,14 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
     <button id="t-bulan" class="aktif" onclick="gantiTab('bulan')">Per bulan</button>
     <button id="t-eks" onclick="gantiTab('eks')">Per ekspedisi</button>
     <button id="t-rinci" onclick="gantiTab('rinci')">Rincian &amp; realisasi</button>
+    <button id="t-manual" onclick="gantiTab('manual')">Order manual</button>
   </div>
 
   <button class="btn-salin" onclick="salin()">Salin tabel ini</button>
   <div class="kotak-tabel"><div class="gulir" id="wadah"></div></div>
 </main>
 
-<footer>Penghematan dihitung dari selisih <b>rate rank 1</b> (harga termurah di tab Rate, apa adanya tanpa potongan 3%) terhadap harga pemenang. Hanya lelang yang sudah selesai dan punya pemenang yang ikut dihitung.</footer>
+<footer>Order manual dibaca dari tab konfirmasi armada di spreadsheet Pesanan Armada — baris yang tidak bertanda "Dari Lelang". Rank 1 direkam sekali saat order pertama terbaca, lalu tidak berubah lagi.<br>Penghematan dihitung dari selisih <b>rate rank 1</b> (harga termurah di tab Rate, apa adanya tanpa potongan 3%) terhadap harga pemenang. Hanya lelang yang sudah selesai dan punya pemenang yang ikut dihitung.</footer>
 
     </div>
   </div>
@@ -625,7 +626,7 @@ async function muat(){
 
 function gantiTab(t){
   tabAktif = t;
-  ['bulan','eks','rinci'].forEach(x =>
+  ['bulan','eks','rinci','manual'].forEach(x =>
     document.getElementById('t-' + (x==='eks'?'eks':x)).className = (x===t ? 'aktif' : ''));
   render();
 }
@@ -633,6 +634,7 @@ function gantiTab(t){
 function render(){
   if(!data) return;
 
+  const m = data.manual || {jumlah:0,total:0,selisih:0,persen:0,terukur:0,daftar:[]};
   document.getElementById('ringkas').innerHTML = `
     <div class="kartu-angka"><div class="label">Lelang selesai</div>
       <div class="nilai">${data.jumlah}</div></div>
@@ -640,15 +642,22 @@ function render(){
       <div class="nilai">${rp(data.totalTarget)}</div></div>
     <div class="kartu-angka"><div class="label">Total harga pemenang</div>
       <div class="nilai">${rp(data.totalMenang)}</div></div>
+    <div class="kartu-angka"><div class="label">Order manual</div>
+      <div class="nilai">${m.jumlah || 0}</div>
+      <div class="ket">${rp(m.total || 0)}</div></div>
+    <div class="kartu-angka"><div class="label">Selisih order manual</div>
+      <div class="nilai ${(m.selisih||0) <= 0 ? 'hemat' : 'rugi'}">${rp(Math.abs(m.selisih||0))}</div>
+      <div class="ket">${m.terukur ? ((m.selisih||0) <= 0 ? 'di bawah' : 'di atas') + ' rank 1 · ' + pct(Math.abs(m.persen||0)) : 'belum ada pembanding'}</div></div>
     <div class="kartu-angka"><div class="label">Penghematan</div>
       <div class="nilai ${data.totalHemat >= 0 ? 'hemat' : 'rugi'}">${rp(data.totalHemat)}</div>
       <div class="ket">${pct(data.persen)} dari rate rank 1</div></div>`;
 
-  const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi'};
+  const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi', manual:'Order Manual'};
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
 
   const wadah = document.getElementById('wadah');
-  if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
+  if(tabAktif === 'manual') wadah.innerHTML = tabelManual();
+  else if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
   else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : data.perEkspedisi, tabAktif);
 }
 
@@ -667,6 +676,46 @@ function tabelKelompok(daftar, jenis){
       <td class="kanan">${rp(b.menang)}</td>
       <td class="kanan ${b.hemat >= 0 ? 'hemat' : 'rugi'}">${rp(b.hemat)}</td>
       <td class="kanan ${b.hemat >= 0 ? 'hemat' : 'rugi'}">${pct(b.persen)}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function tabelManual(){
+  const m = data.manual || {daftar:[]};
+  const r = m.daftar || [];
+
+  if(m.galat){
+    return `<div class="empty" style="padding:34px;text-align:center;">
+      Tidak bisa membaca spreadsheet Pesanan Armada.<br><br>
+      <span style="font-family:var(--mono);font-size:11.5px;">${aman(m.galat)}</span></div>`;
+  }
+  if(r.length === 0){
+    return `<div class="empty" style="padding:34px;text-align:center;">
+      Belum ada order manual.<br><br>
+      Order yang dibuat langsung lewat aplikasi Pesanan Armada akan muncul di sini,
+      dibandingkan dengan rate rank 1 seperti order lelang.</div>`;
+  }
+
+  document.getElementById('ket-tabel').textContent =
+    `${r.length} order · ${m.terukur} punya pembanding · ${r.length - m.terukur} tanpa pembanding`;
+
+  return `<table class="rekap" style="min-width:900px;">
+    <thead><tr>
+      <th>No Order</th><th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Tipe</th><th>Ekspedisi</th>
+      <th style="text-align:right;">Rank 1</th><th style="text-align:right;">Harga</th>
+      <th style="text-align:right;">Selisih</th><th>Kontener / Polisi</th>
+    </tr></thead>
+    <tbody>${r.map(x => `<tr>
+      <td class="mono">${aman(x.noOrder)}</td>
+      <td class="mono">${aman(x.tanggal)||'—'}</td>
+      <td style="font-weight:600;">${aman(x.customer)||'—'}</td>
+      <td class="mono">${aman(x.kota)||'—'}</td>
+      <td class="mono">${aman(x.tipeMobil)||'—'}</td>
+      <td>${aman(x.ekspedisi)||'—'}</td>
+      <td class="kanan">${x.rank1 ? rp(x.rank1) : '—'}</td>
+      <td class="kanan">${x.harga ? rp(x.harga) : '—'}</td>
+      <td class="kanan ${x.selisih === null ? '' : (x.selisih <= 0 ? 'hemat' : 'rugi')}">${
+        x.selisih === null ? '—' : (x.selisih > 0 ? '+' : '') + rp(x.selisih)}</td>
+      <td class="mono">${aman(x.noKontener || x.noPolisi)||'—'}</td>
     </tr>`).join('')}</tbody></table>`;
 }
 
@@ -710,7 +759,16 @@ function bersih(v){
 function salin(){
   if(!data) return;
   let baris = [];
-  if(tabAktif === 'rinci'){
+  if(tabAktif === 'manual'){
+    const r = (data.manual && data.manual.daftar) || [];
+    baris.push(['No Order','Tgl Muat','Distributor','Kota','Tipe','Ekspedisi',
+                'Rank 1','Harga','Selisih','Kontener/Polisi'].join('\t'));
+    r.forEach(x => baris.push([
+      bersih(x.noOrder), bersih(x.tanggal), bersih(x.customer), bersih(x.kota),
+      bersih(x.tipeMobil), bersih(x.ekspedisi), x.rank1 || '', x.harga || '',
+      x.selisih === null ? '' : x.selisih, bersih(x.noKontener || x.noPolisi)
+    ].join('\t')));
+  } else if(tabAktif === 'rinci'){
     baris.push(['Tgl Muat','No Order','Distributor','Kota','Tipe','Ekspedisi','Rank 1','Harga','Hemat',
                 'No Kontener','Kapal','ETD','ETA','ATD','ATA','Dooring','Keterangan'].join('\t'));
     (data.rinci||[]).forEach(x => baris.push([

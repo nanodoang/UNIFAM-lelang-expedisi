@@ -489,6 +489,20 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .rinci-catatan{margin-top:9px;font-size:12px;color:var(--muted);line-height:1.55;
   padding-left:9px;border-left:2px solid var(--line-tebal);}
 .rinci-waktu{margin-top:8px;font-family:var(--mono);font-size:10px;color:#8D96AC;}
+
+.btn-combo{background:#fff;border:1px solid var(--teal);color:var(--teal-tua);
+  font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.09em;
+  text-transform:uppercase;padding:10px 15px;cursor:pointer;}
+.btn-combo:hover:not(:disabled){background:var(--teal);color:#fff;}
+.btn-combo:disabled{opacity:.4;cursor:default;border-color:var(--line-tebal);color:var(--muted);}
+.cap-combo{font-family:var(--mono);font-size:9.5px;background:var(--teal-tua);color:#fff;
+  padding:2px 8px;margin-left:8px;white-space:nowrap;}
+.combo-bubar{background:none;border:none;color:var(--muted);font-family:var(--mono);
+  font-size:10.5px;text-decoration:underline;cursor:pointer;padding:0;margin-left:9px;}
+.combo-bubar:hover{color:var(--red);}
+
+.combo-baris{font-family:var(--mono);font-size:10.5px;color:var(--teal-tua);margin-top:5px;
+  display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
 </style>
 </head>
 <body>
@@ -595,6 +609,7 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
     <div class="bar-hapus">
       <button class="btn-siar" onclick="bukaSiaran()">Beritahu semua ekspedisi</button>
       <button class="btn-rate" onclick="bukaUsulRate()">Perbarui tab Rate</button>
+      <button class="btn-combo" id="btn-combo" onclick="gabungCombo()" disabled>Gabung jadi Combo</button>
       <button class="btn-hapus" id="btn-hapus-pilih" onclick="hapusTerpilih()" disabled>Hapus Terpilih</button>
       <button class="btn-hapus-semua" onclick="hapusSemua()">Hapus Semua Lelang</button>
       <span class="pilih-info" id="pilih-info">belum ada yang dipilih</span>
@@ -746,8 +761,18 @@ function perbaruiBarHapus(){
   const n = terpilih.size;
   const btn = document.getElementById('btn-hapus-pilih');
   if(btn) btn.disabled = n === 0;
+
+  /* combo butuh minimal 2 lelang, dan semuanya belum tergabung combo lain */
+  const bisaCombo = n >= 2 && Array.from(terpilih).every(id => {
+    const l = lelangList.find(x => x.id === id);
+    return l && !l.combo && l.status !== 'selesai';
+  });
+  const btnC = document.getElementById('btn-combo');
+  if(btnC) btnC.disabled = !bisaCombo;
+
   const info = document.getElementById('pilih-info');
-  if(info) info.textContent = n === 0 ? 'belum ada yang dipilih' : `${n} lelang dipilih`;
+  if(info) info.textContent = n === 0 ? 'belum ada yang dipilih'
+    : `${n} lelang dipilih${n >= 2 && !bisaCombo ? ' · ada yang sudah combo / sudah selesai' : ''}`;
 }
 
 async function hapusTerpilih(){
@@ -1850,6 +1875,68 @@ function siapkanNego(idLelang, ekspedisi){
   return true;
 }
 
+/* ---------- combo ---------- */
+async function gabungCombo(){
+  const ids = Array.from(terpilih);
+  if(ids.length < 2){ setStatus('Pilih minimal 2 lelang untuk digabung jadi combo.', true); return; }
+
+  const kota = ids.map(id => {
+    const l = lelangList.find(x => x.id === id);
+    return l ? `${l.kota} (${l.tipeMobil})` : id;
+  });
+
+  if(!confirm(`Gabung ${ids.length} lelang jadi satu combo?\n\n${kota.join('\n')}\n\n` +
+              `Ekspedisi akan melihatnya sebagai satu kartu dan mengisi harga per tujuan ` +
+              `yang sudah termasuk potongan combo.\n\nCombo tidak punya pembanding rank 1.`)) return;
+
+  try{
+    setStatus('Menggabungkan…');
+    const r = await gas({action:'combo_buat', ids: ids.join(',')});
+    terpilih.clear();
+    await muat(true);
+    setStatus(`${r.jumlah} lelang digabung jadi satu combo.`);
+  }catch(err){ setStatus('Gagal menggabung: ' + err.message, true); }
+}
+
+async function bubarkanCombo(comboId){
+  if(!confirm('Bubarkan combo ini?\n\nTiap tujuan kembali jadi lelang terpisah dengan pembanding rank 1 masing-masing.')) return;
+  try{
+    setStatus('Membubarkan combo…');
+    const r = await gas({action:'combo_bubar', combo: comboId});
+    await muat(true);
+    setStatus(`Combo dibubarkan — ${r.dibubarkan} lelang kembali terpisah.`);
+  }catch(err){ setStatus('Gagal membubarkan: ' + err.message, true); }
+}
+
+/* pilih pemenang untuk seluruh tujuan dalam satu combo sekaligus */
+async function pilihPemenangCombo(comboId, ekspedisi){
+  const anggota = lelangList.filter(l => l.combo === comboId);
+  const rinci = anggota.map(l => {
+    const b = bidsUntuk(l.id).find(x => x.ekspedisi === ekspedisi);
+    return `${l.kota} — ${b ? formatRupiah(b.harga) : '(belum ada harga)'}`;
+  });
+  const total = anggota.reduce((a,l) => {
+    const b = bidsUntuk(l.id).find(x => x.ekspedisi === ekspedisi);
+    return a + (b ? b.harga : 0);
+  }, 0);
+
+  if(!confirm(`Pilih ${ekspedisi} untuk seluruh combo?\n\n${rinci.join('\n')}\n\nTotal: ${formatRupiah(total)}`)) return;
+
+  try{
+    for(let i = 0; i < anggota.length; i++){
+      setStatus(`Menyimpan pemenang ${i+1} dari ${anggota.length}…`);
+      await gas({action:'pilih_pemenang', idLelang: anggota[i].id, pemenang: ekspedisi,
+                 tanggalMuat: '', alasan: 'bagian dari combo'});
+      const l = lelangList.find(x => x.id === anggota[i].id);
+      if(l){ l.status = 'selesai'; l.pemenang = ekspedisi; }
+      terpilih.delete(anggota[i].id);
+    }
+    render();
+    await muat(true);
+    setStatus(`${ekspedisi} dipilih untuk ${anggota.length} tujuan dalam combo. Buat ordernya di tab Kiriman.`);
+  }catch(err){ setStatus('Gagal simpan pemenang combo: ' + err.message, true); }
+}
+
 function gantiTabAdmin(t){
   tabAdmin = t;
   document.getElementById('tab-isi-lelang').classList.toggle('sembunyi', t !== 'lelang');
@@ -1886,7 +1973,9 @@ function render(){
               <td>${b.etd||'-'}</td><td>${b.eta||'-'}</td><td>${b.namaKapal||'-'}</td>
               <td class="aksi-bid">
                 <button class="btn-nego" onclick="bukaNego('${l.id}','${b.ekspedisi}')" title="minta harga lebih baik">Nego</button>
-                <button class="btn-pilih" onclick="pilihPemenang('${l.id}','${b.ekspedisi}')">Pilih Ini</button>
+                ${l.combo
+                  ? `<button class="btn-pilih" onclick="pilihPemenangCombo('${l.combo}','${b.ekspedisi}')" title="berlaku untuk semua tujuan dalam combo">Pilih Combo</button>`
+                  : `<button class="btn-pilih" onclick="pilihPemenang('${l.id}','${b.ekspedisi}')">Pilih Ini</button>`}
               </td>
             </tr>`).join('');
 
