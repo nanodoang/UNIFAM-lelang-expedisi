@@ -332,6 +332,11 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   .isi{padding:15px 16px 40px;}
 }
 
+
+.btn-segar{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;}
+.btn-segar:hover{border-color:var(--navy);color:var(--navy);}
+.btn-segar:disabled{opacity:.5;cursor:default;}
 </style>
 </head>
 <body>
@@ -362,6 +367,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
         <div class="ket">Penghematan terhadap rate rank 1 dan data pengiriman</div>
       </div>
       <div class="aksi">
+        <button class="btn-segar" onclick="segarkanRekap()">Segarkan</button>
         <div class="aku"><div class="bulat">N</div><div><div class="n">Nano</div><div class="r">Admin</div></div></div>
       </div>
     </div>
@@ -607,11 +613,18 @@ function namaBulan(kunci){
   return nama[Number(m[2])-1] + ' ' + m[1];
 }
 
-async function muat(){
+async function segarkanRekap(){
+  const b = document.querySelector('.btn-segar');
+  if(b){ b.disabled = true; b.textContent = 'Mengambil…'; }
+  await muat(true);
+  if(b){ b.disabled = false; b.textContent = 'Segarkan'; }
+}
+
+async function muat(segar){
   if(!ambilPassAdmin()){ bukaGerbang(''); return; }
   try{
     setStatus('Memuat data…');
-    data = await gas({action:'rekap_hemat'});
+    data = await gas(segar ? {action:'rekap_hemat', segar:'1'} : {action:'rekap_hemat'});
     setStatus(`${data.jumlah} lelang selesai · ${data.versi || ''} · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
