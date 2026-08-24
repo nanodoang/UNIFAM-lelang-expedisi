@@ -116,6 +116,12 @@ input:focus,textarea:focus{border-color:var(--navy);}
 .pesan-kosong,.alamat-box{border-radius:0;}
 footer{font-family:var(--mono);}
 
+
+.no-order{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;
+  background:var(--navy);color:#fff;padding:9px 13px;margin:0 0 12px;}
+.no-order .no-l{font-family:var(--disp);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:600;}
+.no-order .no-v{font-family:var(--mono);font-size:16px;font-weight:600;letter-spacing:.03em;}
 </style>
 </head>
 <body>
@@ -343,6 +349,10 @@ function render(){
   isi.innerHTML = `
     <div class="card">
       <div class="card-head">
+        ${lelang.noOrder ? `<div class="no-order">
+          <span class="no-l">No Order</span>
+          <span class="no-v">${lelang.noOrder}</span>
+        </div>` : ''}
         <div class="route">Cikande<span class="arrow">→</span>${lelang.kota}</div>
         <span class="jenis-tag ${isKontener ? 'kontener' : 'darat'}">${isKontener ? 'KONTENER' : 'DARAT'}</span>
         <dl class="rincian">

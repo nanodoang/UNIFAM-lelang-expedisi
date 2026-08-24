@@ -1668,18 +1668,23 @@ function linkKonfirmasiOrder(order, ekspedisi){
 }
 
 function waKonfirmasiOrder(l, order, eks){
-  const teks = [
-    `Halo ${eks.nama}, order kiriman UNIFAM:`, ``,
-    `No Order  : ${order.noOrder}`,
-    `Tujuan    : Cikande -> ${l.kota}`,
+  const rinci = [
+    `No Order   : ${order.noOrder}`,
+    `Tujuan     : Cikande -> ${l.kota}`,
     `Distributor: ${l.customer}`,
-    `Tipe      : ${l.tipeMobil}`,
-    `Tgl muat  : ${order.tanggalMuat}`,
-    `Harga     : ${formatRupiah(order.harga)}`, ``,
-    `Mohon isi data armada di link berikut:`,
-    linkKonfirmasiOrder(order, eks.nama), ``,
-    `Terima kasih.`
-  ].filter(x => x !== '').join('\n');
+    `Tipe       : ${l.tipeMobil}`,
+    `Tgl muat   : ${order.tanggalMuat || '-'}`,
+    order.harga ? `Harga      : ${formatRupiah(order.harga)}` : ''
+  ].filter(x => x).join('\n');
+
+  /* bagian dipisah baris kosong supaya enak dibaca di WhatsApp */
+  const teks = [
+    `Halo ${eks.nama}, order kiriman UNIFAM:`,
+    rinci,
+    `Mohon isi data armada di link berikut:\n${linkKonfirmasiOrder(order, eks.nama)}`,
+    `Mohon sebutkan No Order *${order.noOrder}* kalau ada yang perlu ditanyakan.\nTerima kasih.`
+  ].join('\n\n');
+
   return `https://wa.me/${eks.wa}?text=${encodeURIComponent(teks)}`;
 }
 
