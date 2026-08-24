@@ -285,6 +285,11 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   .isi{padding:15px 16px 40px;}
 }
 
+
+.eks-kota{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--teal-tua);
+  background:rgba(21,150,163,.08);border:1px solid rgba(21,150,163,.35);
+  padding:5px 9px;line-height:1.55;}
+.eks-kota .semua-kota{color:var(--muted);font-style:italic;}
 </style>
 </head>
 <body>
@@ -628,9 +633,16 @@ function bukaEdit(nama){
       </div>
       <div class="kolom">
         <label>Kode ekspedisi</label>
-        <input id="e-kode" type="text" value="${aman(e.kode)}" placeholder="mis. PAT"
-               onkeydown="if(event.key==='Enter')simpanEdit()">
+        <input id="e-kode" type="text" value="${aman(e.kode)}" placeholder="mis. PAT">
         <div class="bantu">dipakai untuk kolom Kode Eksp di Pesanan Armada</div>
+      </div>
+      <div class="kolom">
+        <label>Kota yang dilayani</label>
+        <input id="e-kota" type="text" value="${aman(e.kotaLayanan || '')}"
+               placeholder="MAMUJU, POLMAN, BONE"
+               onkeydown="if(event.key==='Enter')simpanEdit()">
+        <div class="bantu">pisah dengan koma. <b>Kosongkan</b> kalau mereka boleh
+          melihat semua rute — itu bawaannya</div>
       </div>
 
       <div class="baris-tombol">
@@ -657,6 +669,7 @@ async function simpanEdit(){
   const nama = document.getElementById('e-nama').value.trim();
   const wa   = document.getElementById('e-wa').value.trim();
   const kode = document.getElementById('e-kode').value.trim();
+  const kota = document.getElementById('e-kota').value.trim();
   const btn  = document.getElementById('btn-simpan-edit');
 
   const angka = wa.replace(/[^0-9]/g, '');
@@ -670,7 +683,7 @@ async function simpanEdit(){
     btn.disabled = true;
     pesanEdit('');
     setStatus('Menyimpan…');
-    await gas({action:'eks_insert', nama, wa, kode});
+    await gas({action:'eks_insert', nama, wa, kode, kotaLayanan: kota});
     tutupEdit();
     await muat();
     setStatus(`Data ${nama} diperbarui.`);
@@ -704,6 +717,10 @@ function render(){
           <div class="eks-wa ${e.wa ? '' : 'kosong-wa'}" onclick="bukaEdit('${aman(e.nama).replace(/'/g, "\\'")}')" title="klik untuk ubah">${aman(e.wa) || 'no. WA belum diisi — klik untuk isi'}</div>
         </div>
         ${e.kode ? `<span class="eks-kode">${aman(e.kode)}</span>` : ''}
+      </div>
+      <div class="eks-kota">${e.kotaLayanan
+        ? `<b>Melayani:</b> ${aman(e.kotaLayanan)}`
+        : `<span class="semua-kota">melihat semua rute</span>`}
       </div>
 
       <div class="kredensial">
