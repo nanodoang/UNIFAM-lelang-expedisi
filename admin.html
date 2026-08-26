@@ -513,17 +513,16 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .baris-batal td{opacity:.55;text-decoration:line-through;}
 .baris-batal td:last-child,.baris-batal td:nth-child(4){text-decoration:none;}
 
-.bar-tanggal{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+.bar-tanggal{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   background:var(--panel);border:1px solid var(--line);padding:11px 13px;margin-bottom:14px;}
 .bar-tanggal .bt-l{font-family:var(--disp);font-size:10px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--muted);font-weight:600;margin-right:4px;}
-.chip-tgl{background:#fff;border:1px solid var(--line-tebal);color:var(--tinta);
-  font-family:var(--mono);font-size:12px;padding:6px 11px;cursor:pointer;
-  display:inline-flex;align-items:center;gap:7px;}
-.chip-tgl:hover{border-color:var(--navy);}
-.chip-tgl.aktif{background:var(--navy);color:#fff;border-color:var(--navy);}
-.chip-tgl .n{font-size:10px;background:rgba(0,0,0,.1);padding:1px 6px;}
-.chip-tgl.aktif .n{background:rgba(255,255,255,.22);}
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
+.pilih-tgl{background:#fff;border:1px solid var(--line-tebal);color:var(--tinta);
+  font-family:var(--mono);font-size:13px;padding:9px 11px;min-width:230px;cursor:pointer;}
+.pilih-tgl:focus{outline:none;border-color:var(--navy);}
+.btn-reset-tgl{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:7px 11px;cursor:pointer;}
+.btn-reset-tgl:hover{border-color:var(--navy);color:var(--navy);}
 </style>
 </head>
 <body>
@@ -1725,26 +1724,29 @@ function pilihTanggal(t){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-/* Deretan tanggal yang punya order, dengan jumlahnya */
+/* Satu kotak pilihan tanggal — lebih ringkas daripada deretan tombol
+   kalau tanggalnya sudah banyak. */
 function barisTanggal(){
   const semua = semuaOrderGabung().filter(x => x.o.status !== 'batal');
+  if(semua.length === 0) return '';
+
   const hitung = new Map();
   semua.forEach(x => {
     const t = x.o.tanggalMuat || '(tanpa tanggal)';
     hitung.set(t, (hitung.get(t) || 0) + 1);
   });
 
-  if(hitung.size === 0) return '';
-
   const tgl = Array.from(hitung.keys()).sort((a,b) => urutTanggal(a) - urutTanggal(b));
-  const tombol = tgl.map(t => `<button class="chip-tgl ${tglPilih === t ? 'aktif' : ''}"
-      onclick="pilihTanggal('${t}')">${t}<span class="n">${hitung.get(t)}</span></button>`).join('');
+  const opsi = tgl.map(t =>
+    `<option value="${t}" ${tglPilih === t ? 'selected' : ''}>${t} — ${hitung.get(t)} order</option>`).join('');
 
   return `<div class="bar-tanggal">
     <span class="bt-l">Tanggal muat</span>
-    <button class="chip-tgl ${tglPilih === '' ? 'aktif' : ''}" onclick="pilihTanggal('')">
-      Semua<span class="n">${semua.length}</span></button>
-    ${tombol}
+    <select class="pilih-tgl" onchange="pilihTanggal(this.value)">
+      <option value="">Semua tanggal — ${semua.length} order</option>
+      ${opsi}
+    </select>
+    ${tglPilih ? `<button class="btn-reset-tgl" onclick="pilihTanggal('')">tampilkan semua</button>` : ''}
   </div>`;
 }
 
