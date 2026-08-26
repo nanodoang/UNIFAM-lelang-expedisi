@@ -503,6 +503,27 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 
 .combo-baris{font-family:var(--mono);font-size:10.5px;color:var(--teal-tua);margin-top:5px;
   display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
+
+.btn-mini{background:#fff;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--mono);font-size:10px;padding:4px 9px;cursor:pointer;margin-left:5px;}
+.btn-mini:hover{border-color:var(--navy);color:var(--navy);}
+.btn-mini.merah:hover{border-color:var(--red);color:var(--red);}
+.pil-batal{font-family:var(--mono);font-size:9.5px;padding:2px 8px;
+  background:#F1F3F7;border:1px solid var(--line-tebal);color:var(--muted);white-space:nowrap;}
+.baris-batal td{opacity:.55;text-decoration:line-through;}
+.baris-batal td:last-child,.baris-batal td:nth-child(4){text-decoration:none;}
+
+.bar-tanggal{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line);padding:11px 13px;margin-bottom:14px;}
+.bar-tanggal .bt-l{font-family:var(--disp);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;margin-right:4px;}
+.chip-tgl{background:#fff;border:1px solid var(--line-tebal);color:var(--tinta);
+  font-family:var(--mono);font-size:12px;padding:6px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;}
+.chip-tgl:hover{border-color:var(--navy);}
+.chip-tgl.aktif{background:var(--navy);color:#fff;border-color:var(--navy);}
+.chip-tgl .n{font-size:10px;background:rgba(0,0,0,.1);padding:1px 6px;}
+.chip-tgl.aktif .n{background:rgba(255,255,255,.22);}
 </style>
 </head>
 <body>
@@ -748,6 +769,7 @@ async function kirimKeServer(params){
 let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], pendingPreview = [];
 let jumlahBarisMentah = 0;
 let daftarOrder = [];
+let tglPilih = '';        // '' = semua tanggal
 let rateInfo = {jumlah:0, kota:[]};
 let versiScript = '';
 let terpilih = new Set();
@@ -1688,6 +1710,85 @@ function waKonfirmasiOrder(l, order, eks){
   return `https://wa.me/${eks.wa}?text=${encodeURIComponent(teks)}`;
 }
 
+/* Semua order (dari seluruh lelang) beserta lelangnya, untuk tampilan per tanggal */
+function semuaOrderGabung(){
+  const out = [];
+  lelangList.filter(l => l.status === 'selesai').forEach(l => {
+    orderUntuk(l.id).forEach(o => out.push({ o, l }));
+  });
+  return out.sort((a,b) => urutTanggal(a.o.tanggalMuat) - urutTanggal(b.o.tanggalMuat));
+}
+
+function pilihTanggal(t){
+  tglPilih = t;
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* Deretan tanggal yang punya order, dengan jumlahnya */
+function barisTanggal(){
+  const semua = semuaOrderGabung().filter(x => x.o.status !== 'batal');
+  const hitung = new Map();
+  semua.forEach(x => {
+    const t = x.o.tanggalMuat || '(tanpa tanggal)';
+    hitung.set(t, (hitung.get(t) || 0) + 1);
+  });
+
+  if(hitung.size === 0) return '';
+
+  const tgl = Array.from(hitung.keys()).sort((a,b) => urutTanggal(a) - urutTanggal(b));
+  const tombol = tgl.map(t => `<button class="chip-tgl ${tglPilih === t ? 'aktif' : ''}"
+      onclick="pilihTanggal('${t}')">${t}<span class="n">${hitung.get(t)}</span></button>`).join('');
+
+  return `<div class="bar-tanggal">
+    <span class="bt-l">Tanggal muat</span>
+    <button class="chip-tgl ${tglPilih === '' ? 'aktif' : ''}" onclick="pilihTanggal('')">
+      Semua<span class="n">${semua.length}</span></button>
+    ${tombol}
+  </div>`;
+}
+
+/* Daftar rata semua kiriman di satu tanggal, lintas lelang */
+function tabelPerTanggal(){
+  const semua = semuaOrderGabung().filter(x =>
+    x.o.status !== 'batal' && (x.o.tanggalMuat || '(tanpa tanggal)') === tglPilih);
+
+  if(semua.length === 0){
+    return `<div class="empty" style="padding:30px;text-align:center;">
+      Tidak ada kiriman pada ${tglPilih}.</div>`;
+  }
+
+  const baris = semua.map(({o, l}) => {
+    const k = konfirmasiList.find(x => x.idLelang === o.id);
+    const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === (l.pemenang||'').toUpperCase());
+    return `<tr>
+      <td class="mono">${o.noOrder}</td>
+      <td style="font-weight:600;">${l.customer}</td>
+      <td class="mono">${l.kota}</td>
+      <td class="mono">${l.tipeMobil}</td>
+      <td>${l.pemenang || '—'}</td>
+      <td class="mono">${k ? (k.noKontener || k.noPolisi || '—') : '—'}</td>
+      <td>${k ? `<span class="pil-ok">Sudah konfirmasi</span>` : `<span class="pil-nunggu">Menunggu</span>`}</td>
+      <td class="kanan">${eks && !k
+        ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>` : ''}</td>
+    </tr>`;
+  }).join('');
+
+  const belum = semua.filter(({o}) => !konfirmasiList.find(x => x.idLelang === o.id)).length;
+
+  return `<div class="section-title">
+      <h2>Kiriman ${tglPilih}</h2>
+      <small>${semua.length} order · ${belum} belum konfirmasi</small>
+    </div>
+    <div class="panel-box" style="padding:0;"><div class="gulir">
+      <table class="tabel-order" style="min-width:800px;">
+        <thead><tr><th>No Order</th><th>Distributor</th><th>Kota</th><th>Tipe</th>
+          <th>Ekspedisi</th><th>Kontener / Polisi</th><th>Status</th><th></th></tr></thead>
+        <tbody>${baris}</tbody>
+      </table>
+    </div></div>`;
+}
+
 function orderUntuk(idLelang){
   const asli = daftarOrder.filter(o => o.idLelang === idLelang);
   if(asli.length) return asli.sort((a,b) => urutTanggal(a.tanggalMuat) - urutTanggal(b.tanggalMuat));
@@ -1744,6 +1845,43 @@ async function buatOrder(idLelang){
       setStatus(`Order ${r.noOrder} dibuat untuk muat ${r.tanggalMuat} & terkirim ke planning draft.`);
     }
   }catch(err){ setStatus('Gagal membuat order: ' + err.message, true); }
+}
+
+async function geserTanggal(idOrder, noOrder, tglSekarang){
+  const isi = prompt(
+    `Geser tanggal muat ${noOrder}\n\n` +
+    `Sekarang: ${tglSekarang}\n\n` +
+    `Tanggal baru (dd/mm/yyyy):`, tglSekarang);
+  if(isi === null) return;
+  const tgl = String(isi).trim();
+  if(!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(tgl)){
+    setStatus('Tanggal harus dd/mm/yyyy, contoh 24/08/2026.', true); return;
+  }
+  if(tgl === tglSekarang) return;
+
+  try{
+    setStatus('Menggeser tanggal…');
+    const r = await gas({action:'order_tanggal', idOrder, tanggalMuat: tgl});
+    await muat(true);
+    setStatus(`${r.noOrder} digeser dari ${r.tanggalLama} ke ${r.tanggalBaru}.` +
+              (r.jejak ? ` Ikut diubah di: ${r.jejak}.` : ' Belum ada barisnya di Pesanan Armada.'));
+  }catch(err){ setStatus('Gagal menggeser tanggal: ' + err.message, true); }
+}
+
+async function batalOrder(idOrder, noOrder, kota){
+  const alasan = prompt(
+    `Batalkan order ${noOrder} (${kota})?\n\n` +
+    `Barisnya dihapus dari planning draft dan konfirmasi armada di Pesanan Armada.\n` +
+    `Ordernya sendiri tetap tercatat dengan status "batal" sebagai jejak.\n\n` +
+    `Alasan pembatalan:`, 'jadwal digeser');
+  if(alasan === null) return;
+
+  try{
+    setStatus('Membatalkan order…');
+    const r = await gas({action:'order_batal', idOrder, alasan: String(alasan).trim()});
+    await muat(true);
+    setStatus(`Order ${r.noOrder} dibatalkan.${r.jejak ? ' Dibersihkan: ' + r.jejak + '.' : ''}`);
+  }catch(err){ setStatus('Gagal membatalkan: ' + err.message, true); }
 }
 
 async function hapusOrder(idOrder, noOrder, kota){
@@ -2061,13 +2199,21 @@ function render(){
       }).join('');
 
   const selesai = lelangList.filter(l => l.status === 'selesai');
-  document.getElementById('riwayat-wrap').innerHTML = `
+
+  /* kalau satu tanggal dipilih, tampilkan daftar rata lintas lelang */
+  if(tglPilih){
+    document.getElementById('riwayat-wrap').innerHTML = barisTanggal() + tabelPerTanggal();
+    return;
+  }
+
+  document.getElementById('riwayat-wrap').innerHTML = barisTanggal() + `
     <div class="section-title"><h2>Kiriman &amp; Order</h2>
       <small>${selesai.length} lelang sudah ada pemenangnya · ${daftarOrder.length} order dibuat</small></div>
     <div class="grid">${selesai.length === 0 ? '<div class="empty">Belum ada.</div>' : selesai.map(l=>{
       const win = bidsUntuk(l.id).find(b => b.ekspedisi === l.pemenang);
       const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === (l.pemenang||'').toUpperCase());
       const orders = orderUntuk(l.id);
+      const aktif = orders.filter(o => o.status !== 'batal');
       const rencana = String(l.tanggalSemua || '').split(',').map(x=>x.trim()).filter(x=>x);
       const belumDipakai = rencana.filter(t => !orders.some(o => o.tanggalMuat === t));
 
@@ -2091,21 +2237,26 @@ function render(){
           <div class="rinci-waktu">dikonfirmasi ${k.waktu ? new Date(k.waktu).toLocaleString('id-ID') : '-'}</div>
         </td></tr>` : '';
 
-        return `<tr>
+        const batal = o.status === 'batal';
+        return `<tr class="${batal ? 'baris-batal' : ''}">
           <td class="mono">${o.noOrder}</td>
           <td class="mono">${o.tanggalMuat}</td>
           <td class="mono">${k && k.noKontener ? k.noKontener : (k && k.noPolisi ? k.noPolisi : '—')}</td>
-          <td>${sudah
-              ? `<span class="pil-ok">Sudah konfirmasi</span>`
-              : `<span class="pil-nunggu">Menunggu</span>`}</td>
+          <td>${batal
+              ? `<span class="pil-batal" title="${o.alasanBatal || ''}">Dibatalkan</span>`
+              : sudah
+                ? `<span class="pil-ok">Sudah konfirmasi</span>`
+                : `<span class="pil-nunggu">Menunggu</span>`}</td>
           <td class="kanan">
-            ${eks && !sudah
+            ${eks && !sudah && !batal
               ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>`
               : ''}
-            ${o.caraLama
+            ${batal ? '' : o.caraLama
               ? `<span class="cap-lama" title="dibuat sebelum ada tab Order">lama</span>`
-              : `<button class="btn-x" title="hapus order"
-                   onclick="hapusOrder('${o.id}','${o.noOrder}','${l.kota}')">&times;</button>`}
+              : `<button class="btn-mini" title="geser tanggal muat"
+                   onclick="geserTanggal('${o.id}','${o.noOrder}','${o.tanggalMuat}')">tgl</button>
+                 <button class="btn-mini merah" title="batalkan order"
+                   onclick="batalOrder('${o.id}','${o.noOrder}','${l.kota}')">batal</button>`}
           </td>
         </tr>${rinci}`;
       }).join('');
@@ -2113,7 +2264,7 @@ function render(){
       const panelOrder = `<div class="panel-order">
         <div class="po-kop">
           <span class="po-jdl">Kiriman</span>
-          <span class="po-ket">${orders.length} order dibuat${
+          <span class="po-ket">${aktif.length} order aktif${orders.length > aktif.length ? ' · ' + (orders.length - aktif.length) + ' dibatalkan' : ''}${
             belumDipakai.length ? ` · rencana belum dipakai: ${belumDipakai.join(', ')}` : ''}</span>
         </div>
         ${orders.length === 0
