@@ -310,7 +310,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h46';
+const VERSI_HALAMAN = 'h61';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -812,7 +812,10 @@ function ubahRealisasi(id){
 async function simpanRealisasi(id){
   try{
     setStatus('Menyimpan…');
+    const amb = x => { const e = document.getElementById(`${x}-${id}`); return e ? e.value : ''; };
     await gas({action:'realisasi_submit', user:sesi.user, pass:sesi.pass, idLelang:id,
+               etd: keLokal(amb('etd-r')),
+               eta: keLokal(amb('eta-r')),
                atd: keLokal(document.getElementById(`atd-${id}`).value),
                ata: keLokal(document.getElementById(`ata-${id}`).value),
                dooring: keLokal(document.getElementById(`dooring-${id}`).value),
@@ -1225,8 +1228,8 @@ function tabelRiwayat(){
     <td class="kanan">${r.rate ? formatRupiah(r.rate) : '—'}</td>
     <td class="mono">${amanHTML(r.noKontener)||'—'}</td>
     <td>${amanHTML(r.namaKapal)||'—'}</td>
-    <td class="mono">${amanHTML(r.etd)||'—'}</td>
-    <td class="mono">${amanHTML(r.eta)||'—'}</td>
+    <td><input id="etd-r-${r.id}" type="date" value="${keISO(r.etd)}" onchange="ubahRealisasi('${r.id}')"></td>
+    <td><input id="eta-r-${r.id}" type="date" value="${keISO(r.eta)}" onchange="ubahRealisasi('${r.id}')"></td>
     <td><input id="atd-${r.id}" type="date" value="${keISO(r.atd)}" onchange="ubahRealisasi('${r.id}')"></td>
     <td><input id="ata-${r.id}" type="date" value="${keISO(r.ata)}" onchange="ubahRealisasi('${r.id}')"></td>
     <td><input id="dooring-${r.id}" type="date" value="${keISO(r.dooring)}" onchange="ubahRealisasi('${r.id}')"></td>
@@ -1241,7 +1244,7 @@ function tabelRiwayat(){
     <table>
       <thead><tr>
         <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th>
-        <th>No Kontener</th><th>Kapal</th><th>ETD</th><th>ETA</th>
+        <th>No Kontener</th><th>Kapal</th><th class="isi">ETD</th><th class="isi">ETA</th>
         <th class="isi">ATD</th><th class="isi">ATA</th><th class="isi">Dooring</th><th class="isi">Keterangan</th>
       </tr></thead>
       <tbody>${baris}</tbody>
