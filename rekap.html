@@ -378,6 +378,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
         <div class="ket">Penghematan terhadap rate rank 1 dan data pengiriman</div>
       </div>
       <div class="aksi">
+        <button class="btn-segar" onclick="bangunReport()">Tulis ke tab Report</button>
         <button class="btn-segar" onclick="segarkanRekap()">Segarkan</button>
         <div class="aku"><div class="bulat">N</div><div><div class="n">Nano</div><div class="r">Admin</div></div></div>
       </div>
@@ -689,6 +690,24 @@ function namaBulan(kunci){
   return nama[Number(m[2])-1] + ' ' + m[1];
 }
 
+/* Tulis ulang seluruh isi tab Report di spreadsheet */
+async function bangunReport(){
+  if(!confirm('Tulis ulang tab Report di spreadsheet?\n\n' +
+              'Seluruh isinya diganti dengan data terbaru — dari lelang maupun order manual.\n' +
+              'Tab lain tidak disentuh.')) return;
+
+  const b = document.querySelectorAll('.btn-segar')[0];
+  if(b){ b.disabled = true; b.textContent = 'Menulis…'; }
+  try{
+    const r = await gas({action:'report_bangun'});
+    setStatus(`Tab Report diperbarui — ${r.baris} baris ` +
+              `(${r.dariLelang} dari lelang, ${r.dariManual} manual) · ${r.waktu}`);
+  }catch(err){
+    setStatus('Gagal menulis tab Report: ' + err.message, true);
+  }
+  if(b){ b.disabled = false; b.textContent = 'Tulis ke tab Report'; }
+}
+
 async function segarkanRekap(){
   const b = document.querySelector('.btn-segar');
   if(b){ b.disabled = true; b.textContent = 'Mengambil…'; }
@@ -745,6 +764,21 @@ function render(){
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
 
   const wadah = document.getElementById('wadah');
+
+  /* kotak pilihan bulan — tidak dipasang di tab Per Bulan,
+     karena di sana bulan sudah jadi barisnya sendiri */
+  { const lamaB = document.getElementById('bar-bulan');
+    if(lamaB) lamaB.remove();
+    if(tabAktif !== 'bulan'){
+      const htmlB = barisBulan();
+      if(htmlB){
+        const w = document.createElement('div');
+        w.id = 'bar-bulan';
+        w.innerHTML = htmlB;
+        wadah.parentNode.insertBefore(w, wadah);
+      }
+    } }
+
   if(tabAktif === 'manual') wadah.innerHTML = tabelManual();
   else if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
   else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring(), tabAktif);

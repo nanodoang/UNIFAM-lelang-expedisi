@@ -523,6 +523,13 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .btn-reset-tgl{background:none;border:1px solid var(--line-tebal);color:var(--muted);
   font-family:var(--mono);font-size:11px;padding:7px 11px;cursor:pointer;}
 .btn-reset-tgl:hover{border-color:var(--navy);color:var(--navy);}
+
+.btn-mini.biru{border-color:var(--navy);color:var(--navy);}
+.btn-mini.biru:hover{background:var(--navy);color:#fff;}
+
+.ket-kecil{font-family:var(--mono);font-size:9.5px;color:var(--muted);}
+.ket-ada{font-family:var(--mono);font-size:9.5px;color:#8A5A0A;
+  background:rgba(217,130,15,.14);padding:2px 7px;margin-right:7px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -1872,8 +1879,10 @@ function tabelPerTanggal(){
   const judulSaring = [tglPilih, kotaPilihK].filter(x => x).join(' · ');
 
   if(semua.length === 0){
-    return `<div class="empty" style="padding:30px;text-align:center;">
-      Tidak ada kiriman untuk ${judulSaring || 'saringan ini'}.</div>`;
+    /* panel buat order tetap ditampilkan — justru di sinilah paling dibutuhkan */
+    return `<div class="empty" style="padding:26px;text-align:center;">
+      Belum ada kiriman untuk ${judulSaring || 'saringan ini'}.</div>
+      ${panelBuatOrder()}`;
   }
 
   const baris = semua.map(({o, l}) => {
@@ -1904,7 +1913,95 @@ function tabelPerTanggal(){
           <th>Ekspedisi</th><th>Kontener / Polisi</th><th>Status</th><th></th></tr></thead>
         <tbody>${baris}</tbody>
       </table>
+    </div></div>
+    ${panelBuatOrder()}`;
+}
+
+/* Saat sedang menyaring, tombol "+ Buat order baru" di kartu tidak kelihatan.
+   Panel ini menggantikannya: daftar lelang yang sudah ada pemenangnya,
+   masing-masing bisa langsung dibuatkan order. */
+function panelBuatOrder(){
+  let siap = lelangList.filter(l => l.status === 'selesai' && l.pemenang);
+  if(kotaPilihK) siap = siap.filter(l => l.kota === kotaPilihK);
+  if(siap.length === 0) return '';
+
+  siap.sort((a,b) => (a.kota || '').localeCompare(b.kota || ''));
+
+  const baris = siap.map(l => {
+    const aktif = orderUntuk(l.id).filter(o => o.status !== 'batal');
+    const jml = aktif.length;
+
+    /* berapa order yang sudah ada di tanggal yang sedang disaring — hanya
+       keterangan, tombolnya TETAP bisa ditekan karena satu rute memang
+       bisa dikirim berkali-kali di tanggal yang sama */
+    const diTgl = tglPilih ? aktif.filter(o => o.tanggalMuat === tglPilih).length : 0;
+    const terakhir = aktif.length
+      ? aktif[aktif.length - 1].tanggalMuat : '';
+
+    return `<tr>
+      <td style="font-weight:600;">${l.customer}</td>
+      <td class="mono">${l.kota}</td>
+      <td class="mono">${l.tipeMobil}</td>
+      <td>${l.pemenang}</td>
+      <td class="mono">${jml} order${terakhir ? `<br><span class="ket-kecil">terakhir ${terakhir}</span>` : ''}</td>
+      <td class="kanan">
+        ${diTgl ? `<span class="ket-ada">sudah ${diTgl}x di ${tglPilih}</span>` : ''}
+        <button class="btn-mini biru" onclick="buatOrderCepat('${l.id}')">+ buat order${
+          tglPilih ? ' ' + tglPilih : ''}</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="section-title" style="margin-top:22px;">
+      <h2>Buat order baru</h2>
+      <small>${siap.length} lelang siap${kotaPilihK ? ' di ' + kotaPilihK : ''}${
+        tglPilih ? ' · tanggal ' + tglPilih : ''}</small>
+    </div>
+    <div class="panel-box" style="padding:0;"><div class="gulir">
+      <table class="tabel-order" style="min-width:700px;">
+        <thead><tr><th>Distributor</th><th>Kota</th><th>Tipe</th><th>Ekspedisi</th>
+          <th>Sudah dibuat</th><th></th></tr></thead>
+        <tbody>${baris}</tbody>
+      </table>
     </div></div>`;
+}
+
+/* Kalau sedang menyaring tanggal, tanggalnya langsung dipakai tanpa mengetik lagi */
+async function buatOrderCepat(idLelang){
+  const l = lelangList.find(x => x.id === idLelang);
+  if(!l) return;
+
+  let tgl = tglPilih;
+  if(!tgl){
+    const isi = prompt(`Buat order ${l.kota} — ${l.tipeMobil}\nEkspedisi: ${l.pemenang}\n\n` +
+                       `Tanggal muat (dd/mm/yyyy):`, l.tanggalMuat || l.tanggal || '');
+    if(isi === null) return;
+    tgl = String(isi).trim();
+  } else {
+    const sudah = orderUntuk(idLelang).filter(o => o.status !== 'batal' && o.tanggalMuat === tgl);
+    const catatan = sudah.length
+      ? `\n\nCATATAN: sudah ada ${sudah.length} order untuk rute ini di tanggal yang sama` +
+        `\n(${sudah.map(o => o.noOrder).join(', ')}).` +
+        `\nLanjutkan kalau memang mau menambah kiriman.`
+      : '';
+    if(!confirm(`Buat order untuk ${l.customer} — ${l.kota} (${l.tipeMobil})?\n\n` +
+                `Ekspedisi: ${l.pemenang}\nTanggal muat: ${tgl}` + catatan)) return;
+  }
+
+  if(!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(tgl)){
+    setStatus('Tanggal harus dd/mm/yyyy, contoh 24/08/2026.', true); return;
+  }
+
+  try{
+    setStatus('Membuat order…');
+    const r = await gas({action:'order_buat', idLelang, tanggalMuat: tgl});
+    await muat(true);
+    if(r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
+      setStatus(`Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
+    } else {
+      setStatus(`Order ${r.noOrder} dibuat untuk ${l.kota} muat ${r.tanggalMuat}.`);
+    }
+  }catch(err){ setStatus('Gagal membuat order: ' + err.message, true); }
 }
 
 function orderUntuk(idLelang){
