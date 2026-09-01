@@ -633,12 +633,16 @@ function daftarBulan(){
 
 function barisBulan(){
   const bulan = daftarBulan();
-  if(bulan.length < 2) return '';
+  if(bulan.length === 0) return '';        // tidak ada tanggal yang terbaca
   return `<div class="bar-bulan">
     <span class="bb-l">Bulan</span>
     <select class="pilih-bulan" onchange="pilihBulan(this.value)">
       <option value="">Semua bulan</option>
-      ${bulan.map(b => `<option value="${b}" ${bulanPilih === b ? 'selected' : ''}>${labelBulan(b)}</option>`).join('')}
+      ${bulan.map(b => {
+          const n = ((data && data.rinci) || []).filter(x => bulanDari(x.tanggal) === b).length
+                  + (((data && data.manual && data.manual.daftar) || []).filter(x => bulanDari(x.tanggal) === b).length);
+          return `<option value="${b}" ${bulanPilih === b ? 'selected' : ''}>${labelBulan(b)} — ${n} baris</option>`;
+        }).join('')}
     </select>
     ${bulanPilih ? `<button class="btn-reset-bulan" onclick="pilihBulan('')">semua bulan</button>` : ''}
   </div>`;

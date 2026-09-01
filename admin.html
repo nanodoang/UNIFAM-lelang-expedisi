@@ -1888,12 +1888,14 @@ function tabelPerTanggal(){
   const baris = semua.map(({o, l}) => {
     const k = konfirmasiList.find(x => x.idLelang === o.id);
     const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === (l.pemenang||'').toUpperCase());
+    const hrg = o.harga || (bidsUntuk(l.id).find(b => b.ekspedisi === l.pemenang) || {}).harga || 0;
     return `<tr>
       <td class="mono">${o.noOrder}</td>
       <td style="font-weight:600;">${l.customer}</td>
       <td class="mono">${l.kota}</td>
       <td class="mono">${l.tipeMobil}</td>
       <td>${l.pemenang || '—'}</td>
+      <td class="kanan">${hrg ? formatRupiah(hrg) : '—'}</td>
       <td class="mono">${k ? (k.noKontener || k.noPolisi || '—') : '—'}</td>
       <td>${k ? `<span class="pil-ok">Sudah konfirmasi</span>` : `<span class="pil-nunggu">Menunggu</span>`}</td>
       <td class="kanan">${eks && !k
@@ -1902,15 +1904,18 @@ function tabelPerTanggal(){
   }).join('');
 
   const belum = semua.filter(({o}) => !konfirmasiList.find(x => x.idLelang === o.id)).length;
+  const total = semua.reduce((a, {o, l}) =>
+    a + (o.harga || (bidsUntuk(l.id).find(b => b.ekspedisi === l.pemenang) || {}).harga || 0), 0);
 
   return `<div class="section-title">
       <h2>Kiriman ${judulSaring}</h2>
-      <small>${semua.length} order · ${belum} belum konfirmasi</small>
+      <small>${semua.length} order · ${belum} belum konfirmasi · total ${formatRupiah(total)}</small>
     </div>
     <div class="panel-box" style="padding:0;"><div class="gulir">
       <table class="tabel-order" style="min-width:800px;">
         <thead><tr><th>No Order</th><th>Distributor</th><th>Kota</th><th>Tipe</th>
-          <th>Ekspedisi</th><th>Kontener / Polisi</th><th>Status</th><th></th></tr></thead>
+          <th>Ekspedisi</th><th class="kanan">Harga</th><th>Kontener / Polisi</th>
+          <th>Status</th><th></th></tr></thead>
         <tbody>${baris}</tbody>
       </table>
     </div></div>
@@ -1943,6 +1948,10 @@ function panelBuatOrder(){
       <td class="mono">${l.kota}</td>
       <td class="mono">${l.tipeMobil}</td>
       <td>${l.pemenang}</td>
+      <td class="kanan">${(() => {
+        const b = bidsUntuk(l.id).find(x => x.ekspedisi === l.pemenang);
+        return b ? formatRupiah(b.harga) : '—';
+      })()}</td>
       <td class="mono">${jml} order${terakhir ? `<br><span class="ket-kecil">terakhir ${terakhir}</span>` : ''}</td>
       <td class="kanan">
         ${diTgl ? `<span class="ket-ada">sudah ${diTgl}x di ${tglPilih}</span>` : ''}
@@ -1960,7 +1969,7 @@ function panelBuatOrder(){
     <div class="panel-box" style="padding:0;"><div class="gulir">
       <table class="tabel-order" style="min-width:700px;">
         <thead><tr><th>Distributor</th><th>Kota</th><th>Tipe</th><th>Ekspedisi</th>
-          <th>Sudah dibuat</th><th></th></tr></thead>
+          <th class="kanan">Harga</th><th>Sudah dibuat</th><th></th></tr></thead>
         <tbody>${baris}</tbody>
       </table>
     </div></div>`;
