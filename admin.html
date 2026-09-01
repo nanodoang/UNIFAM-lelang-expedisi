@@ -770,6 +770,8 @@ let lelangList = [], bidList = [], daftarEkspedisi = [], konfirmasiList = [], pe
 let jumlahBarisMentah = 0;
 let daftarOrder = [];
 let tglPilih = '';        // '' = semua tanggal
+let kotaPilih = '';       // '' = semua kota (tab Lelang)
+let kotaPilihK = '';      // '' = semua kota (tab Kiriman)
 let rateInfo = {jumlah:0, kota:[]};
 let versiScript = '';
 let terpilih = new Set();
@@ -1797,6 +1799,27 @@ function semuaOrderGabung(){
   return out.sort((a,b) => urutTanggal(a.o.tanggalMuat) - urutTanggal(b.o.tanggalMuat));
 }
 
+function pilihKota(k){ kotaPilih = k; render(); }
+function pilihKotaK(k){ kotaPilihK = k; render(); }
+
+/* Kotak pilihan kota untuk daftar lelang terbuka */
+function barisKotaLelang(terbuka){
+  if(terbuka.length === 0) return '';
+  const hitung = new Map();
+  terbuka.forEach(l => hitung.set(l.kota, (hitung.get(l.kota) || 0) + 1));
+  if(hitung.size < 2) return '';
+
+  const kota = Array.from(hitung.keys()).sort();
+  return `<div class="bar-tanggal">
+    <span class="bt-l">Kota</span>
+    <select class="pilih-tgl" onchange="pilihKota(this.value)">
+      <option value="">Semua kota — ${terbuka.length} lelang</option>
+      ${kota.map(k => `<option value="${k}" ${kotaPilih === k ? 'selected' : ''}>${k} — ${hitung.get(k)}</option>`).join('')}
+    </select>
+    ${kotaPilih ? `<button class="btn-reset-tgl" onclick="pilihKota('')">tampilkan semua</button>` : ''}
+  </div>`;
+}
+
 function pilihTanggal(t){
   tglPilih = t;
   render();
@@ -1815,6 +1838,10 @@ function barisTanggal(){
     hitung.set(t, (hitung.get(t) || 0) + 1);
   });
 
+  const hitungKota = new Map();
+  semua.forEach(x => hitungKota.set(x.l.kota, (hitungKota.get(x.l.kota) || 0) + 1));
+  const kotaK = Array.from(hitungKota.keys()).sort();
+
   const tgl = Array.from(hitung.keys()).sort((a,b) => urutTanggal(a) - urutTanggal(b));
   const opsi = tgl.map(t =>
     `<option value="${t}" ${tglPilih === t ? 'selected' : ''}>${t} — ${hitung.get(t)} order</option>`).join('');
@@ -1825,18 +1852,28 @@ function barisTanggal(){
       <option value="">Semua tanggal — ${semua.length} order</option>
       ${opsi}
     </select>
-    ${tglPilih ? `<button class="btn-reset-tgl" onclick="pilihTanggal('')">tampilkan semua</button>` : ''}
+    <span class="bt-l" style="margin-left:6px;">Kota</span>
+    <select class="pilih-tgl" style="min-width:170px;" onchange="pilihKotaK(this.value)">
+      <option value="">Semua kota</option>
+      ${kotaK.map(k => `<option value="${k}" ${kotaPilihK === k ? 'selected' : ''}>${k} — ${hitungKota.get(k)}</option>`).join('')}
+    </select>
+    ${(tglPilih || kotaPilihK)
+      ? `<button class="btn-reset-tgl" onclick="pilihTanggal('');pilihKotaK('')">tampilkan semua</button>` : ''}
   </div>`;
 }
 
 /* Daftar rata semua kiriman di satu tanggal, lintas lelang */
 function tabelPerTanggal(){
   const semua = semuaOrderGabung().filter(x =>
-    x.o.status !== 'batal' && (x.o.tanggalMuat || '(tanpa tanggal)') === tglPilih);
+    x.o.status !== 'batal' &&
+    (!tglPilih || (x.o.tanggalMuat || '(tanpa tanggal)') === tglPilih) &&
+    (!kotaPilihK || x.l.kota === kotaPilihK));
+
+  const judulSaring = [tglPilih, kotaPilihK].filter(x => x).join(' · ');
 
   if(semua.length === 0){
     return `<div class="empty" style="padding:30px;text-align:center;">
-      Tidak ada kiriman pada ${tglPilih}.</div>`;
+      Tidak ada kiriman untuk ${judulSaring || 'saringan ini'}.</div>`;
   }
 
   const baris = semua.map(({o, l}) => {
@@ -1858,7 +1895,7 @@ function tabelPerTanggal(){
   const belum = semua.filter(({o}) => !konfirmasiList.find(x => x.idLelang === o.id)).length;
 
   return `<div class="section-title">
-      <h2>Kiriman ${tglPilih}</h2>
+      <h2>Kiriman ${judulSaring}</h2>
       <small>${semua.length} order · ${belum} belum konfirmasi</small>
     </div>
     <div class="panel-box" style="padding:0;"><div class="gulir">
@@ -2173,8 +2210,10 @@ function gantiTabAdmin(t){
 function render(){
 
   const grid = document.getElementById('grid');
-  const terbuka = lelangList.filter(l => l.status !== 'selesai');
-  document.getElementById('jumlah-lelang').textContent = `${terbuka.length} aktif`;
+  const semuaTerbuka = lelangList.filter(l => l.status !== 'selesai');
+  const terbuka = kotaPilih ? semuaTerbuka.filter(l => l.kota === kotaPilih) : semuaTerbuka;
+  document.getElementById('jumlah-lelang').textContent =
+    kotaPilih ? `${terbuka.length} di ${kotaPilih} · ${semuaTerbuka.length} total` : `${terbuka.length} aktif`;
 
   { /* angka di tab */
     const selesaiN = lelangList.filter(l => l.status === 'selesai').length;
@@ -2184,8 +2223,19 @@ function render(){
     if(el2) el2.textContent = selesaiN;
   }
 
+  /* kotak pilihan kota, disisipkan tepat di atas daftar kartu */
+  { const lamaK = document.getElementById('bar-kota-lelang');
+    if(lamaK) lamaK.remove();
+    const htmlK = barisKotaLelang(semuaTerbuka);
+    if(htmlK){
+      const wadah = document.createElement('div');
+      wadah.id = 'bar-kota-lelang';
+      wadah.innerHTML = htmlK;
+      grid.parentNode.insertBefore(wadah, grid);
+    } }
+
   grid.innerHTML = terbuka.length === 0
-    ? `<div class="empty">Belum ada lelang terbuka saat ini.</div>`
+    ? `<div class="empty">${kotaPilih ? 'Tidak ada lelang terbuka di ' + kotaPilih + '.' : 'Belum ada lelang terbuka saat ini.'}</div>`
     : terbuka.map(l=>{
         const bids = bidsUntuk(l.id);
         const lewat = l.batasWaktu - Date.now() <= 0;
@@ -2282,7 +2332,7 @@ function render(){
   const selesai = lelangList.filter(l => l.status === 'selesai');
 
   /* kalau satu tanggal dipilih, tampilkan daftar rata lintas lelang */
-  if(tglPilih){
+  if(tglPilih || kotaPilihK){
     document.getElementById('riwayat-wrap').innerHTML = barisTanggal() + tabelPerTanggal();
     return;
   }

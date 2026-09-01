@@ -337,6 +337,17 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;}
 .btn-segar:hover{border-color:var(--navy);color:var(--navy);}
 .btn-segar:disabled{opacity:.5;cursor:default;}
+
+.bar-bulan{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line);padding:11px 13px;margin-bottom:12px;}
+.bar-bulan .bb-l{font-family:var(--disp);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
+.pilih-bulan{background:#fff;border:1px solid var(--line-tebal);color:var(--tinta);
+  font-family:var(--mono);font-size:13px;padding:9px 11px;min-width:190px;cursor:pointer;}
+.pilih-bulan:focus{outline:none;border-color:var(--navy);}
+.btn-reset-bulan{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--mono);font-size:11px;padding:7px 11px;cursor:pointer;}
+.btn-reset-bulan:hover{border-color:var(--navy);color:var(--navy);}
 </style>
 </head>
 <body>
@@ -594,6 +605,71 @@ function kunciPanel(){
 
 
 let data = null, tabAktif = 'bulan';
+let bulanPilih = '';      // '' = semua bulan, isi 'yyyy-MM'
+
+/* 'dd/mm/yyyy' -> 'yyyy-MM' */
+function bulanDari(teks){
+  const m = String(teks||'').trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  return m ? `${m[3]}-${String(m[2]).padStart(2,'0')}` : '';
+}
+
+const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
+                    'Juli','Agustus','September','Oktober','November','Desember'];
+function labelBulan(kunci){
+  const b = String(kunci).split('-');
+  return b.length === 2 ? `${NAMA_BULAN[Number(b[1])-1]} ${b[0]}` : kunci;
+}
+
+function pilihBulan(b){ bulanPilih = b; render(); }
+
+/* Semua bulan yang ada datanya, dari rincian maupun order manual */
+function daftarBulan(){
+  const set = new Set();
+  ((data && data.rinci) || []).forEach(x => { const b = bulanDari(x.tanggal); if(b) set.add(b); });
+  ((data && data.manual && data.manual.daftar) || []).forEach(x => { const b = bulanDari(x.tanggal); if(b) set.add(b); });
+  return Array.from(set).sort().reverse();
+}
+
+function barisBulan(){
+  const bulan = daftarBulan();
+  if(bulan.length < 2) return '';
+  return `<div class="bar-bulan">
+    <span class="bb-l">Bulan</span>
+    <select class="pilih-bulan" onchange="pilihBulan(this.value)">
+      <option value="">Semua bulan</option>
+      ${bulan.map(b => `<option value="${b}" ${bulanPilih === b ? 'selected' : ''}>${labelBulan(b)}</option>`).join('')}
+    </select>
+    ${bulanPilih ? `<button class="btn-reset-bulan" onclick="pilihBulan('')">semua bulan</button>` : ''}
+  </div>`;
+}
+
+function rinciTersaring(){
+  const r = (data && data.rinci) || [];
+  return bulanPilih ? r.filter(x => bulanDari(x.tanggal) === bulanPilih) : r;
+}
+function manualTersaring(){
+  const m = (data && data.manual && data.manual.daftar) || [];
+  return bulanPilih ? m.filter(x => bulanDari(x.tanggal) === bulanPilih) : m;
+}
+
+/* Per ekspedisi dihitung ulang dari rincian yang tersaring */
+function ekspedisiTersaring(){
+  if(!bulanPilih) return (data && data.perEkspedisi) || [];
+  const peta = new Map();
+  rinciTersaring().forEach(x => {
+    const k = String(x.pemenang || '').toUpperCase();
+    if(!peta.has(k)) peta.set(k, {nama:k, jumlah:0, target:0, menang:0});
+    const v = peta.get(k);
+    v.jumlah++; v.target += x.target || 0; v.menang += x.harga || 0;
+  });
+  const out = Array.from(peta.values()).map(v => ({
+    nama: v.nama, jumlah: v.jumlah, target: v.target, menang: v.menang,
+    hemat: v.target - v.menang,
+    persen: v.target ? ((v.target - v.menang) / v.target * 100) : 0
+  }));
+  out.sort((a,b) => b.hemat - a.hemat);
+  return out;
+}
 
 function setStatus(teks, error){
   const el = document.getElementById('status-bar');
@@ -671,7 +747,7 @@ function render(){
   const wadah = document.getElementById('wadah');
   if(tabAktif === 'manual') wadah.innerHTML = tabelManual();
   else if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
-  else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : data.perEkspedisi, tabAktif);
+  else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring(), tabAktif);
 }
 
 function tabelKelompok(daftar, jenis){
@@ -694,7 +770,7 @@ function tabelKelompok(daftar, jenis){
 
 function tabelManual(){
   const m = data.manual || {daftar:[]};
-  const r = m.daftar || [];
+  const r = manualTersaring();
 
   if(m.galat){
     return `<div class="empty" style="padding:34px;text-align:center;">
@@ -733,7 +809,7 @@ function tabelManual(){
 }
 
 function tabelRinci(){
-  const r = data.rinci || [];
+  const r = rinciTersaring();
   if(r.length === 0) return `<div class="empty" style="padding:34px;text-align:center;">Belum ada data.</div>`;
   const belum = r.filter(x => !x.ata || !x.dooring).length;
   document.getElementById('ket-tabel').textContent = `${r.length} pengiriman · ${belum} belum lengkap ATA/Dooring`;
@@ -773,7 +849,7 @@ function salin(){
   if(!data) return;
   let baris = [];
   if(tabAktif === 'manual'){
-    const r = (data.manual && data.manual.daftar) || [];
+    const r = manualTersaring();
     baris.push(['No Order','Tgl Muat','Distributor','Kota','Tipe','Ekspedisi',
                 'Rank 1','Harga','Selisih','Kontener/Polisi'].join('\t'));
     r.forEach(x => baris.push([
@@ -784,13 +860,13 @@ function salin(){
   } else if(tabAktif === 'rinci'){
     baris.push(['Tgl Muat','No Order','Distributor','Kota','Tipe','Ekspedisi','Rank 1','Harga','Hemat',
                 'No Kontener','Kapal','ETD','ETA','ATD','ATA','Dooring','Keterangan'].join('\t'));
-    (data.rinci||[]).forEach(x => baris.push([
+    rinciTersaring().forEach(x => baris.push([
       bersih(x.tanggal), bersih(x.noOrder), bersih(x.customer), bersih(x.kota), bersih(x.tipeMobil),
       bersih(x.pemenang), x.target, x.harga, x.hemat, bersih(x.noKontener), bersih(x.namaKapal),
       bersih(x.etd), bersih(x.eta), bersih(x.atd), bersih(x.ata), bersih(x.dooring), bersih(x.keterangan)
     ].join('\t')));
   } else {
-    const d = tabAktif === 'bulan' ? data.perBulan : data.perEkspedisi;
+    const d = tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring();
     baris.push([tabAktif === 'bulan' ? 'Bulan' : 'Ekspedisi','Lelang','Rank 1','Pemenang','Hemat','Persen'].join('\t'));
     (d||[]).forEach(b => baris.push([
       tabAktif === 'bulan' ? namaBulan(b.nama) : bersih(b.nama),
