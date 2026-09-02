@@ -530,6 +530,22 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .ket-kecil{font-family:var(--mono);font-size:9.5px;color:var(--muted);}
 .ket-ada{font-family:var(--mono);font-size:9.5px;color:#8A5A0A;
   background:rgba(217,130,15,.14);padding:2px 7px;margin-right:7px;white-space:nowrap;}
+
+.baris-juara td{background:#FFFBEF;}
+.pil-juara{font-family:var(--mono);font-size:9px;background:#B8860B;color:#fff;
+  padding:1px 6px;margin-left:7px;white-space:nowrap;}
+.pil-menantang{font-family:var(--mono);font-size:9px;background:var(--red);color:#fff;
+  padding:1px 6px;margin-left:7px;white-space:nowrap;}
+.beda-kunci{font-family:var(--mono);font-size:9.5px;color:var(--muted);}
+.alasan-naik{font-size:11px;color:#8A5A0A;font-style:italic;}
+.kotak-tantang{background:#FDEDEB;border:1px solid rgba(200,68,58,.45);padding:12px 14px;margin-bottom:12px;}
+.kt-t{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.05em;
+  text-transform:uppercase;color:#A5352C;}
+.kt-k{font-size:12.5px;color:#8A3A32;line-height:1.7;margin-top:5px;}
+.btn-tantang{display:inline-block;margin-top:10px;background:#1F9E52;color:#fff;
+  font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.08em;
+  text-transform:uppercase;padding:9px 15px;text-decoration:none;}
+.btn-tantang:hover{background:#17803F;}
 </style>
 </head>
 <body>
@@ -2149,6 +2165,47 @@ function waKonfirmasi(l, win, eks){
 
 let tabAdmin = 'lelang';
 /* ---------- nego harga ---------- */
+/* Keadaan juara bertahan pada satu lelang — dihitung di sisi halaman
+   supaya panel bisa menandai tanpa panggilan server tambahan */
+function cekJuara(l){
+  if(!l.juaraBertahan || !l.hargaKunci) return null;
+  const bids = bidsUntuk(l.id);
+  const juaraNm = String(l.juaraBertahan).toUpperCase();
+
+  let hargaJuara = l.hargaKunci, terendahLain = 0, penantang = '';
+  bids.forEach(b => {
+    if(!b.harga) return;
+    if(b.ekspedisi.toUpperCase() === juaraNm){ hargaJuara = b.harga; return; }
+    if(!terendahLain || b.harga < terendahLain){ terendahLain = b.harga; penantang = b.ekspedisi; }
+  });
+
+  const tertantang = !!(terendahLain && terendahLain < hargaJuara);
+  const diAtasTarget = !!(l.target && terendahLain > l.target);
+  return { juara: l.juaraBertahan, hargaJuara, terendahLain, penantang,
+           tertantang, perluDikabari: tertantang && diAtasTarget };
+}
+
+/* Pesan WA ke juara bertahan — menyebut target rate, bukan harga penantang */
+function waTantang(l, eks){
+  const teks = [
+    `Halo ${eks.nama},`,
+    `Ada penawaran yang lebih rendah untuk rute yang sebelumnya Anda menangkan:`,
+    [`Tujuan     : Cikande -> ${l.kota}`,
+     `Distributor: ${l.customer}`,
+     `Tipe       : ${l.tipeMobil}`,
+     `Tgl muat   : ${l.tanggalMuat || l.tanggal || '-'}`].join('\n'),
+    [`Harga Anda   : ${formatRupiah(l.hargaKunci)}`,
+     `*Target rate : ${l.target ? formatRupiah(l.target) : '-'}*`,
+     l.rateExisting ? `Rate rank 1  : ${formatRupiah(l.rateExisting)} — menyamai angka ini pun masih bisa dipilih` : ''
+    ].filter(x => x).join('\n'),
+    `Harga penawar lain tidak kami sampaikan. Silakan tinjau harga Anda\n` +
+    `sebelum ${tanggalTutup(l.batasWaktu)} lewat link lelang Anda.\n` +
+    `Kalau tidak diubah, harga lama tetap ikut dinilai.`,
+    `Terima kasih.`
+  ].join('\n\n');
+  return `https://wa.me/${eks.wa}?text=${encodeURIComponent(teks)}`;
+}
+
 function bukaNego(idLelang, ekspedisi){
   const l = lelangList.find(x => x.id === idLelang);
   const b = bidsUntuk(idLelang).find(x => x.ekspedisi === ekspedisi);
@@ -2347,9 +2404,19 @@ function render(){
         const lewat = l.batasWaktu - Date.now() <= 0;
         const rows = bids.length === 0
           ? `<tr><td colspan="6" class="empty">Belum ada ekspedisi yang mengisi harga.</td></tr>`
-          : bids.map((b,i)=>`<tr class="${i===0?'termurah':''}">
-              <td>${b.ekspedisi}${i===0?'<span class="badge-termurah">TERMURAH</span>':''}</td>
-              <td class="harga">${formatRupiah(b.harga)}</td>
+          : bids.map((b,i)=>{
+              const juara = l.juaraBertahan &&
+                b.ekspedisi.toUpperCase() === String(l.juaraBertahan).toUpperCase();
+              const menantang = !juara && l.juaraBertahan && l.hargaKunci && b.harga < l.hargaKunci;
+              return `<tr class="${i===0?'termurah':''} ${juara?'baris-juara':''}">
+              <td>${b.ekspedisi}${i===0?'<span class="badge-termurah">TERMURAH</span>':''}${
+                juara?'<span class="pil-juara">TERKUNCI</span>':''}${
+                menantang?'<span class="pil-menantang">MENANTANG</span>':''}</td>
+              <td class="harga">${formatRupiah(b.harga)}${
+                juara && l.hargaKunci && b.harga !== l.hargaKunci
+                  ? `<br><span class="beda-kunci">${b.harga > l.hargaKunci ? 'naik' : 'turun'} ${formatRupiah(Math.abs(b.harga - l.hargaKunci))}</span>`
+                  : ''}${
+                b.alasanNaik ? `<br><span class="alasan-naik">${b.alasanNaik}</span>` : ''}</td>
               <td>${b.etd||'-'}</td><td>${b.eta||'-'}</td><td>${b.namaKapal||'-'}</td>
               <td class="aksi-bid">
                 <button class="btn-nego" onclick="bukaNego('${l.id}','${b.ekspedisi}')" title="minta harga lebih baik">Nego</button>
@@ -2357,7 +2424,8 @@ function render(){
                   ? `<button class="btn-pilih" onclick="pilihPemenangCombo('${l.combo}','${b.ekspedisi}')" title="berlaku untuk semua tujuan dalam combo">Pilih Combo</button>`
                   : `<button class="btn-pilih" onclick="pilihPemenang('${l.id}','${b.ekspedisi}')">Pilih Ini</button>`}
               </td>
-            </tr>`).join('');
+            </tr>`;
+            }).join('');
 
         let ratePanel = '';
         if(!l.rateExisting){

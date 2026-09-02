@@ -295,6 +295,47 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
   border-left:2px solid var(--line-tebal);line-height:1.5;}
 .ct-isian{margin-top:9px;}
 .ct-isian label{margin-bottom:4px;}
+
+/* ---------- juara bertahan ---------- */
+.juara{background:#FFFBEF;border:1.5px solid #B8860B;padding:13px 15px;margin-bottom:12px;}
+.juara .t{font-family:var(--disp);font-weight:700;font-size:16.5px;letter-spacing:.05em;
+  text-transform:uppercase;color:#8A6508;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.juara .h{font-family:var(--mono);font-size:23px;font-weight:600;margin:7px 0 4px;}
+.juara .k{font-size:12.5px;color:#7A5A08;line-height:1.65;}
+.lencana{font-family:var(--mono);font-size:9.5px;background:#B8860B;color:#fff;padding:2px 8px;}
+.lencana.merah{background:var(--red);}
+.tantang{background:#FDEDEB;border:1.5px solid var(--red);padding:13px 15px;margin-bottom:12px;}
+.tantang .t{font-family:var(--disp);font-weight:700;font-size:16.5px;letter-spacing:.05em;
+  text-transform:uppercase;color:#A5352C;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.tantang .k{font-size:12.5px;color:#8A3A32;line-height:1.7;margin-top:6px;}
+.tantang .h{font-family:var(--mono);font-size:12.5px;margin-top:9px;background:#fff;
+  border:1px solid rgba(200,68,58,.35);padding:9px 12px;}
+.tantang .h b{font-size:19px;display:block;margin-top:3px;}
+.tantang .h .lb{font-family:var(--disp);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
+.tantang .h .lb2{display:block;margin-top:9px;padding-top:8px;
+  border-top:1px dashed rgba(200,68,58,.3);font-size:12px;color:#8A3A32;font-family:var(--sans);}
+.tantang .h .lb2 b{display:inline;font-size:13px;font-family:var(--mono);}
+
+/* ---------- peringkat ---------- */
+.peringkat{border:1px solid var(--line-tebal);padding:13px 15px;margin-bottom:12px;background:#FAFBFD;}
+.pr-baris{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;}
+.pr-no{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1;color:var(--navy);}
+.pr-no small{font-size:14px;color:var(--muted);font-weight:600;}
+.pr-teks{flex:1;min-width:170px;}
+.pr-teks b{display:block;font-size:14px;}
+.pr-teks span{font-size:12.5px;color:var(--muted);line-height:1.6;}
+.tangga{display:flex;gap:5px;margin-top:11px;}
+.tangga div{flex:1;height:7px;background:var(--line);}
+.tangga div.isi{background:var(--teal);}
+.tangga div.saya{background:var(--navy);}
+
+/* ---------- alasan kenaikan ---------- */
+.kotak-alasan{background:#FFF8EC;border:1px solid rgba(217,130,15,.45);padding:10px 12px;}
+.kotak-alasan.perlu{border-color:var(--red);background:#FDEDEB;}
+.kotak-alasan label{color:#8A5A0A;}
+.kotak-alasan.perlu label{color:#A5352C;}
+.ket-alasan{font-size:11.5px;color:#7A4E08;margin-top:5px;line-height:1.55;}
 </style>
 </head>
 <body>
@@ -310,7 +351,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h62';
+const VERSI_HALAMAN = 'h71';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -764,6 +805,18 @@ async function kirimTerpilih(){
     const harga = hargaBerlaku(id);
 
     if(l && sudahTutup(l)){ gagal.push(`${nama} — batas waktu sudah lewat`); terpilih.delete(id); continue; }
+
+    /* juara bertahan yang menaikkan harga wajib menyebutkan alasannya */
+    if(l && l.sayaJuara && l.hargaKunci && harga > l.hargaKunci){
+      const el = document.getElementById('alasan-' + id);
+      const al = el ? el.value.trim() : ((draf[id] || {}).alasan || '').trim();
+      if(!al){
+        gagal.push(`${nama} — harga dinaikkan, alasannya wajib diisi`);
+        const w = document.getElementById('wadah-alasan-' + id);
+        if(w) w.classList.add('perlu');
+        continue;
+      }
+    }
     if(!harga || harga <= 0){
       /* sebutkan sebabnya, supaya kalau terulang langsung ketahuan letaknya */
       const inp = document.getElementById('harga-' + id);
@@ -788,7 +841,8 @@ async function kirimTerpilih(){
       await gas({action:'bid_submit', user:sesi.user, pass:sesi.pass, idLelang:id, harga,
                  etd: keLokal(amb('etd')),
                  eta: keLokal(amb('eta')),
-                 namaKapal: String(amb('kapal')).trim()});
+                 namaKapal: String(amb('kapal')).trim(),
+               alasanNaik: String(amb('alasan')).trim()});
       berhasil.push(nama);
       terpilih.delete(id);
       hapusDraf(id);          // sudah tersimpan di server, draf tidak perlu lagi
@@ -985,6 +1039,46 @@ function kartuTerbuka(){
       </div>
     </div>`;
 
+    /* --- juara bertahan: harga terkunci --- */
+    let kotakJuara = '';
+    if(l.sayaJuara && l.hargaKunci){
+      kotakJuara = l.kunciTerbuka
+        ? `<div class="tantang">
+             <div class="t">Kunci Anda terbuka <span class="lencana merah">ADA YANG LEBIH RENDAH</span></div>
+             <div class="k">Ada ekspedisi lain yang menawar di bawah harga Anda.
+               Harga penawar lain tidak kami tampilkan — yang kami sampaikan target rate.</div>
+             <div class="h">
+               <span class="lb">Target rate yang kami harapkan</span>
+               <b>${l.target ? formatRupiah(l.target) : '—'}</b>
+               ${l.rank1 ? `<span class="lb2">Menyamai rate rank 1
+                 <b>${formatRupiah(l.rank1)}</b> pun masih bisa dipilih.</span>` : ''}
+             </div>
+           </div>`
+        : `<div class="juara">
+             <div class="t">Harga Anda terkunci <span class="lencana">MASIH TERENDAH</span></div>
+             <div class="h">${formatRupiah(l.hargaKunci)}</div>
+             <div class="k">Anda pemenang di rute ini sebelumnya, jadi harga tersebut berlaku lagi
+               tanpa perlu diisi ulang. Kalau ada kenaikan, ubah angkanya dan sebutkan alasannya.</div>
+           </div>`;
+    }
+
+    /* --- ekspedisi lain: peringkat, bukan harga lawan --- */
+    let kotakPeringkat = '';
+    if(!l.sayaJuara && l.peringkat && l.jumlahPenawar > 1){
+      const tangga = Array.from({length: l.jumlahPenawar}, (_, i) =>
+        `<div class="${i + 1 === l.peringkat ? 'saya' : (i + 1 < l.peringkat ? 'isi' : '')}"></div>`).join('');
+      kotakPeringkat = `<div class="peringkat">
+        <div class="pr-baris">
+          <div class="pr-no">${l.peringkat}<small>/${l.jumlahPenawar}</small></div>
+          <div class="pr-teks">
+            <b>Penawaran Anda di urutan ke-${l.peringkat} dari ${l.jumlahPenawar}</b>
+            <span>Harga penawar lain tidak ditampilkan. Peringkat diperbarui tiap kali Anda mengubah harga.</span>
+          </div>
+        </div>
+        <div class="tangga">${tangga}</div>
+      </div>`;
+    }
+
     /* posisi penawaran sendiri terhadap yang terendah */
     let posisi = '';
     if(b && b.harga && l.terendah){
@@ -1029,8 +1123,10 @@ function kartuTerbuka(){
       </div>
       ${stempel}
       <div class="card-body">
-        ${kotakHarga}
-        ${posisi}
+        ${kotakJuara}
+        ${kotakPeringkat}
+        ${l.sayaJuara ? '' : kotakHarga}
+        ${l.sayaJuara ? '' : posisi}
         ${terkunci ? `
         <div class="terkunci-kotak">
           <div class="tk-isi">
@@ -1054,6 +1150,14 @@ function kartuTerbuka(){
               <span class="ppn">Belum termasuk PPN.</span>
             </div>
           </div>
+          ${l.sayaJuara && l.hargaKunci ? `<div class="full kotak-alasan" id="wadah-alasan-${l.id}">
+            <label>Alasan kenaikan — wajib diisi kalau harga dinaikkan</label>
+            <input id="alasan-${l.id}" type="text" ${mati}
+                   placeholder="mis. kenaikan tarif kapal per 20 Agustus"
+                   value="${amanHTML(nilaiKolom(l.id, 'alasan', b ? (b.alasanNaik || '') : ''))}"
+                   oninput="simpanDraf('${l.id}')">
+            <div class="ket-alasan">Tersimpan dan dilihat manajemen UNIFAM saat menyetujui.</div>
+          </div>` : ''}
           <div><label>ETD</label><input id="etd-${l.id}" type="date" ${mati}
                  value="${amanHTML(nilaiKolom(l.id, 'etd', keISO(b ? b.etd : '')))}"
                  onchange="simpanDraf('${l.id}')"></div>
