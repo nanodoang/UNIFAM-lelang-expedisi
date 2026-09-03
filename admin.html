@@ -546,6 +546,18 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
   font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.08em;
   text-transform:uppercase;padding:9px 15px;text-decoration:none;}
 .btn-tantang:hover{background:#17803F;}
+
+.langkah-order{background:#FFF8EC;border:1px solid rgba(217,130,15,.45);padding:12px 14px;
+  margin:13px 0;font-size:12.5px;color:#7A4E08;line-height:1.7;}
+.langkah-order b{color:#5E3C06;}
+.langkah-order > b:first-child{display:block;font-family:var(--disp);font-size:14.5px;
+  letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px;}
+.tanpa-order{background:#FFF8EC;border:1px solid rgba(217,130,15,.5);padding:11px 13px;
+  margin-bottom:12px;font-size:12.5px;color:#7A4E08;line-height:1.65;}
+.tanpa-order b{display:block;font-family:var(--disp);font-size:14px;letter-spacing:.05em;
+  text-transform:uppercase;color:#5E3C06;margin-bottom:3px;}
+
+.tab-admin .hit.perlu{background:var(--amber);color:#fff;}
 </style>
 </head>
 <body>
@@ -1557,11 +1569,19 @@ function bukaJendelaMenang(idLelang, namaEks, noOrder, alasan){
         <div style="margin-top:7px;"><span class="label">Tanggal Muat</span><br><b>${l ? (l.tanggalMuat || l.tanggal || '-') : '-'}</b></div>
       </div>
       ${blokApproval}
-      ${eks && eks.wa
-        ? `<a class="btn-wa-besar" href="${waKonfirmasi(l, win, eks)}" target="_blank"
-              onclick="tutupJendelaMenang()">Kirim Form Konfirmasi via WA</a>`
-        : `<div class="peringatan-kecil">Nomor WA ${namaEks} belum terdaftar. Lengkapi dulu di halaman Daftar Ekspedisi.</div>`}
-      <button class="btn-nanti" onclick="tutupJendelaMenang()">Nanti saja</button>
+      <div class="langkah-order">
+        <b>Langkah berikutnya: buat order</b>
+        Memilih pemenang hanya menetapkan harganya. <b>No Order belum dibuat</b>,
+        jadi link konfirmasi belum bisa dikirim dan barisnya belum masuk ke Pesanan Armada.
+        <br><br>Buat ordernya sekarang — boleh lebih dari satu kalau kirimannya beberapa kali.
+      </div>
+      <button class="btn-wa-besar" style="background:var(--navy);border:none;width:100%;"
+        onclick="tutupJendelaMenang(); gantiTabAdmin('kiriman'); buatOrderCepat('${idLelang}');">
+        Buat order sekarang</button>
+      ${eks && eks.wa ? '' :
+        `<div class="peringatan-kecil">Nomor WA ${namaEks} belum terdaftar —
+           lengkapi di Daftar Ekspedisi supaya link konfirmasi bisa dikirim.</div>`}
+      <button class="btn-nanti" onclick="tutupJendelaMenang(); gantiTabAdmin('kiriman');">Nanti saja, buka tab Kiriman</button>
     </div>`;
   w.onclick = (ev) => { if(ev.target === w) tutupJendelaMenang(); };
   document.body.appendChild(w);
@@ -1896,11 +1916,25 @@ function tabelPerTanggal(){
 
   const judulSaring = [tglPilih, kotaPilihK].filter(x => x).join(' · ');
 
+  /* lelang yang sudah ada pemenangnya tapi BELUM dibuatkan order — kalau tidak
+     ditampilkan, lelang seperti ini seolah hilang dari panel */
+  const belumOrder = lelangList.filter(l =>
+    l.status === 'selesai' && l.pemenang &&
+    (!kotaPilihK || l.kota === kotaPilihK) &&
+    orderUntuk(l.id).filter(o => o.status !== 'batal').length === 0);
+
+  const blokBelum = belumOrder.length ? `
+    <div class="tanpa-order" style="margin-top:14px;">
+      <b>${belumOrder.length} lelang belum dibuatkan order</b>
+      Pemenangnya sudah dipilih tapi No Order belum dibuat, jadi belum muncul di daftar
+      kiriman mana pun: ${belumOrder.map(l => l.kota + ' (' + l.pemenang + ')').join(', ')}.
+      Buat ordernya lewat panel di bawah.
+    </div>` : '';
+
   if(semua.length === 0){
-    /* panel buat order tetap ditampilkan — justru di sinilah paling dibutuhkan */
     return `<div class="empty" style="padding:26px;text-align:center;">
       Belum ada kiriman untuk ${judulSaring || 'saringan ini'}.</div>
-      ${panelBuatOrder()}`;
+      ${blokBelum}${panelBuatOrder()}`;
   }
 
   const baris = semua.map(({o, l}) => {
@@ -1937,7 +1971,7 @@ function tabelPerTanggal(){
         <tbody>${baris}</tbody>
       </table>
     </div></div>
-    ${panelBuatOrder()}`;
+    ${blokBelum}${panelBuatOrder()}`;
 }
 
 /* Saat sedang menyaring, tombol "+ Buat order baru" di kartu tidak kelihatan.
@@ -2382,10 +2416,16 @@ function render(){
 
   { /* angka di tab */
     const selesaiN = lelangList.filter(l => l.status === 'selesai').length;
+    const tanpaOrder = lelangList.filter(l =>
+      l.status === 'selesai' && orderUntuk(l.id).filter(o => o.status !== 'batal').length === 0).length;
     const el1 = document.getElementById('hit-lelang');
     const el2 = document.getElementById('hit-kiriman');
     if(el1) el1.textContent = terbuka.length;
-    if(el2) el2.textContent = selesaiN;
+    if(el2){
+      el2.textContent = selesaiN;
+      el2.title = tanpaOrder ? `${tanpaOrder} lelang belum dibuatkan order` : '';
+      el2.classList.toggle('perlu', tanpaOrder > 0);
+    }
   }
 
   /* kotak pilihan kota, disisipkan tepat di atas daftar kartu */
@@ -2515,7 +2555,10 @@ function render(){
 
   document.getElementById('riwayat-wrap').innerHTML = barisTanggal() + `
     <div class="section-title"><h2>Kiriman &amp; Order</h2>
-      <small>${selesai.length} lelang sudah ada pemenangnya · ${daftarOrder.length} order dibuat</small></div>
+      <small>${selesai.length} lelang sudah ada pemenangnya · ${daftarOrder.length} order dibuat${(() => {
+        const n = selesai.filter(l => orderUntuk(l.id).filter(o => o.status !== 'batal').length === 0).length;
+        return n ? ` · <b style="color:#8A5A0A;">${n} belum dibuatkan order</b>` : '';
+      })()}</small></div>
     <div class="grid">${selesai.length === 0 ? '<div class="empty">Belum ada.</div>' : selesai.map(l=>{
       const win = bidsUntuk(l.id).find(b => b.ekspedisi === l.pemenang);
       const eks = daftarEkspedisi.find(e => e.nama.toUpperCase() === (l.pemenang||'').toUpperCase());
@@ -2575,8 +2618,12 @@ function render(){
             belumDipakai.length ? ` · rencana belum dipakai: ${belumDipakai.join(', ')}` : ''}</span>
         </div>
         ${orders.length === 0
-          ? `<div class="po-kosong">Belum ada order. Tekan tombol di bawah tiap kali mau kirim —
-               boleh tanggal berbeda, boleh sama, sebanyak yang diperlukan.</div>`
+          ? `<div class="tanpa-order">
+               <b>Belum ada order</b>
+               Pemenang sudah dipilih, tapi <b>No Order belum dibuat</b> — jadi belum masuk
+               ke Pesanan Armada dan link konfirmasi belum bisa dikirim.
+               Tekan tombol di bawah, boleh lebih dari sekali kalau kirimannya beberapa kali.
+             </div>`
           : `<table class="tabel-order">
                <thead><tr><th>No Order</th><th>Tgl Muat</th><th>Kontener / Polisi</th>
                  <th>Status</th><th></th></tr></thead>
