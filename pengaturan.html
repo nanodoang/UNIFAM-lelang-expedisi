@@ -228,6 +228,9 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.09em;
   text-transform:uppercase;padding:12px;cursor:pointer;}
 .gerbang-salah{color:var(--red);font-size:12.5px;margin-top:10px;font-family:var(--mono);}
+
+.bar-status{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:0 0 12px;line-height:1.6;}
+.bar-status.err{color:var(--red);}
 </style>
 </head>
 <body>
@@ -272,7 +275,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
       </div>
     </div>
     <div class="isi">
-      <div id="status"></div>
+      <div id="status-bar" class="bar-status"></div>
       <div id="wadah"></div>
     </div>
   </div>
@@ -289,12 +292,6 @@ function aman(t){
   return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function setStatus(teks, error){
-  const el = document.getElementById('status');
-  el.textContent = teks || '';
-  el.className = error ? 'err' : '';
-}
-
 let jsonpN = 0;
 function jsonp(url){
   return new Promise((resolve, reject) => {
@@ -413,7 +410,23 @@ async function muat(){
     modePilih = d.modeSekarang || 'juara';
     setStatus(`${setelan.length} setelan · periode ${d.periodeSekarang} · ${d.versi}`);
     gambar();
-  }catch(err){ setStatus('Gagal memuat: ' + err.message, true); }
+  }catch(err){
+    setStatus('Gagal memuat: ' + err.message, true);
+    document.getElementById('wadah').innerHTML = `
+      <div class="blok"><div class="blok-isi">
+        <div class="ingat" style="margin-top:0;">
+          <b>Tidak bisa memuat setelan</b>
+          ${aman(err.message)}
+          ${/action tidak dikenal/i.test(err.message)
+            ? '<br><br>Sepertinya <b>Code.gs versi terbaru belum di-deploy</b>. ' +
+              'Buka editor Apps Script, ganti seluruh isinya dengan Code.gs terbaru, ' +
+              'lalu Manage deployments &rarr; pensil &rarr; New version &rarr; Deploy.'
+            : ''}
+        </div>
+        <button class="btn-simpan" style="margin-top:13px;background:var(--navy);"
+          onclick="muat()">Coba lagi</button>
+      </div></div>`;
+  }
 }
 
 function pilihMode(m){
