@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dokumen Rate — UNIFAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#2A3180; --navy-tua:#1C2159; --teal:#1596A3; --teal-tua:#0E7A85;
+  --kertas:#EFF2F7; --panel:#FFF; --tinta:#12172B; --muted:#5A6480;
+  --line:#DDE2EC; --line-tebal:#C3CAD9;
+  --amber:#D9820F; --red:#C8443A; --hijau:#12876B;
+  --disp:'Barlow Condensed',Arial,sans-serif;
+  --sans:'Barlow',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--kertas);color:var(--tinta);
+  font-family:var(--sans);font-size:14px;line-height:1.55;}
+
+.bar{background:var(--navy);color:#fff;padding:12px 18px;display:flex;
+  align-items:center;gap:11px;flex-wrap:wrap;}
+.bar .jd{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:.05em;
+  text-transform:uppercase;flex:1;}
+.bar button,.bar a{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.4);
+  font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;padding:8px 14px;cursor:pointer;text-decoration:none;}
+.bar button:hover,.bar a:hover{background:rgba(255,255,255,.28);}
+.bar .status{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.75);width:100%;}
+
+.luar{padding:20px;display:flex;justify-content:center;}
+.dok{background:#fff;border:1px solid var(--line-tebal);width:100%;max-width:660px;}
+.dok-kop{padding:18px 22px;border-bottom:2px solid var(--navy);display:flex;gap:14px;align-items:flex-start;}
+.dok-kop .kiri{flex:1;}
+.dok-kop .t{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.05em;
+  text-transform:uppercase;line-height:1.1;}
+.dok-kop .s{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.65;}
+.dok-kop img{width:40px;height:40px;object-fit:contain;}
+.cap-dok{font-family:var(--mono);font-size:9px;padding:3px 9px;white-space:nowrap;}
+.cap-dok.ajukan{background:rgba(217,130,15,.15);color:#8A5A0A;border:1px solid rgba(217,130,15,.45);}
+.cap-dok.setuju{background:rgba(18,135,107,.14);color:#0B6350;border:1px solid rgba(18,135,107,.45);}
+.dok-isi{padding:18px 22px;}
+.pihak{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;font-size:13px;}
+.pihak .l{font-family:var(--disp);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;}
+.pihak b{display:block;margin-top:2px;}
+.pihak span{color:var(--muted);font-size:12px;}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{font-family:var(--disp);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 9px;border-bottom:1.5px solid var(--tinta);white-space:nowrap;}
+th.kanan{text-align:right;}
+td{padding:8px 9px;border-bottom:1px solid var(--line);}
+tbody tr:last-child td{border-bottom:1.5px solid var(--tinta);}
+td.mono{font-family:var(--mono);white-space:nowrap;}
+td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
+.naik{color:var(--red);font-size:11px;}
+.turun{color:var(--hijau);font-size:11px;}
+.abu{color:var(--muted);font-size:11px;}
+
+.syarat{margin-top:16px;font-size:12px;color:var(--muted);line-height:1.8;
+  padding-left:12px;border-left:2px solid var(--line-tebal);}
+.syarat b{color:var(--tinta);}
+.jejak{margin-top:17px;background:#FAFBFD;border:1px solid var(--line);padding:12px 14px;}
+.jejak .jl{font-family:var(--disp);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:7px;}
+.jejak table{font-size:11.5px;}
+.jejak td{border:none;padding:3px 0;font-family:var(--mono);color:var(--muted);}
+.jejak td:first-child{width:132px;}
+.jejak td b{color:var(--tinta);}
+.ttd{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px;}
+.ttd div{text-align:center;font-size:12.5px;}
+.ttd .kotak-ttd{height:82px;border-bottom:1px solid var(--tinta);margin-bottom:7px;}
+.ttd .nm{font-weight:600;}
+.ttd .jb{color:var(--muted);font-size:11.5px;}
+.dok-kaki{padding:11px 22px;background:#FAFBFD;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:9.5px;color:var(--muted);line-height:1.65;}
+.pesan{padding:26px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.7;}
+
+@media print{
+  body{background:#fff;}
+  .bar{display:none;}
+  .luar{padding:0;}
+  .dok{border:none;max-width:none;}
+  .dok-kaki{background:#fff;}
+  @page{margin:14mm;}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <span class="jd">Dokumen Rate</span>
+  <span id="tombol-jenis"></span>
+  <button onclick="window.print()">Cetak / PDF</button>
+  <span class="status" id="status-bar"></span>
+</div>
+
+<div class="luar" id="luar"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
+
+let jsonpN = 0;
+function jsonp(url){
+  return new Promise((resolve, reject) => {
+    const cb = 'gascb' + (++jsonpN) + '_' + Date.now();
+    const s = document.createElement('script');
+    const t = setTimeout(() => { bersih(); reject(new Error('Timeout — server terlalu lama merespons. Coba muat ulang halaman.')); }, 60000);
+    function bersih(){ clearTimeout(t); try{ delete window[cb]; }catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = (d) => { bersih(); resolve(d); };
+    s.src = url + '&callback=' + cb;
+    s.onerror = () => { bersih(); reject(new Error('Gagal terhubung ke Apps Script')); };
+    document.body.appendChild(s);
+  });
+}
+async function gas(p){
+  return kirimKeServer(p);
+}
+
+/* Jalur utama fetch; JSONP hanya cadangan. Kalau keduanya gagal,
+   sebab dari jalur utama yang dilaporkan — bukan sekadar "timeout". */
+async function kirimKeServer(params){
+  const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+  const url = GAS_URL + '?' + q;
+
+  let sebabUtama = '';
+  try {
+    const r = await fetch(url);
+    if(!r.ok) {
+      sebabUtama = 'server menjawab ' + r.status + ' ' + r.statusText;
+    } else {
+      const teks = await r.text();
+      if(/^\s*<(!DOCTYPE|html)/i.test(teks)){
+        throw new Error('Server mengembalikan halaman web, bukan data. Biasanya berarti deployment Apps Script perlu diatur ulang ke "Who has access: Anyone".');
+      }
+      let d;
+      try { d = JSON.parse(teks); }
+      catch(e){ throw new Error('Jawaban server tidak terbaca: ' + teks.slice(0, 120)); }
+      if(d && d.error) throw new Error(d.error);
+      return d;
+    }
+  } catch(e){
+    if(!sebabUtama) sebabUtama = e.message;
+    // error dari server sendiri tidak perlu diulang lewat jalur cadangan
+    if(/password|action tidak dikenal|tidak ditemukan|halaman web|tidak terbaca/i.test(sebabUtama)){
+      throw new Error(sebabUtama);
+    }
+  }
+
+  try {
+    const d = await jsonp(url);
+    if(d && d.error) throw new Error(d.error);
+    return d;
+  } catch(e2){
+    throw new Error(sebabUtama || e2.message);
+  }
+}
+
+let semuaBaris = [], tipeDarat = [], tipeLaut = [], jenisAktif = 'darat', infoLeadtim = {};
+
+function setStatus(teks, error){
+  const el = document.getElementById('status-bar');
+  el.textContent = teks;
+  el.className = error ? 'err' : '';
+}
+
+const par = new URLSearchParams(location.search);
+const periode = par.get('periode') || '';
+const namaEks = par.get('ekspedisi') || '';
+let jenis = par.get('jenis') || 'penawaran';
+let d = null;
+
+function aman(t){
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function rupiah(n){ return Number(n || 0).toLocaleString('id-ID'); }
+function waktuTeks(ms){
+  if(!ms) return '-';
+  const t = new Date(ms);
+  const p = n => String(n).padStart(2,'0');
+  return p(t.getDate()) + '/' + p(t.getMonth()+1) + '/' + t.getFullYear() +
+         ' pukul ' + p(t.getHours()) + '.' + p(t.getMinutes()) + ' WIB';
+}
+
+/* kode ringkas dari isi dokumen — kalau angkanya diubah, kodenya tidak cocok lagi */
+function kodeIsi(){
+  let h = 5381;
+  const teks = (d.baris || []).map(b => b.kota + b.tipeMobil + b.rateDiajukan).join('|') +
+               d.noPenawaran + d.waktuAjukan;
+  for(let i = 0; i < teks.length; i++) h = ((h << 5) + h + teks.charCodeAt(i)) >>> 0;
+  return h.toString(16).toUpperCase().padStart(8,'0').slice(0,4) + '-' +
+         h.toString(36).toUpperCase().slice(0,4);
+}
+
+function gantiJenis(j){ jenis = j; render(); }
+
+async function muat(){
+  if(!periode || !namaEks){
+    document.getElementById('luar').innerHTML =
+      '<div class="dok"><div class="pesan">Alamat halaman tidak lengkap.<br>' +
+      'Buka lewat panel Kesepakatan Rate.</div></div>';
+    return;
+  }
+  try{
+    setStatus('Memuat dokumen…');
+    d = await gas({action:'rb_dokumen', periode, ekspedisi: namaEks});
+    setStatus(d.labelPeriode + ' · ' + d.ekspedisi + ' · ' + d.baris.length + ' rute');
+    render();
+  }catch(err){
+    setStatus('Gagal memuat: ' + err.message, true);
+    document.getElementById('luar').innerHTML =
+      '<div class="dok"><div class="pesan">Tidak bisa memuat dokumen.<br>' +
+      aman(err.message) + '</div></div>';
+  }
+}
+
+function barisPenawaran(){
+  return d.baris.map(b => {
+    const lama = b.rateLama || 0, baru = b.rateDiajukan || 0;
+    const ket = !lama ? '<span class="abu">rute baru</span>'
+      : baru > lama ? '<span class="naik">naik ' + rupiah(baru - lama) +
+                      (b.alasan ? ' — ' + aman(b.alasan) : '') + '</span>'
+      : baru < lama ? '<span class="turun">turun ' + rupiah(lama - baru) + '</span>'
+      : '<span class="abu">tetap</span>';
+    return '<tr><td class="mono">' + aman(b.kota) + '</td>' +
+      '<td class="mono">' + aman(b.tipeMobil) + '</td>' +
+      '<td class="kanan">' + (lama ? rupiah(lama) : '—') + '</td>' +
+      '<td class="kanan">' + rupiah(baru) + '</td>' +
+      '<td>' + ket + '</td></tr>';
+  }).join('');
+}
+
+function barisKesepakatan(){
+  return d.baris.map(b =>
+    '<tr><td class="mono">' + aman(b.kota) + '</td>' +
+    '<td class="mono">' + aman(b.tipeMobil) + '</td>' +
+    '<td class="kanan">Rp ' + rupiah(b.rateDiajukan) + '</td></tr>').join('');
+}
+
+function render(){
+  const kesepakatan = jenis === 'kesepakatan';
+
+  if(kesepakatan && d.status !== 'disetujui'){
+    document.getElementById('luar').innerHTML =
+      '<div class="dok"><div class="pesan">Penawaran ini <b>belum disetujui</b>, ' +
+      'jadi lembar kesepakatannya belum bisa dicetak.<br><br>' +
+      'Setujui dulu di panel Kesepakatan Rate.</div></div>';
+    perbaruiTombol();
+    return;
+  }
+
+  const kop = kesepakatan
+    ? '<div class="t">Kesepakatan Rate Pengiriman</div><div class="s">Nomor: ' +
+      aman(d.noKesepakatan) + '<br>Periode: 1&ndash;akhir ' + aman(d.labelPeriode) +
+      ' &middot; mengacu pada ' + aman(d.noPenawaran) + '</div>'
+    : '<div class="t">Bukti Penawaran Rate</div><div class="s">Nomor: ' +
+      aman(d.noPenawaran) + '<br>Periode berlaku: ' + aman(d.labelPeriode) + '</div>';
+
+  const cap = kesepakatan ? '' :
+    '<span class="cap-dok ' + (d.status === 'disetujui' ? 'setuju' : 'ajukan') + '">' +
+    (d.status === 'disetujui' ? 'SUDAH DISETUJUI' : 'DIAJUKAN EKSPEDISI') + '</span>';
+
+  const pihak = kesepakatan
+    ? '<div><span class="l">Pihak Pertama</span><b>PT. UNIFAM</b>' +
+      '<span>Logistik &amp; Transportasi &middot; Cikande</span></div>' +
+      '<div><span class="l">Pihak Kedua</span><b>' + aman(d.ekspedisi) + '</b>' +
+      '<span>Kode: ' + aman(d.kode || '-') + '</span></div>'
+    : '<div><span class="l">Diajukan oleh</span><b>' + aman(d.ekspedisi) + '</b>' +
+      '<span>Kode: ' + aman(d.kode || '-') + '</span></div>' +
+      '<div><span class="l">Ditujukan kepada</span><b>PT. UNIFAM</b>' +
+      '<span>Logistik &amp; Transportasi &middot; Cikande</span></div>';
+
+  const tabel = kesepakatan
+    ? '<table><thead><tr><th>Kota Tujuan</th><th>Tipe</th>' +
+      '<th class="kanan">Rate Disepakati</th></tr></thead><tbody>' +
+      barisKesepakatan() + '</tbody></table>'
+    : '<table><thead><tr><th>Kota Tujuan</th><th>Tipe</th>' +
+      '<th class="kanan">Rate ' + aman(d.labelLalu) + '</th>' +
+      '<th class="kanan">Rate Diajukan</th><th>Keterangan</th></tr></thead><tbody>' +
+      barisPenawaran() + '</tbody></table>';
+
+  const syarat = kesepakatan
+    ? '<b>All in</b> — termasuk TKBM, stripping, krani, dan biaya bongkar muat. ' +
+      '<b>Belum termasuk PPN.</b><br>Rate ini menjadi <b>dasar penagihan</b> untuk seluruh ' +
+      'pengiriman pada periode di atas. Tagihan di luar angka ini tidak diproses tanpa ' +
+      'persetujuan tertulis lebih dulu.<br>Perubahan di tengah periode hanya dimungkinkan ' +
+      'apabila terdapat selisih harga pasar <b>lebih dari 10%</b>, dan hanya berlaku setelah ' +
+      'disepakati kedua pihak dalam lembar kesepakatan baru.'
+    : '<b>All in</b> — termasuk TKBM, stripping, krani, dan biaya bongkar muat. ' +
+      '<b>Belum termasuk PPN.</b><br>Rate yang diajukan berlaku untuk seluruh pengiriman ' +
+      'pada periode di atas dan menjadi dasar penagihan apabila disetujui PT. UNIFAM.';
+
+  const jejak = kesepakatan ? '' :
+    '<div class="jejak"><div class="jl">Jejak pengajuan</div><table><tbody>' +
+    '<tr><td>Diajukan</td><td><b>' + waktuTeks(d.waktuAjukan) + '</b></td></tr>' +
+    '<tr><td>Oleh akun</td><td><b>' + aman(d.kode || d.ekspedisi) + '</b> — ' + aman(d.ekspedisi) + '</td></tr>' +
+    (d.waktuSetuju ? '<tr><td>Disetujui UNIFAM</td><td><b>' + waktuTeks(d.waktuSetuju) + '</b></td></tr>' : '') +
+    '<tr><td>Kode dokumen</td><td><b>' + kodeIsi() + '</b></td></tr>' +
+    '</tbody></table></div>';
+
+  const ttd = kesepakatan
+    ? '<div class="ttd"><div><div class="kotak-ttd"></div><div class="nm">PT. UNIFAM</div>' +
+      '<div class="jb">Logistik &amp; Transportasi</div></div>' +
+      '<div><div class="kotak-ttd"></div><div class="nm">' + aman(d.ekspedisi) + '</div>' +
+      '<div class="jb">Tanda tangan &amp; cap perusahaan</div></div></div>'
+    : '';
+
+  const kaki = kesepakatan
+    ? 'Lembar ini dicetak dua rangkap. Satu untuk PT. UNIFAM, satu untuk ekspedisi.'
+    : 'Dokumen ini dibuat otomatis oleh sistem lelang PT. UNIFAM berdasarkan data yang ' +
+      'diisi sendiri oleh ekspedisi lewat akunnya. Waktu pengajuan tercatat di sistem ' +
+      'dan tidak dapat diubah.';
+
+  document.getElementById('luar').innerHTML =
+    '<div class="dok"><div class="dok-kop"><div class="kiri">' + kop + '</div>' + cap +
+    '</div><div class="dok-isi"><div class="pihak">' + pihak + '</div>' +
+    tabel + '<div class="syarat">' + syarat + '</div>' + jejak + ttd +
+    '</div><div class="dok-kaki">' + kaki + '</div></div>';
+
+  perbaruiTombol();
+}
+
+function perbaruiTombol(){
+  const b = document.getElementById('tombol-jenis');
+  if(!b || !d) return;
+  b.innerHTML =
+    '<button onclick="gantiJenis(\'penawaran\')"' +
+      (jenis === 'penawaran' ? ' style="background:rgba(255,255,255,.35);"' : '') +
+      '>Bukti penawaran</button> ' +
+    '<button onclick="gantiJenis(\'kesepakatan\')"' +
+      (jenis === 'kesepakatan' ? ' style="background:rgba(255,255,255,.35);"' : '') +
+      '>Kesepakatan</button>';
+}
+
+muat();
+
+</script>
+</body>
+</html>

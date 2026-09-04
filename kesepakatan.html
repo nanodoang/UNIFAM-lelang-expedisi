@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pengaturan — Lelang UNIFAM</title>
+<title>Kesepakatan Rate — Lelang UNIFAM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -169,53 +169,63 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 
 .yatim{font-family:var(--mono);font-size:10.5px;color:var(--amber);font-weight:400;font-style:italic;}
 
-/* ---------- halaman pengaturan ---------- */
-.blok{background:var(--panel);border:1px solid var(--line);margin-bottom:15px;}
-.blok-kop{padding:13px 17px;border-bottom:1px solid var(--line);}
-.blok-kop h2{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:.05em;
-  text-transform:uppercase;margin:0;}
-.blok-kop .bk{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.6;}
-.blok-isi{padding:16px 17px;}
-.set-baris{padding:13px 0;border-bottom:1px solid var(--line);}
-.set-baris:last-child{border-bottom:none;padding-bottom:0;}
-.set-baris label{display:block;font-family:var(--disp);font-size:11px;letter-spacing:.13em;
+.bar-per{display:flex;align-items:flex-end;gap:11px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line);padding:12px 14px;margin-bottom:14px;}
+.bar-per label{display:block;font-family:var(--disp);font-size:9.5px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px;}
-.set-baris input,.set-baris select{width:100%;max-width:370px;background:#fff;
-  border:1px solid var(--line-tebal);padding:10px 12px;font-family:var(--mono);font-size:13.5px;}
-.set-baris input:focus,.set-baris select:focus{outline:none;border-color:var(--navy);}
-.set-ket{font-size:12px;color:var(--muted);line-height:1.6;margin-top:5px;}
-.cap-bawaan{font-family:var(--mono);font-size:9.5px;background:#F1F3F7;
-  border:1px solid var(--line-tebal);color:var(--muted);padding:1px 7px;margin-left:8px;}
-
-/* pemilih mode */
-.mode{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.mode-k{border:1.5px solid var(--line-tebal);background:#fff;padding:13px 14px;cursor:pointer;
-  transition:.12s;}
-.mode-k:hover{border-color:var(--navy);}
-.mode-k.aktif{border-color:var(--navy);background:rgba(42,49,128,.05);}
-.mode-k b{display:block;font-family:var(--disp);font-size:15px;letter-spacing:.04em;
-  text-transform:uppercase;margin-bottom:4px;line-height:1.15;}
-.mode-k span{font-size:12px;color:var(--muted);line-height:1.55;display:block;}
-.mode-k .cap{display:inline-block;font-family:var(--mono);font-size:9px;padding:1px 7px;margin-top:8px;}
-.cap.pakai{background:var(--navy);color:#fff;}
-.cap.siap{background:rgba(18,135,107,.15);color:#0B6350;}
-@media(max-width:640px){.mode{grid-template-columns:1fr;}}
-
-.ingat{background:#FFF8EC;border-left:3px solid var(--amber);padding:13px 15px;
-  font-size:12.5px;color:#7A4E08;line-height:1.7;margin-top:13px;}
-.ingat b{display:block;font-family:var(--disp);font-size:14px;letter-spacing:.05em;
-  text-transform:uppercase;color:#5E3C06;margin-bottom:4px;}
-
-.kaki{position:sticky;bottom:0;background:var(--panel);border:1px solid var(--line-tebal);
-  padding:13px 17px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;
-  box-shadow:0 -3px 12px rgba(18,23,43,.08);}
-.kaki .ket{flex:1;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.6;}
-.btn-simpan{background:var(--hijau);color:#fff;border:none;font-family:var(--disp);
-  font-weight:700;font-size:13.5px;letter-spacing:.09em;text-transform:uppercase;
-  padding:12px 22px;cursor:pointer;}
-.btn-simpan:hover{background:#0B6350;}
-.btn-simpan:disabled{opacity:.5;cursor:default;}
-
+.bar-per select{background:#fff;border:1px solid var(--line-tebal);padding:9px 11px;
+  font-family:var(--mono);font-size:13px;min-width:170px;}
+.btn-k{background:var(--navy);color:#fff;border:none;font-family:var(--disp);font-weight:700;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:9px 15px;cursor:pointer;
+  text-decoration:none;display:inline-block;}
+.btn-k:hover{background:var(--navy-tua);color:#fff;}
+.btn-k.putih{background:#fff;color:var(--navy);border:1px solid var(--navy);}
+.btn-k.putih:hover{background:var(--navy);color:#fff;}
+.btn-k.hijau{background:#12876B;}
+.btn-k.hijau:hover{background:#0B6350;}
+.kartu-eks{background:var(--panel);border:1px solid var(--line-tebal);margin-bottom:13px;}
+.ke-kop{display:flex;align-items:center;gap:11px;padding:12px 15px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap;cursor:pointer;}
+.ke-kop:hover{background:#FAFBFD;}
+.ke-nm{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:.04em;
+  text-transform:uppercase;flex:1;line-height:1.1;}
+.ke-dok{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+.st-k{font-family:var(--mono);font-size:9.5px;padding:3px 9px;white-space:nowrap;}
+.st-k.belum{background:#F1F3F7;color:var(--muted);}
+.st-k.diajukan{background:rgba(217,130,15,.16);color:#8A5A0A;}
+.st-k.disetujui{background:#12876B;color:#fff;}
+.hit-k{font-family:var(--mono);font-size:9.5px;padding:2px 7px;}
+.hit-k.naik{background:rgba(200,68,58,.13);color:#A5352C;}
+.hit-k.turun{background:rgba(18,135,107,.14);color:#0B6350;}
+.hit-k.baru{background:rgba(21,150,163,.14);color:var(--teal-tua);}
+.hit-k.tetap{background:#F1F3F7;color:var(--muted);}
+.ke-badan{border-top:1px dashed var(--line);}
+.ke-kaki{padding:12px 15px;background:#FAFBFD;border-top:1px solid var(--line);
+  display:flex;gap:9px;flex-wrap:wrap;align-items:center;}
+.ke-kaki .ket{flex:1;font-size:12px;color:var(--muted);line-height:1.6;min-width:170px;}
+table.k{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.k th{font-family:var(--disp);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  background:#FAFBFD;white-space:nowrap;}
+table.k th.kanan{text-align:right;}
+table.k td{padding:8px 10px;border-bottom:1px solid var(--line);}
+table.k tr:last-child td{border-bottom:none;}
+table.k td.mono{font-family:var(--mono);white-space:nowrap;}
+table.k td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
+table.k tr.naik td{background:#FDF3F2;}
+.alasan-k{font-size:11.5px;color:#8A5A0A;font-style:italic;}
+.gulir{overflow-x:auto;}
+.urut-rute{background:var(--panel);border:1px solid var(--line);margin-bottom:12px;}
+.ur-kop{padding:10px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);
+  font-size:12px;font-weight:600;}
+.pil-u{font-family:var(--mono);font-size:9px;padding:2px 7px;white-space:nowrap;}
+.pil-u.p1{background:#B8860B;color:#fff;}
+.pil-u.p2{background:#8892A8;color:#fff;}
+.pil-u.p3{background:#F1F3F7;color:var(--muted);}
+.tab-k{display:flex;margin-bottom:14px;background:#fff;border:1px solid var(--line-tebal);width:fit-content;}
+.tab-k button{background:none;border:none;font-family:var(--disp);font-weight:600;font-size:13px;
+  letter-spacing:.06em;text-transform:uppercase;padding:10px 18px;cursor:pointer;color:var(--muted);}
+.tab-k button.aktif{background:var(--navy);color:#fff;}
 .gerbang{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;
   justify-content:center;padding:20px;z-index:90;}
 .gerbang-isi{background:#fff;padding:28px 26px;max-width:340px;width:100%;}
@@ -228,17 +238,14 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
   font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.09em;
   text-transform:uppercase;padding:12px;cursor:pointer;}
 .gerbang-salah{color:var(--red);font-size:12.5px;margin-top:10px;font-family:var(--mono);}
-
-.bar-status{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:0 0 12px;line-height:1.6;}
-.bar-status.err{color:var(--red);}
 </style>
 </head>
 <body>
 
 <div class="gerbang" id="gerbang">
   <div class="gerbang-isi">
-    <h2>Pengaturan</h2>
-    <p>Halaman ini mengubah cara seluruh aplikasi bekerja. Masukkan password admin.</p>
+    <h2>Kesepakatan Rate</h2>
+    <p>Masukkan password admin.</p>
     <input id="g-pass" type="password" placeholder="password admin"
            onkeydown="if(event.key==='Enter')masuk()">
     <button onclick="masuk()">Masuk</button>
@@ -259,10 +266,10 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
       <div class="grup">Data</div>
       <a href="ekspedisi.html"><span class="ik">◈</span> Ekspedisi</a>
       <a href="rate.html"><span class="ik">≡</span> Template rate</a>
-      <a href="kesepakatan.html"><span class="ik">◇</span> Kesepakatan rate</a>
+      <a href="kesepakatan.html" class="aktif"><span class="ik">◇</span> Kesepakatan rate</a>
       <a href="rekap.html"><span class="ik">◔</span> Rekap &amp; realisasi</a>
       <div class="grup">Sistem</div>
-      <a href="pengaturan.html" class="aktif"><span class="ik">⚙</span> Pengaturan</a>
+      <a href="pengaturan.html"><span class="ik">⚙</span> Pengaturan</a>
     </nav>
     <div class="sisi-kaki">PT. UNIFAM<br>Logistik &amp; Transportasi</div>
   </aside>
@@ -271,12 +278,12 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
     <div class="bar-atas">
       <button class="menu" onclick="document.getElementById('sisi').classList.toggle('buka')">☰</button>
       <div class="tajuk">
-        <h1>Pengaturan</h1>
-        <div class="ket">Ubah cara aplikasi bekerja tanpa menyentuh kode</div>
+        <h1>Kesepakatan Rate</h1>
+        <div class="ket">Periksa penawaran bulanan, setujui, lalu cetak dokumennya</div>
       </div>
     </div>
     <div class="isi">
-      <div id="status-bar" class="bar-status"></div>
+      <div id="status-bar" class="ket-status"></div>
       <div id="wadah"></div>
     </div>
   </div>
@@ -286,13 +293,10 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
 
 let adminPass = '';
-let setelan = [];
-let info = {};
+let data = null, urutan = null, tabAktif = 'penawaran';
+let periodePilih = '';
+let terbuka = {};
 
-function aman(t){
-  return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 let jsonpN = 0;
 function jsonp(url){
   return new Promise((resolve, reject) => {
@@ -357,6 +361,26 @@ function setStatus(teks, error){
   el.className = error ? 'err' : '';
 }
 
+function aman(t){
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function rupiah(n){ return Number(n || 0).toLocaleString('id-ID'); }
+
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
+               'Juli','Agustus','September','Oktober','November','Desember'];
+function labelPeriode(p){
+  const b = String(p).split('-');
+  return b.length === 2 ? BULAN[Number(b[1])-1] + ' ' + b[0] : p;
+}
+function daftarPeriode(){
+  const out = [], kini = new Date();
+  for(let i = -1; i < 5; i++){
+    const d = new Date(kini.getFullYear(), kini.getMonth() + 1 - i, 1);
+    out.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+  }
+  return out;
+}
 
 async function masuk(){
   const p = document.getElementById('g-pass').value.trim();
@@ -373,199 +397,180 @@ async function masuk(){
   }
 }
 
-const KELOMPOK = [
-  { judul: 'Cara penentuan harga', mode: true,
-    ket: 'Menentukan bagaimana harga ditetapkan. Sebaiknya diganti di awal bulan.',
-    isi: ['MODE_HARGA','LELANG_PENGUJI','AMBANG_RENEGOSIASI'] },
-  { judul: 'Akses', ket: 'Password untuk masuk semua panel admin.',
-    isi: ['ADMIN_PASSWORD'] },
-  { judul: 'Target rate',
-    ket: 'Angka acuan yang dilihat ekspedisi saat menawar.',
-    isi: ['POTONGAN_TARGET','BULATKAN_KE','ACUAN_LELANG_LALU','PATOKAN_HANYA_TURUN'] },
-  { judul: 'Jalannya lelang',
-    ket: 'Batas waktu dan apa yang boleh dilihat ekspedisi.',
-    isi: ['TUTUP_OTOMATIS','KELONGGARAN_DETIK','TAMPILKAN_TERENDAH','HARI_RIWAYAT'] },
-  { judul: 'Permintaan persetujuan',
-    ket: 'Dipakai kalau pemenang bukan termurah, atau harganya di atas target.',
-    isi: ['WA_APPROVAL','NAMA_APPROVAL','APPROVAL_KE_GRUP'] },
-  { judul: 'Order manual & rank 1',
-    ket: 'Data mana yang ikut dibaca dari Pesanan Armada dan tab Rate.',
-    isi: ['MANUAL_MULAI','MANUAL_TIPE_DIBACA','RATE_EKS_DILEWATI','RATE_TIPE_DILEWATI'] }
-];
-
-const KET_MODE = {
-  lelang:  'Harga ditentukan lelang tiap minggu. Semua ekspedisi menawar dari kolom kosong.',
-  juara:   'Pemenang sebelumnya harganya terkunci. Kuncinya terbuka kalau ada yang menawar lebih rendah.',
-  bulanan: 'Rate disepakati sekali sebulan dan ditandatangani. Urutan primary terbentuk dari situ.'
-};
-const NAMA_MODE = { lelang:'Lelang mingguan', juara:'Lelang + juara bertahan', bulanan:'Rate bulanan' };
-
-let modePilih = '';
+function gantiPeriode(p){ periodePilih = p; muat(); }
+function gantiTab(t){ tabAktif = t; render(); }
+function togglePanel(nama){ terbuka[nama] = !terbuka[nama]; render(); }
 
 async function muat(){
   try{
-    setStatus('Memuat setelan…');
-    const d = await gas({action:'setelan_baca', adminPass});
-    setelan = d.setelan || [];
-    info = d;
-    modePilih = d.modeSekarang || 'juara';
-    setStatus(`${setelan.length} setelan · periode ${d.periodeSekarang} · ${d.versi}`);
-    gambar();
+    setStatus('Memuat…');
+    data = await gas({action:'rb_admin', adminPass, periode: periodePilih});
+    urutan = await gas({action:'rb_urutan', adminPass, periode: periodePilih});
+    const nunggu = data.ekspedisi.filter(e => e.status === 'diajukan').length;
+    const setuju = data.ekspedisi.filter(e => e.status === 'disetujui').length;
+    setStatus(data.labelPeriode + ' · ' + nunggu + ' menunggu diperiksa · ' +
+              setuju + ' disetujui · ' + data.versi);
+    render();
   }catch(err){
     setStatus('Gagal memuat: ' + err.message, true);
-    document.getElementById('wadah').innerHTML = `
-      <div class="blok"><div class="blok-isi">
-        <div class="ingat" style="margin-top:0;">
-          <b>Tidak bisa memuat setelan</b>
-          ${aman(err.message)}
-          ${/action tidak dikenal/i.test(err.message)
-            ? '<br><br>Sepertinya <b>Code.gs versi terbaru belum di-deploy</b>. ' +
-              'Buka editor Apps Script, ganti seluruh isinya dengan Code.gs terbaru, ' +
-              'lalu Manage deployments &rarr; pensil &rarr; New version &rarr; Deploy.'
-            : ''}
-        </div>
-        <button class="btn-simpan" style="margin-top:13px;background:var(--navy);"
-          onclick="muat()">Coba lagi</button>
-      </div></div>`;
+    document.getElementById('wadah').innerHTML =
+      '<div class="kartu-eks"><div class="ke-kaki"><span class="ket">Tidak bisa memuat: ' +
+      aman(err.message) +
+      (/action tidak dikenal/i.test(err.message)
+        ? '<br><br><b>Code.gs versi terbaru belum di-deploy.</b>' : '') +
+      '</span><button class="btn-k" onclick="muat()">Coba lagi</button></div></div>';
   }
 }
 
-function pilihMode(m){
-  modePilih = m;
-  gambar();
-}
+function tabelRate(e){
+  if(!e.baris.length) return '<div style="padding:20px;text-align:center;color:var(--muted);' +
+    'font-size:12.5px;">Belum mengisi. Rate periode sebelumnya tetap berlaku.</div>';
 
-function kolomUntuk(s){
-  if(s.jenis === 'pilih' && s.pilihan){
-    return `<select id="set-${s.nama}">${s.pilihan.map(o =>
-      `<option value="${o.nilai}" ${s.nilai === o.nilai ? 'selected' : ''}>${aman(o.teks)}</option>`).join('')}</select>`;
-  }
-  if(s.jenis === 'ya-tidak'){
-    return `<select id="set-${s.nama}">
-      <option value="ya" ${s.nilai === 'ya' ? 'selected' : ''}>Ya</option>
-      <option value="tidak" ${s.nilai !== 'ya' ? 'selected' : ''}>Tidak</option></select>`;
-  }
-  if(s.rahasia){
-    return `<input id="set-${s.nama}" type="password"
-      placeholder="${s.terisi ? 'sudah diisi — kosongkan kalau tidak diubah' : 'belum diisi'}">`;
-  }
-  return `<input id="set-${s.nama}" type="text" value="${aman(s.nilai)}">`;
-}
-
-function gambar(){
-  const peta = {};
-  setelan.forEach(s => peta[s.nama] = s);
-
-  const html = KELOMPOK.map(k => {
-    let isi = '';
-
-    if(k.mode){
-      const kartu = ['lelang','juara','bulanan'].map(m => `
-        <div class="mode-k ${modePilih === m ? 'aktif' : ''}" onclick="pilihMode('${m}')">
-          <b>${NAMA_MODE[m]}</b>
-          <span>${KET_MODE[m]}</span>
-          ${info.modeSekarang === m ? '<span class="cap pakai">SEDANG DIPAKAI</span>'
-            : (m === 'bulanan' ? '<span class="cap siap">halamannya belum ada</span>' : '')}
-        </div>`).join('');
-
-      isi = `<div class="mode">${kartu}</div>
-        <input type="hidden" id="set-MODE_HARGA" value="${modePilih}">
-        ${modePilih !== info.modeSekarang ? `<div class="ingat">
-          <b>Mode akan diubah</b>
-          Dari <b>${NAMA_MODE[info.modeSekarang] || info.modeSekarang}</b>
-          jadi <b>${NAMA_MODE[modePilih]}</b>.
-          ${info.penawaranBerjalan ? `Saat ini ada <b>${info.penawaranBerjalan} penawaran rate</b>
-            yang sedang berjalan di periode ${aman(info.periodeSekarang)} —
-            berpindah mode sekarang bisa membuatnya menggantung.` : ''}
-          Perubahan tidak memengaruhi lelang yang sudah berjalan, hanya yang dibuat sesudahnya.
-        </div>` : ''}`;
-
-      isi += k.isi.filter(n => n !== 'MODE_HARGA').map(nama => {
-        const s = peta[nama];
-        if(!s) return '';
-        const relevan = (nama === 'LELANG_PENGUJI') ? (modePilih === 'bulanan') : true;
-        return `<div class="set-baris" ${relevan ? '' : 'style="opacity:.45"'}>
-          <label>${aman(s.label)}${s.dariBawaan ? '<span class="cap-bawaan">bawaan</span>' : ''}</label>
-          ${kolomUntuk(s)}
-          <div class="set-ket">${aman(s.ket)}${relevan ? '' : ' — hanya berlaku di mode Rate bulanan'}</div>
-        </div>`;
-      }).join('');
-
-    } else {
-      isi = k.isi.map(nama => {
-        const s = peta[nama];
-        if(!s) return '';
-        return `<div class="set-baris">
-          <label>${aman(s.label)}${s.dariBawaan ? '<span class="cap-bawaan">bawaan</span>' : ''}</label>
-          ${kolomUntuk(s)}
-          <div class="set-ket">${aman(s.ket)}</div>
-        </div>`;
-      }).join('');
-    }
-
-    return `<div class="blok">
-      <div class="blok-kop"><h2>${k.judul}</h2><div class="bk">${k.ket}</div></div>
-      <div class="blok-isi">${isi}</div>
-    </div>`;
+  const baris = e.baris.map(b => {
+    const naik = b.rateLama && b.rate > b.rateLama;
+    const turun = b.rateLama && b.rate < b.rateLama;
+    const tanda = !b.rateLama ? '<span class="hit-k baru">rute baru</span>'
+      : naik ? '<span class="hit-k naik">+' + rupiah(b.rate - b.rateLama) + '</span>'
+      : turun ? '<span class="hit-k turun">&minus;' + rupiah(b.rateLama - b.rate) + '</span>'
+      : '<span class="hit-k tetap">tetap</span>';
+    return '<tr class="' + (naik ? 'naik' : '') + '">' +
+      '<td class="mono"><b>' + aman(b.kota) + '</b></td>' +
+      '<td class="mono">' + aman(b.tipeMobil) + '</td>' +
+      '<td class="kanan">' + (b.rateLama ? rupiah(b.rateLama) : '—') + '</td>' +
+      '<td class="kanan"><b>' + rupiah(b.rate) + '</b></td>' +
+      '<td>' + tanda + '</td>' +
+      '<td class="alasan-k">' + aman(b.alasan || '') + '</td></tr>';
   }).join('');
 
-  document.getElementById('wadah').innerHTML = html + `
-    <div class="ingat" style="border-left-color:var(--teal);background:rgba(21,150,163,.07);color:var(--teal-tua);">
-      <b style="color:var(--teal-tua);">Perubahan berlaku untuk yang baru</b>
-      Target rate dikunci sejak lelang diposting, jadi mengubah potongan atau pembulatan
-      di sini tidak mengubah lelang yang sudah berjalan.
-    </div>
-    <div class="kaki">
-      <span class="ket">Bertanda "bawaan" berarti belum pernah diubah dari halaman ini.</span>
-      <button class="btn-simpan" id="btn-simpan" onclick="simpan()">Simpan pengaturan</button>
-    </div>`;
+  return '<div class="gulir"><table class="k" style="min-width:640px;"><thead><tr>' +
+    '<th>Kota</th><th>Tipe</th><th class="kanan">' + aman(data.labelLalu) + '</th>' +
+    '<th class="kanan">' + aman(data.labelPeriode) + '</th>' +
+    '<th>Perubahan</th><th>Alasan</th></tr></thead><tbody>' + baris + '</tbody></table></div>';
 }
 
-async function simpan(){
-  const data = {};
-  setelan.forEach(s => {
-    const el = document.getElementById('set-' + s.nama);
-    if(!el) return;
-    const v = String(el.value).trim();
-    if(s.rahasia && v === '') return;
-    data[s.nama] = v;
-  });
+function tautDok(nama, jenis, label, kelas){
+  return '<a class="btn-k ' + kelas + '" target="_blank" href="dokumen.html?periode=' +
+    periodePilih + '&ekspedisi=' + encodeURIComponent(nama) + '&jenis=' + jenis + '">' +
+    label + '</a>';
+}
 
-  const pw = data.ADMIN_PASSWORD;
-  if(pw !== undefined && pw.length < 6){
-    setStatus('Password admin minimal 6 karakter.', true); return;
+function render(){
+  const opsi = daftarPeriode().map(p =>
+    '<option value="' + p + '"' + (p === periodePilih ? ' selected' : '') + '>' +
+    labelPeriode(p) + '</option>').join('');
+
+  const bar = '<div class="bar-per"><div><label>Periode</label>' +
+    '<select onchange="gantiPeriode(this.value)">' + opsi + '</select></div>' +
+    '<button class="btn-k putih" onclick="muat()">Segarkan</button>' +
+    '<button class="btn-k putih" onclick="salinUndangan()">Salin undangan WA</button></div>' +
+    '<div class="tab-k">' +
+    '<button class="' + (tabAktif === 'penawaran' ? 'aktif' : '') +
+      '" onclick="gantiTab(\'penawaran\')">Penawaran</button>' +
+    '<button class="' + (tabAktif === 'urutan' ? 'aktif' : '') +
+      '" onclick="gantiTab(\'urutan\')">Urutan per rute</button></div>';
+
+  let isi = '';
+
+  if(tabAktif === 'penawaran'){
+    isi = data.ekspedisi.map(e => {
+      const buka = !!terbuka[e.nama];
+      const stKelas = e.status === 'disetujui' ? 'disetujui'
+                    : e.status === 'diajukan' ? 'diajukan' : 'belum';
+      const stTeks = e.status === 'disetujui' ? 'Disetujui'
+                   : e.status === 'diajukan' ? 'Menunggu Anda' : 'Belum mengisi';
+
+      let kaki;
+      if(e.status === 'belum'){
+        kaki = '<span class="ket">Belum mengisi — rate ' + aman(data.labelLalu) +
+          ' tetap berlaku, jadi tidak ada rute yang kosong.</span>' +
+          (e.wa ? '<a class="btn-k putih" target="_blank" href="' + waIngat(e) +
+                  '">Ingatkan via WA</a>' : '');
+      } else if(e.status === 'diajukan'){
+        kaki = '<span class="ket">Diajukan ' +
+          (e.waktuAjukan ? new Date(e.waktuAjukan).toLocaleString('id-ID') : '-') +
+          '. Periksa dulu, lalu setujui.</span>' +
+          tautDok(e.nama, 'penawaran', 'Bukti penawaran', 'putih') +
+          '<button class="btn-k hijau" onclick="setujui(\'' + aman(e.nama) + '\')">Setujui</button>';
+      } else {
+        kaki = '<span class="ket">Disetujui ' +
+          (e.waktuSetuju ? new Date(e.waktuSetuju).toLocaleString('id-ID') : '-') + '.</span>' +
+          tautDok(e.nama, 'penawaran', 'Bukti penawaran', 'putih') +
+          tautDok(e.nama, 'kesepakatan', 'Cetak kesepakatan', '');
+      }
+
+      return '<div class="kartu-eks"><div class="ke-kop" onclick="togglePanel(\'' +
+        aman(e.nama) + '\')">' +
+        '<span class="ke-nm">' + aman(e.nama) + '</span>' +
+        '<span class="ke-dok">' + e.jumlahRute + ' rute' +
+          (e.noDokumen ? ' · ' + aman(e.noDokumen) : '') + '</span>' +
+        (e.naik ? '<span class="hit-k naik">' + e.naik + ' naik</span>' : '') +
+        (e.turun ? '<span class="hit-k turun">' + e.turun + ' turun</span>' : '') +
+        (e.baru ? '<span class="hit-k baru">' + e.baru + ' baru</span>' : '') +
+        '<span class="st-k ' + stKelas + '">' + stTeks + '</span>' +
+        '<span style="color:var(--muted);font-size:14px;">' + (buka ? '▴' : '▾') + '</span></div>' +
+        (buka ? '<div class="ke-badan">' + tabelRate(e) + '</div>' : '') +
+        '<div class="ke-kaki">' + kaki + '</div></div>';
+    }).join('');
+
+  } else {
+    const rute = (urutan && urutan.rute) || [];
+    isi = rute.length === 0
+      ? '<div class="kartu-eks"><div class="ke-kaki"><span class="ket">Belum ada urutan — ' +
+        'urutan terbentuk dari penawaran yang <b>sudah disetujui</b>.</span></div></div>'
+      : rute.map(r => '<div class="urut-rute"><div class="ur-kop">' +
+          aman(r.kota) + ' · ' + aman(r.tipeMobil) + '</div>' +
+          '<div class="gulir"><table class="k" style="min-width:460px;"><tbody>' +
+          r.daftar.map(x => '<tr><td style="width:105px;"><span class="pil-u p' +
+            Math.min(x.urutan,3) + '">' +
+            (['PRIMARY','SECONDARY','TERTIARY'][x.urutan-1] || 'CADANGAN') + '</span></td>' +
+            '<td style="font-weight:600;">' + aman(x.ekspedisi) + '</td>' +
+            '<td class="kanan">' + rupiah(x.rate) + '</td>' +
+            '<td class="kanan" style="color:var(--muted);">' +
+            (x.selisih ? '+' + rupiah(x.selisih) : '—') + '</td></tr>').join('') +
+          '</tbody></table></div></div>').join('');
   }
-  if(pw !== undefined && !confirm(
-      'Password admin akan diganti.\n\nSemua panel admin akan meminta password baru ' +
-      'setelah ini. Pastikan sudah dicatat.\n\nLanjutkan?')) return;
 
-  if(data.MODE_HARGA && data.MODE_HARGA !== info.modeSekarang){
-    let pesan = `Cara penentuan harga akan diubah jadi "${NAMA_MODE[data.MODE_HARGA]}".\n\n`;
-    if(data.MODE_HARGA === 'bulanan'){
-      pesan += 'Juara bertahan otomatis dimatikan. Halaman rate bulanan belum tersedia, ' +
-               'jadi untuk sementara lelang berjalan tanpa juara bertahan.\n\n';
-    }
-    if(info.penawaranBerjalan){
-      pesan += `Ada ${info.penawaranBerjalan} penawaran rate yang sedang berjalan.\n\n`;
-    }
-    if(!confirm(pesan + 'Lanjutkan?')) return;
-  }
+  document.getElementById('wadah').innerHTML = bar + isi;
+}
 
-  const btn = document.getElementById('btn-simpan');
-  if(btn){ btn.disabled = true; btn.textContent = 'Menyimpan…'; }
+function teksUndangan(nama){
+  return [
+    'Halo ' + (nama || '') + ',',
+    'Mohon mengisi rate untuk periode *' + data.labelPeriode + '*.',
+    'Rate ' + data.labelLalu + ' sudah tertera di halaman. Yang tidak berubah cukup dibiarkan — ' +
+    'rate lama otomatis tetap berlaku. Kalau ada kenaikan, mohon sebutkan alasannya.',
+    'Isi di sini:\nhttps://nanodoang.github.io/UNIFAM-lelang-expedisi/rate-bulanan.html',
+    'Terima kasih.'
+  ].join('\n\n');
+}
+function waIngat(e){
+  return 'https://wa.me/' + String(e.wa).replace(/[^0-9]/g,'') +
+         '?text=' + encodeURIComponent(teksUndangan(e.nama));
+}
+function salinUndangan(){
+  const t = teksUndangan('');
+  navigator.clipboard.writeText(t)
+    .then(() => setStatus('Undangan disalin — tinggal tempel di grup WA.'))
+    .catch(() => setStatus('Gagal menyalin.', true));
+}
+
+async function setujui(nama){
+  const e = data.ekspedisi.find(x => x.nama === nama);
+  if(!e) return;
+  if(!confirm('Setujui penawaran ' + nama + ' untuk ' + data.labelPeriode + '?\n\n' +
+      e.jumlahRute + ' rute — ' + e.naik + ' naik, ' + e.turun + ' turun, ' + e.baru + ' baru.\n\n' +
+      'Setelah disetujui, ekspedisi TIDAK bisa mengubahnya lagi, dan rate ini jadi ' +
+      'dasar penagihan sepanjang periode.')) return;
   try{
-    const r = await gas({action:'setelan_simpan', adminPass, data: JSON.stringify(data)});
-    if(pw !== undefined){ adminPass = pw; sessionStorage.setItem('lelang-admin-pass', pw); }
+    setStatus('Menyetujui…');
+    const r = await gas({action:'rb_setujui', adminPass, periode: periodePilih, ekspedisi: nama});
     await muat();
-    setStatus(`Tersimpan — ${r.diubah} diubah, ${r.ditambah} ditambahkan.` +
-              (r.ditolak ? ` Diabaikan: ${r.ditolak}.` : ''));
-  }catch(err){
-    setStatus('Gagal menyimpan: ' + err.message, true);
-  }
-  if(btn){ btn.disabled = false; btn.textContent = 'Simpan pengaturan'; }
+    setStatus(nama + ' disetujui. Nomor kesepakatan ' + r.noKesepakatan + ' — silakan dicetak.');
+  }catch(err){ setStatus('Gagal menyetujui: ' + err.message, true); }
 }
 
 {
+  periodePilih = daftarPeriode()[1];
   const simpanan = sessionStorage.getItem('lelang-admin-pass');
   if(simpanan){
     adminPass = simpanan;
@@ -575,6 +580,7 @@ async function simpan(){
   }
   setTimeout(() => { const i = document.getElementById('g-pass'); if(i) i.focus(); }, 60);
 }
+
 </script>
 </body>
 </html>
