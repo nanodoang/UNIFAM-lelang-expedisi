@@ -231,6 +231,18 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 
 .bar-status{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:0 0 12px;line-height:1.6;}
 .bar-status.err{color:var(--red);}
+
+.kaki{transition:background .15s, border-color .15s;}
+.kaki.ada-ubah{background:#FFF8EC;border-color:var(--amber);
+  box-shadow:0 -3px 14px rgba(217,130,15,.22);}
+.kaki.ada-ubah .ket{color:#7A4E08;}
+.kaki.ada-ubah .ket b{color:#5E3C06;}
+.kaki.ada-ubah .btn-simpan{animation:denyut 1.6s ease-in-out infinite;}
+@keyframes denyut{0%,100%{transform:scale(1);}50%{transform:scale(1.035);}}
+.btn-batal{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.08em;
+  text-transform:uppercase;padding:10px 16px;cursor:pointer;margin-left:7px;}
+.btn-batal:hover{border-color:var(--navy);color:var(--navy);}
 </style>
 </head>
 <body>
@@ -401,6 +413,26 @@ const KET_MODE = {
 const NAMA_MODE = { lelang:'Lelang mingguan', juara:'Lelang + juara bertahan', bulanan:'Rate bulanan' };
 
 let modePilih = '';
+let adaUbah = false;
+
+/* Tandai bahwa ada perubahan yang belum disimpan */
+function tandaiUbah(){
+  if(adaUbah) return;
+  adaUbah = true;
+  perbaruiKaki();
+}
+
+function perbaruiKaki(){
+  const kaki = document.getElementById('kaki-simpan');
+  const ket  = document.getElementById('ket-simpan');
+  const btn  = document.getElementById('btn-simpan');
+  if(!kaki) return;
+  kaki.classList.toggle('ada-ubah', adaUbah);
+  if(ket) ket.innerHTML = adaUbah
+    ? '<b>Ada perubahan yang belum disimpan.</b> Tekan tombol di sebelah kanan.'
+    : 'Bertanda "bawaan" berarti belum pernah diubah dari halaman ini.';
+  if(btn) btn.textContent = adaUbah ? 'Simpan perubahan' : 'Simpan pengaturan';
+}
 
 async function muat(){
   try{
@@ -409,6 +441,7 @@ async function muat(){
     setelan = d.setelan || [];
     info = d;
     modePilih = d.modeSekarang || 'juara';
+    adaUbah = false;
     setStatus(`${setelan.length} setelan · periode ${d.periodeSekarang} · ${d.versi}`);
     gambar();
   }catch(err){
@@ -431,25 +464,28 @@ async function muat(){
 }
 
 function pilihMode(m){
+  if(modePilih === m) return;
   modePilih = m;
+  if(m !== info.modeSekarang) adaUbah = true;
   gambar();
 }
 
 function kolomUntuk(s){
   if(s.jenis === 'pilih' && s.pilihan){
-    return `<select id="set-${s.nama}">${s.pilihan.map(o =>
+    return `<select id="set-${s.nama}" onchange="tandaiUbah()">${s.pilihan.map(o =>
       `<option value="${o.nilai}" ${s.nilai === o.nilai ? 'selected' : ''}>${aman(o.teks)}</option>`).join('')}</select>`;
   }
   if(s.jenis === 'ya-tidak'){
-    return `<select id="set-${s.nama}">
+    return `<select id="set-${s.nama}" onchange="tandaiUbah()">
       <option value="ya" ${s.nilai === 'ya' ? 'selected' : ''}>Ya</option>
       <option value="tidak" ${s.nilai !== 'ya' ? 'selected' : ''}>Tidak</option></select>`;
   }
   if(s.rahasia){
     return `<input id="set-${s.nama}" type="password"
-      placeholder="${s.terisi ? 'sudah diisi — kosongkan kalau tidak diubah' : 'belum diisi'}">`;
+      placeholder="${s.terisi ? 'sudah diisi — kosongkan kalau tidak diubah' : 'belum diisi'}"
+      oninput="tandaiUbah()">`;
   }
-  return `<input id="set-${s.nama}" type="text" value="${aman(s.nilai)}">`;
+  return `<input id="set-${s.nama}" type="text" value="${aman(s.nilai)}" oninput="tandaiUbah()">`;
 }
 
 function gambar(){
@@ -478,6 +514,11 @@ function gambar(){
             yang sedang berjalan di periode ${aman(info.periodeSekarang)} —
             berpindah mode sekarang bisa membuatnya menggantung.` : ''}
           Perubahan tidak memengaruhi lelang yang sudah berjalan, hanya yang dibuat sesudahnya.
+          <div style="margin-top:11px;">
+            <button class="btn-simpan" style="padding:10px 18px;font-size:12.5px;"
+              onclick="simpan()">Simpan sekarang</button>
+            <button class="btn-batal" onclick="pilihMode('${info.modeSekarang}')">Batal</button>
+          </div>
         </div>` : ''}`;
 
       isi += k.isi.filter(n => n !== 'MODE_HARGA').map(nama => {
@@ -515,10 +556,11 @@ function gambar(){
       Target rate dikunci sejak lelang diposting, jadi mengubah potongan atau pembulatan
       di sini tidak mengubah lelang yang sudah berjalan.
     </div>
-    <div class="kaki">
-      <span class="ket">Bertanda "bawaan" berarti belum pernah diubah dari halaman ini.</span>
+    <div class="kaki" id="kaki-simpan">
+      <span class="ket" id="ket-simpan">Bertanda "bawaan" berarti belum pernah diubah dari halaman ini.</span>
       <button class="btn-simpan" id="btn-simpan" onclick="simpan()">Simpan pengaturan</button>
     </div>`;
+  perbaruiKaki();
 }
 
 async function simpan(){
@@ -556,6 +598,7 @@ async function simpan(){
   try{
     const r = await gas({action:'setelan_simpan', adminPass, data: JSON.stringify(data)});
     if(pw !== undefined){ adminPass = pw; sessionStorage.setItem('lelang-admin-pass', pw); }
+    adaUbah = false;
     await muat();
     setStatus(`Tersimpan — ${r.diubah} diubah, ${r.ditambah} ditambahkan.` +
               (r.ditolak ? ` Diabaikan: ${r.ditolak}.` : ''));
@@ -564,6 +607,10 @@ async function simpan(){
   }
   if(btn){ btn.disabled = false; btn.textContent = 'Simpan pengaturan'; }
 }
+
+window.addEventListener('beforeunload', e => {
+  if(adaUbah){ e.preventDefault(); e.returnValue = ''; }
+});
 
 {
   const simpanan = sessionStorage.getItem('lelang-admin-pass');

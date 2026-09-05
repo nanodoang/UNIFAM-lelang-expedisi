@@ -400,7 +400,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h89';
+const VERSI_HALAMAN = 'h91';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -469,6 +469,7 @@ function hapusSesi(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
 
 let sesi = null, namaEkspedisi = '', tabAktif = 'terbuka';
 let rbData = null, rbMemuat = false;   // rate bulanan, dimuat saat tabnya dibuka
+let rbAktif = false, rbLabel = '', rbStatus = 'draft';   // keadaan dari server
 let daftarTerbuka = [], daftarRiwayat = [], daftarTidakMenang = [], pesanSalah = '', belumKonfirmasi = 0;
 
 /* Selisih jam HP terhadap jam server. Hitung mundur memakai jam server,
@@ -579,6 +580,10 @@ async function muat(){
     daftarRiwayat = d.riwayat || [];
     belumKonfirmasi = d.belumKonfirmasi || 0;
     daftarTidakMenang = d.tidakMenang || [];
+    rbAktif = !!d.rateBulananAktif;
+    if(!rbAktif && tabAktif === 'rate') tabAktif = 'terbuka';
+    rbLabel = d.rbLabel || '';
+    rbStatus = d.rbStatus || 'draft';
     if(d.waktuServer) selisihJam = d.waktuServer - Date.now();
     { const ada = new Set(daftarTerbuka.map(l => l.id));
       Array.from(terpilih).forEach(id => { if(!ada.has(id)) terpilih.delete(id); });
@@ -1003,10 +1008,10 @@ function render(){
       <button class="${tabAktif==='terbuka'?'aktif':''}" onclick="gantiTab('terbuka')">Lelang terbuka (${daftarTerbuka.length})</button>
       <button class="${tabAktif==='riwayat'?'aktif':''}" onclick="gantiTab('riwayat')">Riwayat dipakai (${daftarRiwayat.length})</button>
       <button class="${tabAktif==='selesai'?'aktif':''}" onclick="gantiTab('selesai')">Sudah selesai (${daftarTidakMenang.length})</button>
-      ${laporan && laporan.rateBulananAktif ? `<button class="${tabAktif==='rate'?'aktif':''} ${
-        laporan.rbStatus === 'draft' ? 'perlu' : ''}" onclick="gantiTab('rate')">Rate ${
-        amanHTML(laporan.rbLabel || 'bulanan')}${
-        laporan.rbStatus === 'draft' ? ' •' : laporan.rbStatus === 'disetujui' ? ' ✓' : ''}</button>` : ''}
+      ${rbAktif ? `<button class="${tabAktif==='rate'?'aktif':''} ${
+        rbStatus === 'draft' ? 'perlu' : ''}" onclick="gantiTab('rate')">Rate ${
+        amanHTML(rbLabel || 'bulanan')}${
+        rbStatus === 'draft' ? ' •' : rbStatus === 'disetujui' ? ' ✓' : ''}</button>` : ''}
     </div>`;
 
   isi.innerHTML = tabHTML + (
