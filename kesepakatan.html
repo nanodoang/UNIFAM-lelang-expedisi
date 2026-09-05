@@ -550,8 +550,7 @@ function tabelRate(e){
 
 function tautDok(nama, jenis, label, kelas){
   return '<a class="btn-k ' + kelas + '" target="_blank" href="dokumen.html?periode=' +
-    periodePilih + '&ekspedisi=' + encodeURIComponent(nama) + '&jenis=' + jenis + '">' +
-    label + '</a>';
+    periodePilih + '&ekspedisi=' + encodeURIComponent(nama) + '">' + label + '</a>';
 }
 
 function render(){
@@ -562,7 +561,7 @@ function render(){
   const bar = '<div class="bar-per"><div><label>Periode</label>' +
     '<select onchange="gantiPeriode(this.value)">' + opsi + '</select></div>' +
     '<button class="btn-k putih" onclick="muat(true)">Segarkan</button>' +
-    '<button class="btn-k putih" onclick="salinUndangan()">Salin undangan WA</button></div>' +
+    '<button class="btn-k putih" onclick="bukaUndangan()">Kirim undangan WA</button></div>' +
     '<div class="tab-k">' +
     '<button class="' + (tabAktif === 'penawaran' ? 'aktif' : '') +
       '" onclick="gantiTab(\'penawaran\')">Penawaran</button>' +
@@ -590,13 +589,11 @@ function render(){
       } else if(e.status === 'diajukan'){
         kaki = '<span class="ket">Diajukan ' +
           (e.waktuAjukan ? new Date(e.waktuAjukan).toLocaleString('id-ID') : '-') +
-          '. Periksa dulu, lalu setujui.</span>' +
-          tautDok(e.nama, 'penawaran', 'Bukti penawaran', 'putih') +
+          '. Periksa dulu dengan membuka kartunya, lalu setujui.</span>' +
           '<button class="btn-k hijau" onclick="setujui(\'' + aman(e.nama) + '\')">Setujui</button>';
       } else {
         kaki = '<span class="ket">Disetujui ' +
           (e.waktuSetuju ? new Date(e.waktuSetuju).toLocaleString('id-ID') : '-') + '.</span>' +
-          tautDok(e.nama, 'penawaran', 'Bukti penawaran', 'putih') +
           tautDok(e.nama, 'kesepakatan', 'Cetak kesepakatan', '');
       }
 
@@ -816,23 +813,74 @@ async function simpanRute(){
 }
 
 function teksUndangan(nama){
+  const jml = (rute && rute.daftar && rute.daftar.length) ? rute.daftar.length : 0;
   return [
     'Halo ' + (nama || '') + ',',
-    'Mohon mengisi rate untuk periode *' + data.labelPeriode + '*.',
-    'Rate ' + data.labelLalu + ' sudah tertera di halaman. Yang tidak berubah cukup dibiarkan — ' +
-    'rate lama otomatis tetap berlaku. Kalau ada kenaikan, mohon sebutkan alasannya.',
-    'Isi di sini:\nhttps://nanodoang.github.io/UNIFAM-lelang-expedisi/rate-bulanan.html',
+    'Mohon mengisi *rate ' + data.labelPeriode + '*.',
+    [ 'Periode   : ' + data.labelPeriode,
+      jml ? 'Rute      : ' + jml + ' tujuan' : '',
+      'Rate acuan: ' + data.labelLalu
+    ].filter(x => x).join('\n'),
+    'Rate ' + data.labelLalu + ' sudah tertera di halaman. Yang tidak berubah cukup ' +
+    'dibiarkan — rate lama otomatis tetap berlaku. Kalau ada kenaikan, mohon ' +
+    'sebutkan alasannya.',
+    'Buka di sini, lalu pilih tab *Rate ' + data.labelPeriode + '*:\n' +
+    'https://nanodoang.github.io/UNIFAM-lelang-expedisi/index.html?ekspedisi=' +
+    encodeURIComponent(nama || ''),
     'Terima kasih.'
   ].join('\n\n');
 }
-function waIngat(e){
+function waIngat(e){ return waUndangan(e); }
+/* Daftar tombol WA per ekspedisi — sekali klik langsung membuka WhatsApp
+   dengan pesannya sudah terisi, seperti di panel lelang. */
+function bukaUndangan(){
+  const punyaWa = data.ekspedisi.filter(e => e.wa);
+  const tanpaWa = data.ekspedisi.filter(e => !e.wa);
+
+  if(!punyaWa.length){
+    setStatus('Belum ada ekspedisi dengan nomor WA. Lengkapi di Daftar Ekspedisi.', true);
+    return;
+  }
+
+  const kartu = punyaWa.map(e => {
+    const st = e.status === 'disetujui' ? '<span class="st-k disetujui">Disetujui</span>'
+             : e.status === 'diajukan' ? '<span class="st-k diajukan">Sudah mengisi</span>'
+             : '<span class="st-k belum">Belum mengisi</span>';
+    return '<tr><td style="font-weight:600;">' + aman(e.nama) + '</td>' +
+      '<td class="mono" style="color:var(--muted);">' + aman(e.wa) + '</td>' +
+      '<td>' + st + '</td>' +
+      '<td class="kanan"><a class="btn-k hijau" target="_blank" href="' +
+        waUndangan(e) + '">Kirim WA</a></td></tr>';
+  }).join('');
+
+  document.getElementById('wadah').innerHTML =
+    '<div class="kartu-eks"><div class="ke-kop" style="cursor:default;">' +
+      '<span class="ke-nm">Kirim undangan ' + aman(data.labelPeriode) + '</span>' +
+      '<span class="ke-dok">' + punyaWa.length + ' ekspedisi</span>' +
+      '<button class="btn-k putih" onclick="render()">Kembali</button>' +
+    '</div>' +
+    '<div class="gulir"><table class="k" style="min-width:480px;"><thead><tr>' +
+      '<th>Ekspedisi</th><th>No WA</th><th>Status</th><th></th></tr></thead>' +
+      '<tbody>' + kartu + '</tbody></table></div>' +
+    '<div class="ke-kaki"><span class="ket">' +
+      'Tiap tombol langsung membuka WhatsApp dengan pesannya sudah terisi — tinggal tekan kirim.' +
+      (tanpaWa.length ? '<br><b>' + tanpaWa.length + ' ekspedisi belum punya nomor WA:</b> ' +
+        tanpaWa.map(e => aman(e.nama)).join(', ') + '.' : '') +
+    '</span>' +
+    '<button class="btn-k putih" onclick="salinUndanganGrup()">Salin untuk grup</button>' +
+    '</div></div>';
+
+  setStatus('Tekan "Kirim WA" di baris ekspedisi yang dituju.');
+}
+
+function waUndangan(e){
   return 'https://wa.me/' + String(e.wa).replace(/[^0-9]/g,'') +
          '?text=' + encodeURIComponent(teksUndangan(e.nama));
 }
-function salinUndangan(){
-  const t = teksUndangan('');
-  navigator.clipboard.writeText(t)
-    .then(() => setStatus('Undangan disalin — tinggal tempel di grup WA.'))
+
+function salinUndanganGrup(){
+  navigator.clipboard.writeText(teksUndangan('Bapak/Ibu'))
+    .then(() => setStatus('Pesan disalin — tinggal tempel di grup WA.'))
     .catch(() => setStatus('Gagal menyalin.', true));
 }
 

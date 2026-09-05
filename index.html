@@ -336,6 +336,55 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
 .kotak-alasan label{color:#8A5A0A;}
 .kotak-alasan.perlu label{color:#A5352C;}
 .ket-alasan{font-size:11.5px;color:#7A4E08;margin-top:5px;line-height:1.55;}
+
+/* ---------- rate bulanan ---------- */
+.rb-ket{background:var(--panel);border:1px solid var(--line);padding:12px 15px;
+  margin-bottom:12px;font-size:12.5px;color:var(--muted);line-height:1.7;}
+.rb-ket b{color:var(--tinta);}
+.rb-setuju{background:rgba(18,135,107,.08);border:1px solid rgba(18,135,107,.4);
+  padding:13px 15px;margin-bottom:12px;font-size:13px;color:#0B6350;line-height:1.7;}
+.rb-setuju b{display:block;font-family:var(--disp);font-size:15px;letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:4px;}
+.tabel-rb{background:var(--panel);border:1px solid var(--line-tebal);}
+table.rb{width:100%;border-collapse:collapse;font-size:13px;}
+table.rb th{font-family:var(--disp);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);
+  background:#FAFBFD;white-space:nowrap;}
+table.rb th.kanan{text-align:right;}
+table.rb td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+table.rb tr:last-child td{border-bottom:none;}
+table.rb td.mono{font-family:var(--mono);}
+table.rb td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
+table.rb td:first-child{max-width:250px;}
+table.rb .dist{font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--tinta);
+  display:inline-block;margin-top:2px;}
+table.rb .almt{font-family:var(--sans);font-size:11px;color:var(--muted);
+  display:inline-block;line-height:1.45;max-width:230px;margin-top:1px;}
+table.rb input.rate{width:135px;border:1px solid var(--line-tebal);padding:8px 10px;
+  font-family:var(--mono);font-size:13.5px;text-align:right;background:#fff;}
+table.rb input.rate.naik{border-color:var(--red);background:#FFF6F5;}
+table.rb input.rate.turun{border-color:#12876B;background:#F4FBF6;}
+table.rb input.rate.baru{background:#FAFBFD;}
+table.rb input.alasan{width:100%;min-width:150px;border:1px solid var(--amber);
+  background:#FFFBF4;padding:7px 9px;font-family:var(--sans);font-size:12.5px;}
+table.rb input.alasan.perlu{border-color:var(--red);background:#FDEDEB;}
+table.rb input:disabled{background:#F1F3F7;color:var(--muted);}
+.pil-rb{font-family:var(--mono);font-size:9px;padding:2px 7px;white-space:nowrap;}
+.pil-rb.tetap{background:#F1F3F7;color:var(--muted);}
+.pil-rb.naik{background:rgba(200,68,58,.13);color:#A5352C;}
+.pil-rb.turun{background:rgba(18,135,107,.14);color:#0B6350;}
+.pil-rb.baru{background:rgba(21,150,163,.14);color:var(--teal-tua);}
+.kaki-rb{padding:14px 16px;border-top:1px solid var(--line);background:#FAFBFD;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.kaki-rb .cat{flex:1;font-size:12.5px;color:var(--muted);line-height:1.65;min-width:200px;}
+.kaki-rb .cat b{color:var(--tinta);}
+.btn-kirim-rb{background:var(--navy);color:#fff;border:none;font-family:var(--disp);
+  font-weight:700;font-size:14px;letter-spacing:.09em;text-transform:uppercase;
+  padding:13px 24px;cursor:pointer;}
+.btn-kirim-rb:disabled{opacity:.5;cursor:default;}
+.tab-baris button.perlu{position:relative;}
+.tab-baris button.perlu::after{content:'';position:absolute;top:5px;right:5px;
+  width:6px;height:6px;border-radius:50%;background:var(--amber);}
 </style>
 </head>
 <body>
@@ -351,7 +400,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h71';
+const VERSI_HALAMAN = 'h89';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -419,6 +468,7 @@ function ambilSesi(){ try{ return JSON.parse(localStorage.getItem(KUNCI) || 'nul
 function hapusSesi(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
 
 let sesi = null, namaEkspedisi = '', tabAktif = 'terbuka';
+let rbData = null, rbMemuat = false;   // rate bulanan, dimuat saat tabnya dibuka
 let daftarTerbuka = [], daftarRiwayat = [], daftarTidakMenang = [], pesanSalah = '', belumKonfirmasi = 0;
 
 /* Selisih jam HP terhadap jam server. Hitung mundur memakai jam server,
@@ -553,7 +603,21 @@ async function muat(){
   }
 }
 
-function gantiTab(t){ tabAktif = t; render(); }
+async function gantiTab(t){
+  tabAktif = t;
+  render();
+  if(t === 'rate' && !rbData && !rbMemuat){
+    rbMemuat = true;
+    render();
+    try{
+      rbData = await gas({action:'rb_data', user:sesi.user, pass:sesi.pass});
+    }catch(err){
+      rbData = { galat: err.message };
+    }
+    rbMemuat = false;
+    render();
+  }
+}
 
 /* ---------- ganti password ---------- */
 function bukaGantiPass(){
@@ -939,10 +1003,15 @@ function render(){
       <button class="${tabAktif==='terbuka'?'aktif':''}" onclick="gantiTab('terbuka')">Lelang terbuka (${daftarTerbuka.length})</button>
       <button class="${tabAktif==='riwayat'?'aktif':''}" onclick="gantiTab('riwayat')">Riwayat dipakai (${daftarRiwayat.length})</button>
       <button class="${tabAktif==='selesai'?'aktif':''}" onclick="gantiTab('selesai')">Sudah selesai (${daftarTidakMenang.length})</button>
+      ${laporan && laporan.rateBulananAktif ? `<button class="${tabAktif==='rate'?'aktif':''} ${
+        laporan.rbStatus === 'draft' ? 'perlu' : ''}" onclick="gantiTab('rate')">Rate ${
+        amanHTML(laporan.rbLabel || 'bulanan')}${
+        laporan.rbStatus === 'draft' ? ' •' : laporan.rbStatus === 'disetujui' ? ' ✓' : ''}</button>` : ''}
     </div>`;
 
   isi.innerHTML = tabHTML + (
       tabAktif === 'terbuka' ? kartuTerbuka() :
+      tabAktif === 'rate' ? panelRateBulanan() :
       tabAktif === 'selesai' ? tabelSelesai() : tabelRiwayat());
 
   const bilahLama = document.getElementById('bilah');
@@ -982,6 +1051,151 @@ function render(){
   kaki.textContent = tabAktif === 'terbuka'
     ? 'Harga yang Anda ajukan tidak terlihat oleh ekspedisi lain.'
     : 'Kolom ATD, ATA, Dooring, dan Keterangan diisi oleh Anda. Tersimpan otomatis beberapa saat setelah diisi.';
+}
+
+
+/* ================= RATE BULANAN ================= */
+function panelRateBulanan(){
+  if(rbMemuat) return `<div class="kosong">Memuat daftar rate…</div>`;
+  if(!rbData)  return `<div class="kosong">Belum dimuat.</div>`;
+  if(rbData.galat) return `<div class="kosong">Tidak bisa memuat.<br>${amanHTML(rbData.galat)}</div>`;
+
+  const d = rbData;
+  const terkunci = d.status === 'disetujui';
+
+  const baris = d.daftar.map((r, i) => {
+    const nilai = r.rateDiajukan || r.rateLama || 0;
+    const lama = r.rateLama || 0;
+    const kelas = !lama ? 'baru' : nilai > lama ? 'naik' : nilai < lama ? 'turun' : '';
+    const tanda = !nilai ? '' :
+      !lama ? '<span class="pil-rb baru">rute baru</span>' :
+      nilai > lama ? `<span class="pil-rb naik">+${(nilai-lama).toLocaleString('id-ID')}</span>` :
+      nilai < lama ? `<span class="pil-rb turun">&minus;${(lama-nilai).toLocaleString('id-ID')}</span>` :
+      '<span class="pil-rb tetap">tetap</span>';
+
+    return `<tr>
+      <td class="mono"><b>${amanHTML(r.kota)}</b>${
+        r.distributor ? `<br><span class="dist">${amanHTML(r.distributor)}</span>` : ''}${
+        r.alamat ? `<br><span class="almt">${amanHTML(r.alamat)}</span>` : ''}</td>
+      <td class="mono">${amanHTML(r.tipeMobil)}</td>
+      <td class="kanan">${lama ? lama.toLocaleString('id-ID') : '—'}</td>
+      <td><input id="rb-${i}" class="rate ${kelas}" type="text" inputmode="numeric"
+             value="${nilai ? nilai.toLocaleString('id-ID') : ''}"
+             placeholder="${lama ? '' : 'belum ada'}" ${terkunci ? 'disabled' : ''}
+             oninput="ubahRb(${i})" onblur="rapikanRb(${i})"></td>
+      <td id="rbt-${i}">${tanda}</td>
+      <td><span id="rbw-${i}" style="display:${lama && nilai > lama ? '' : 'none'};">
+            <input id="rba-${i}" class="alasan" type="text" ${terkunci ? 'disabled' : ''}
+              placeholder="wajib diisi" value="${amanHTML(r.alasan || '')}">
+          </span></td>
+    </tr>`;
+  }).join('');
+
+  return `
+    ${terkunci ? `<div class="rb-setuju">
+      <b>Rate ${amanHTML(d.labelPeriode)} sudah disepakati</b>
+      Tidak bisa diubah lagi.${d.noDokumen ? ` Nomor dokumen ${amanHTML(d.noDokumen)}.` : ''}
+      Hubungi UNIFAM kalau ada yang perlu dikoreksi.
+    </div>` : `<div class="rb-ket">
+      Kolom <b>${amanHTML(d.labelLalu)}</b> adalah rate Anda yang berlaku sekarang.
+      Yang tidak diubah berarti <b>rate itu tetap berlaku</b> — tidak perlu diisi ulang.
+      Kalau ada kenaikan, ubah angkanya dan sebutkan alasannya.
+    </div>`}
+
+    <div class="tabel-rb"><div class="gulir">
+      <table class="rb" style="min-width:760px;">
+        <thead><tr>
+          <th>Kota / tujuan</th><th>Tipe</th>
+          <th class="kanan">Rate ${amanHTML(d.labelLalu)}</th>
+          <th>Rate ${amanHTML(d.labelPeriode)}</th>
+          <th>Perubahan</th><th>Alasan kalau naik</th>
+        </tr></thead>
+        <tbody>${baris || '<tr><td colspan="6" style="padding:26px;text-align:center;color:var(--muted);">Belum ada rute terdaftar.</td></tr>'}</tbody>
+      </table>
+    </div>
+    ${terkunci ? '' : `<div class="kaki-rb">
+      <span class="cat"><b>All in</b> — termasuk TKBM, stripping, krani. Belum termasuk PPN.<br>
+        Rate yang dikirim jadi dasar penagihan sepanjang ${amanHTML(d.labelPeriode)}.</span>
+      <button class="btn-kirim-rb" id="btn-rb" onclick="kirimRb()">
+        ${d.status === 'diajukan' ? 'Kirim ulang' : 'Kirim penawaran'}</button>
+    </div>`}
+    </div>`;
+}
+
+function ubahRb(i){
+  const r = rbData.daftar[i];
+  const inp = document.getElementById('rb-' + i);
+  const nilai = angkaSaja(inp.value);
+  const lama = r.rateLama || 0;
+  inp.className = 'rate ' + (!lama ? 'baru' : nilai > lama ? 'naik' : nilai < lama ? 'turun' : '');
+
+  const t = document.getElementById('rbt-' + i);
+  if(t){
+    if(!nilai) t.innerHTML = '';
+    else if(!lama) t.innerHTML = '<span class="pil-rb baru">rute baru</span>';
+    else if(nilai > lama) t.innerHTML = `<span class="pil-rb naik">+${(nilai-lama).toLocaleString('id-ID')}</span>`;
+    else if(nilai < lama) t.innerHTML = `<span class="pil-rb turun">&minus;${(lama-nilai).toLocaleString('id-ID')}</span>`;
+    else t.innerHTML = '<span class="pil-rb tetap">tetap</span>';
+  }
+  const w = document.getElementById('rbw-' + i);
+  if(w) w.style.display = (lama && nilai > lama) ? '' : 'none';
+}
+
+function rapikanRb(i){
+  const inp = document.getElementById('rb-' + i);
+  if(inp) inp.value = tampilAngka(inp.value);
+}
+
+async function kirimRb(){
+  const isi = [];
+  let kurang = null;
+
+  rbData.daftar.forEach((r, i) => {
+    const inp = document.getElementById('rb-' + i);
+    if(!inp) return;
+    const nilai = angkaSaja(inp.value);
+    if(!nilai) return;
+    const lama = r.rateLama || 0;
+    const ael = document.getElementById('rba-' + i);
+    const alasan = ael ? ael.value.trim() : '';
+    if(lama && nilai > lama && !alasan){
+      if(!kurang) kurang = { i, kota: r.kota, tipe: r.tipeMobil };
+      if(ael) ael.className = 'alasan perlu';
+    } else if(ael) ael.className = 'alasan';
+    isi.push({ kota: r.kota, tipeMobil: r.tipeMobil, rateLama: lama, rate: nilai, alasan });
+  });
+
+  if(kurang){
+    setStatus(`Rate ${kurang.kota} ${kurang.tipe} dinaikkan — alasannya wajib diisi.`, true);
+    const el = document.getElementById('rba-' + kurang.i);
+    if(el) el.focus();
+    return;
+  }
+  if(!isi.length){ setStatus('Belum ada rate yang diisi.', true); return; }
+
+  const naik = isi.filter(x => x.rateLama && x.rate > x.rateLama).length;
+  const turun = isi.filter(x => x.rateLama && x.rate < x.rateLama).length;
+  const baru = isi.filter(x => !x.rateLama).length;
+
+  if(!confirm(`Kirim penawaran rate ${rbData.labelPeriode}?\n\n` +
+      `${isi.length} rute — ${naik} naik, ${turun} turun, ${baru} rute baru.\n\n` +
+      `Rate ini jadi dasar penagihan sepanjang ${rbData.labelPeriode} apabila disetujui UNIFAM.`)) return;
+
+  const btn = document.getElementById('btn-rb');
+  if(btn){ btn.disabled = true; btn.textContent = 'Mengirim…'; }
+  try{
+    const r = await gas({action:'rb_kirim', user:sesi.user, pass:sesi.pass,
+                         periode:rbData.periode, data:JSON.stringify(isi)});
+    rbData = await gas({action:'rb_data', user:sesi.user, pass:sesi.pass});
+    render();
+    setStatus(`Rate terkirim ${r.waktu} — ${r.jumlah} rute. Dokumen ${r.noDokumen}.`);
+    alert(`Penawaran terkirim.\n\nNomor dokumen: ${r.noDokumen}\nWaktu: ${r.waktu}\n\n` +
+          `UNIFAM akan memeriksanya. Anda masih bisa mengubah selama belum disetujui.`);
+  }catch(err){
+    setStatus('Gagal mengirim: ' + err.message, true);
+    alert('Gagal mengirim rate:\n\n' + err.message);
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'Kirim ulang'; }
 }
 
 function kartuTerbuka(){
