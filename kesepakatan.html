@@ -747,11 +747,18 @@ async function simpanRute(){
     setStatus('Menyimpan…');
     const r = await gas({action:'rb_rute_simpan', adminPass, periode: periodePilih,
                          data: JSON.stringify(isi)});
-    ruteDraf = '';
     rute = await gas({action:'rb_rute_baca', adminPass, periode: periodePilih});
+
+    /* pastikan yang tersimpan sama dengan yang dikirim */
+    if(rute.daftar.length !== isi.length - (r.dilewati || 0)){
+      setStatus('Tersimpan ' + rute.daftar.length + ' rute, padahal dikirim ' + isi.length +
+                '. Periksa tab "Rute Periode" di spreadsheet.', true);
+    } else {
+      ruteDraf = '';
+      setStatus(r.jumlah + ' rute tersimpan' +
+        (r.dilewati ? ' · ' + r.dilewati + ' baris dilewati (kembar atau tidak lengkap)' : '') + '.');
+    }
     render();
-    setStatus(r.jumlah + ' rute tersimpan' +
-      (r.dilewati ? ' · ' + r.dilewati + ' baris dilewati (kembar atau tidak lengkap)' : '') + '.');
   }catch(err){ setStatus('Gagal menyimpan: ' + err.message, true); }
 }
 
