@@ -625,15 +625,17 @@ function panelRute(){
 
   const ada = rute.daftar.length;
   const tabel = ada
-    ? '<div class="gulir"><table class="k" style="min-width:520px;"><thead><tr>' +
+    ? '<div class="gulir"><table class="k" style="min-width:760px;"><thead><tr>' +
       '<th style="width:38px;">#</th><th>Kota</th><th>Tipe</th><th>Moda</th>' +
-      '<th>Distributor</th><th>Catatan</th></tr></thead><tbody>' +
+      '<th>Distributor</th><th>Alamat</th><th>Catatan</th></tr></thead><tbody>' +
       rute.daftar.map((r,i) => '<tr><td class="mono" style="color:var(--muted);">' + (i+1) + '</td>' +
         '<td class="mono"><b>' + aman(r.kota) + '</b></td>' +
         '<td class="mono">' + aman(r.tipeMobil) + '</td>' +
         '<td><span class="moda ' + (r.moda || 'darat') + '">' +
           (r.moda === 'laut' ? 'Laut' : 'Darat') + '</span></td>' +
         '<td>' + aman(r.distributor || '') + '</td>' +
+        '<td style="font-size:11.5px;color:var(--muted);max-width:230px;">' +
+          aman(r.alamat || '') + '</td>' +
         '<td style="color:var(--muted);font-size:11.5px;">' + aman(r.catatan || '') + '</td></tr>').join('') +
       '</tbody></table></div>'
     : '<div style="padding:22px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.7;">' +
@@ -642,7 +644,7 @@ function panelRute(){
 
   const contoh = rute.saran && rute.saran.length
     ? rute.saran.slice(0, 60).map(x => x.kota + '\t' + x.tipeMobil).join('\n')
-    : 'DUMAI\t40 ft\nPALU\t40 ft\nTERNATE\t20 ft';
+    : 'DUMAI\t40 ft\tPT. Prisma Reksa\tJl. Sultan 45\nPALU\t40 ft\nTERNATE\t20 ft';
 
   return '<div class="kartu-eks">' +
     '<div class="ke-kop" style="cursor:default;">' +
@@ -656,8 +658,10 @@ function panelRute(){
     tabel +
     '<div class="ke-kaki" style="display:block;">' +
       '<div class="ket" style="margin-bottom:9px;">' +
-        'Tempel daftar rute dari Excel — <b>dua kolom</b>: kota dan tipe. ' +
-        'Boleh ditambah kolom ketiga (distributor) dan keempat (catatan).<br>' +
+        'Tempel daftar rute dari Excel. Urutan kolomnya: ' +
+        '<b>kota, tipe, distributor, alamat, catatan</b>. ' +
+        'Dua kolom pertama wajib, sisanya boleh dikosongkan — ' +
+        'distributor dan alamat yang kosong diisi otomatis dari tab Alamat.<br>' +
         'Daftar ini <b>mengganti seluruh daftar sebelumnya</b> untuk periode ini, dan ' +
         'dipakai semua ekspedisi.' +
       '</div>' +
@@ -687,7 +691,8 @@ function isiDariRate(moda){
   const pilih = moda ? rute.saran.filter(x => x.moda === moda) : rute.saran;
   if(!pilih.length){ setStatus('Tidak ada rute ' + moda + ' di Template Rate.', true); return; }
 
-  const baru = pilih.map(x => x.kota + '\t' + x.tipeMobil).join('\n');
+  const baru = pilih.map(x => [x.kota, x.tipeMobil, x.distributor || '', x.alamat || '']
+    .join('\t').replace(/\t+$/, '')).join('\n');
   const el = document.getElementById('tempel-rute');
   const isiSekarang = el ? el.value.trim() : '';
 
@@ -705,7 +710,8 @@ function isiDariRate(moda){
 }
 
 function salinRute(){
-  const t = rute.daftar.map(r => [r.kota, r.tipeMobil, r.distributor || '', r.catatan || '']
+  const t = rute.daftar.map(r =>
+    [r.kota, r.tipeMobil, r.distributor || '', r.alamat || '', r.catatan || '']
     .join('\t').replace(/\t+$/,'')).join('\n');
   navigator.clipboard.writeText(t)
     .then(() => setStatus('Daftar rute disalin.'))
@@ -720,9 +726,13 @@ async function simpanRute(){
   const isi = [];
   teks.split(/\r?\n/).forEach(b => {
     if(!b.trim()) return;
-    const k = b.split(/\t|;|\s{2,}|,/).map(x => x.trim()).filter(x => x !== '');
-    if(k.length < 2) return;
-    isi.push({ kota: k[0], tipeMobil: k[1], distributor: k[2] || '', catatan: k[3] || '' });
+    /* dipisah TAB saja — alamat sering mengandung koma dan spasi ganda */
+    let k = b.split('\t').map(x => x.trim());
+    if(k.length < 2) k = b.split(/;|\s{2,}/).map(x => x.trim());
+    k = k.filter((x, i) => i < 2 ? x !== '' : true);
+    if(k.length < 2 || !k[0] || !k[1]) return;
+    isi.push({ kota: k[0], tipeMobil: k[1], distributor: k[2] || '',
+               alamat: k[3] || '', catatan: k[4] || '' });
   });
 
   if(isi.length === 0){

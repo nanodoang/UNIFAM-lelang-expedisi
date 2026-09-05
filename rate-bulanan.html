@@ -391,6 +391,12 @@ table.rb input:disabled{background:#F1F3F7;color:var(--muted);cursor:not-allowed
   padding:13px 15px;margin-bottom:13px;font-size:13px;color:#0B6350;line-height:1.7;}
 .sudah-setuju b{display:block;font-family:var(--disp);font-size:15px;letter-spacing:.05em;
   text-transform:uppercase;margin-bottom:4px;}
+
+table.rb .dist{font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--tinta);
+  white-space:normal;display:inline-block;margin-top:2px;}
+table.rb .almt{font-family:var(--sans);font-size:11px;color:var(--muted);
+  white-space:normal;display:inline-block;line-height:1.45;max-width:230px;margin-top:1px;}
+table.rb td:first-child{max-width:250px;white-space:normal;}
 </style>
 </head>
 <body>
@@ -426,7 +432,7 @@ table.rb input:disabled{background:#F1F3F7;color:var(--muted);cursor:not-allowed
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
-const VERSI_HALAMAN = 'rb1';
+const VERSI_HALAMAN = 'rb2';
 
 let jsonpN = 0;
 function jsonp(url){
@@ -596,7 +602,9 @@ function render(){
       '<span class="pil-rb tetap">tetap</span>';
 
     return `<tr>
-      <td class="mono"><b>${amanHTML(r.kota)}</b></td>
+      <td class="mono"><b>${amanHTML(r.kota)}</b>${
+        r.distributor ? `<br><span class="dist">${amanHTML(r.distributor)}</span>` : ''}${
+        r.alamat ? `<br><span class="almt">${amanHTML(r.alamat)}</span>` : ''}</td>
       <td class="mono">${amanHTML(r.tipeMobil)}</td>
       <td class="kanan">${lama ? lama.toLocaleString('id-ID') : '—'}</td>
       <td><input id="r-${i}" class="rate ${kelas}" type="text" inputmode="numeric"
@@ -640,7 +648,7 @@ function render(){
       <div class="gulir">
         <table class="rb" style="min-width:720px;">
           <thead><tr>
-            <th>Kota</th><th>Tipe</th>
+            <th>Kota / tujuan</th><th>Tipe</th>
             <th class="kanan">Rate ${amanHTML(data.labelLalu)}</th>
             <th>Rate ${amanHTML(data.labelPeriode)}</th>
             <th>Perubahan</th><th>Alasan kalau naik</th>
