@@ -238,6 +238,14 @@ table.k tr.naik td{background:#FDF3F2;}
   font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.09em;
   text-transform:uppercase;padding:12px;cursor:pointer;}
 .gerbang-salah{color:var(--red);font-size:12.5px;margin-top:10px;font-family:var(--mono);}
+
+.moda{font-family:var(--mono);font-size:9px;padding:2px 7px;white-space:nowrap;}
+.moda.darat{background:rgba(217,130,15,.14);color:#8A5A0A;}
+.moda.laut{background:rgba(21,150,163,.15);color:var(--teal-tua);}
+.grup-isi{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;
+  border:1px dashed var(--line-tebal);padding:5px 9px;}
+.grup-isi .gi-l{font-family:var(--disp);font-size:9.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;}
 </style>
 </head>
 <body>
@@ -618,11 +626,13 @@ function panelRute(){
   const ada = rute.daftar.length;
   const tabel = ada
     ? '<div class="gulir"><table class="k" style="min-width:520px;"><thead><tr>' +
-      '<th style="width:38px;">#</th><th>Kota</th><th>Tipe</th><th>Distributor</th>' +
-      '<th>Catatan</th></tr></thead><tbody>' +
+      '<th style="width:38px;">#</th><th>Kota</th><th>Tipe</th><th>Moda</th>' +
+      '<th>Distributor</th><th>Catatan</th></tr></thead><tbody>' +
       rute.daftar.map((r,i) => '<tr><td class="mono" style="color:var(--muted);">' + (i+1) + '</td>' +
         '<td class="mono"><b>' + aman(r.kota) + '</b></td>' +
         '<td class="mono">' + aman(r.tipeMobil) + '</td>' +
+        '<td><span class="moda ' + (r.moda || 'darat') + '">' +
+          (r.moda === 'laut' ? 'Laut' : 'Darat') + '</span></td>' +
         '<td>' + aman(r.distributor || '') + '</td>' +
         '<td style="color:var(--muted);font-size:11.5px;">' + aman(r.catatan || '') + '</td></tr>').join('') +
       '</tbody></table></div>'
@@ -637,7 +647,11 @@ function panelRute(){
   return '<div class="kartu-eks">' +
     '<div class="ke-kop" style="cursor:default;">' +
       '<span class="ke-nm">Rute ' + aman(rute.labelPeriode) + '</span>' +
-      '<span class="ke-dok">' + (ada ? ada + ' rute ditentukan' : 'belum ditentukan') + '</span>' +
+      '<span class="ke-dok">' + (ada
+        ? ada + ' rute · ' +
+          rute.daftar.filter(x => x.moda === 'darat').length + ' darat, ' +
+          rute.daftar.filter(x => x.moda === 'laut').length + ' laut'
+        : 'belum ditentukan') + '</span>' +
     '</div>' +
     tabel +
     '<div class="ke-kaki" style="display:block;">' +
@@ -653,18 +667,41 @@ function panelRute(){
       '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
         '<button class="btn-k" onclick="simpanRute()">Simpan daftar rute</button>' +
         (rute.saran && rute.saran.length
-          ? '<button class="btn-k putih" onclick="isiDariRate()">Isi dari Template Rate (' +
-            rute.saran.length + ' rute)</button>' : '') +
+          ? '<span class="grup-isi">' +
+            '<span class="gi-l">Isi dari Template Rate</span>' +
+            '<button class="btn-k putih" onclick="isiDariRate(\'\')">Semua (' +
+              rute.saran.length + ')</button>' +
+            (rute.jumlahDarat ? '<button class="btn-k putih" onclick="isiDariRate(\'darat\')">' +
+              'Darat (' + rute.jumlahDarat + ')</button>' : '') +
+            (rute.jumlahLaut ? '<button class="btn-k putih" onclick="isiDariRate(\'laut\')">' +
+              'Laut (' + rute.jumlahLaut + ')</button>' : '') +
+            '</span>' : '') +
         (ada ? '<button class="btn-k putih" onclick="salinRute()">Salin daftar sekarang</button>' : '') +
       '</div>' +
     '</div></div>';
 }
 
-function isiDariRate(){
+/* moda: '' semua, 'darat', atau 'laut' */
+function isiDariRate(moda){
   if(!rute || !rute.saran) return;
-  ruteDraf = rute.saran.map(x => x.kota + '\t' + x.tipeMobil).join('\n');
+  const pilih = moda ? rute.saran.filter(x => x.moda === moda) : rute.saran;
+  if(!pilih.length){ setStatus('Tidak ada rute ' + moda + ' di Template Rate.', true); return; }
+
+  const baru = pilih.map(x => x.kota + '\t' + x.tipeMobil).join('\n');
+  const el = document.getElementById('tempel-rute');
+  const isiSekarang = el ? el.value.trim() : '';
+
+  if(isiSekarang && !confirm('Kotak isian sudah berisi ' +
+      isiSekarang.split(/\r?\n/).filter(x => x.trim()).length + ' baris.\n\n' +
+      'Tekan OK untuk MENAMBAHKAN ' + pilih.length + ' rute ' + (moda || 'semua') +
+      ' di bawahnya,\natau Batal untuk membiarkan.')){
+    return;
+  }
+
+  ruteDraf = isiSekarang ? (isiSekarang + '\n' + baru) : baru;
   render();
-  setStatus(rute.saran.length + ' rute dari Template Rate dimuat — periksa dulu, lalu Simpan.');
+  setStatus(pilih.length + ' rute ' + (moda ? moda : 'dari Template Rate') +
+            ' dimuat — periksa dulu, lalu Simpan.');
 }
 
 function salinRute(){
