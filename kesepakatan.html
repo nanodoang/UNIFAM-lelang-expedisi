@@ -296,6 +296,16 @@ let adminPass = '';
 let data = null, urutan = null, tabAktif = 'penawaran';
 let periodePilih = '';
 let terbuka = {};
+let rute = null, ruteDraf = '';
+const tembolok = {};          // hasil per periode, hanya selama halaman terbuka
+
+function simpanTembolok(p, d){ tembolok[p] = { d, waktu: Date.now() }; }
+function ambilTembolok(p){
+  const t = tembolok[p];
+  if(!t) return null;
+  if(Date.now() - t.waktu > 120000) return null;   // 2 menit
+  return t.d;
+}
 
 let jsonpN = 0;
 function jsonp(url){
@@ -397,15 +407,75 @@ async function masuk(){
   }
 }
 
-function gantiPeriode(p){ periodePilih = p; muat(); }
-function gantiTab(t){ tabAktif = t; render(); }
-function togglePanel(nama){ terbuka[nama] = !terbuka[nama]; render(); }
+function gantiPeriode(p){
+  periodePilih = p;
+  urutan = null; rute = null; ruteDraf = '';
+  document.getElementById('wadah').innerHTML =
+    '<div class="kartu-eks"><div class="ke-kaki"><span class="ket">Memuat ' +
+    labelPeriode(p) + '…</span></div></div>';
+  muat();
+}
+async function gantiTab(t){
+  tabAktif = t;
+  render();
+  /* urutan baru diambil saat benar-benar dibutuhkan */
+  if(t === 'rute' && !rute){
+    try{
+      setStatus('Memuat daftar rute…');
+      rute = await gas({action:'rb_rute_baca', adminPass, periode: periodePilih});
+      setStatus(rute.daftar.length
+        ? rute.daftar.length + ' rute ditentukan untuk ' + rute.labelPeriode
+        : 'Belum ada daftar rute untuk ' + rute.labelPeriode);
+      render();
+    }catch(err){ setStatus('Gagal memuat rute: ' + err.message, true); }
+    return;
+  }
+  if(t === 'urutan' && !urutan){
+    try{
+      setStatus('Memuat urutan…');
+      urutan = await gas({action:'rb_urutan', adminPass, periode: periodePilih});
+      setStatus(`${urutan.rute.length} rute punya urutan · ${data.labelPeriode}`);
+      render();
+    }catch(err){ setStatus('Gagal memuat urutan: ' + err.message, true); }
+  }
+}
+async function togglePanel(nama){
+  terbuka[nama] = !terbuka[nama];
+  render();
+  if(!terbuka[nama]) return;
 
-async function muat(){
+  const e = data.ekspedisi.find(x => x.nama === nama);
+  if(!e || e.baris.length || e.status === 'belum') return;   // sudah ada / tidak perlu
+
+  try{
+    e.memuat = true; render();
+    const r = await gas({action:'rb_rinci', adminPass, periode: periodePilih, ekspedisi: nama});
+    e.baris = r.baris || [];
+    e.memuat = false;
+    render();
+  }catch(err){
+    e.memuat = false;
+    setStatus('Gagal memuat rincian ' + nama + ': ' + err.message, true);
+    render();
+  }
+}
+
+async function muat(paksa){
+  /* pakai hasil yang sudah ada kalau baru saja diambil */
+  if(!paksa){
+    const simpan = ambilTembolok(periodePilih);
+    if(simpan){
+      data = simpan; urutan = null;
+      setStatus(data.labelPeriode + ' · dari data yang baru diambil');
+      render();
+      return;
+    }
+  }
   try{
     setStatus('Memuat…');
     data = await gas({action:'rb_admin', adminPass, periode: periodePilih});
-    urutan = await gas({action:'rb_urutan', adminPass, periode: periodePilih});
+    simpanTembolok(periodePilih, data);
+    urutan = null; rute = null;          // dimuat saat tabnya dibuka
     const nunggu = data.ekspedisi.filter(e => e.status === 'diajukan').length;
     const setuju = data.ekspedisi.filter(e => e.status === 'disetujui').length;
     setStatus(data.labelPeriode + ' · ' + nunggu + ' menunggu diperiksa · ' +
@@ -423,8 +493,12 @@ async function muat(){
 }
 
 function tabelRate(e){
+  if(e.memuat) return '<div style="padding:20px;text-align:center;color:var(--muted);' +
+    'font-size:12.5px;">Memuat rincian…</div>';
   if(!e.baris.length) return '<div style="padding:20px;text-align:center;color:var(--muted);' +
-    'font-size:12.5px;">Belum mengisi. Rate periode sebelumnya tetap berlaku.</div>';
+    'font-size:12.5px;">' + (e.status === 'belum'
+      ? 'Belum mengisi. Rate periode sebelumnya tetap berlaku.'
+      : 'Tidak ada rincian.') + '</div>';
 
   const baris = e.baris.map(b => {
     const naik = b.rateLama && b.rate > b.rateLama;
@@ -461,13 +535,15 @@ function render(){
 
   const bar = '<div class="bar-per"><div><label>Periode</label>' +
     '<select onchange="gantiPeriode(this.value)">' + opsi + '</select></div>' +
-    '<button class="btn-k putih" onclick="muat()">Segarkan</button>' +
+    '<button class="btn-k putih" onclick="muat(true)">Segarkan</button>' +
     '<button class="btn-k putih" onclick="salinUndangan()">Salin undangan WA</button></div>' +
     '<div class="tab-k">' +
     '<button class="' + (tabAktif === 'penawaran' ? 'aktif' : '') +
       '" onclick="gantiTab(\'penawaran\')">Penawaran</button>' +
     '<button class="' + (tabAktif === 'urutan' ? 'aktif' : '') +
-      '" onclick="gantiTab(\'urutan\')">Urutan per rute</button></div>';
+      '" onclick="gantiTab(\'urutan\')">Urutan per rute</button>' +
+    '<button class="' + (tabAktif === 'rute' ? 'aktif' : '') +
+      '" onclick="gantiTab(\'rute\')">Daftar rute</button></div>';
 
   let isi = '';
 
@@ -512,12 +588,15 @@ function render(){
         '<div class="ke-kaki">' + kaki + '</div></div>';
     }).join('');
 
+  } else if(tabAktif === 'rute'){
+    isi = panelRute();
+
   } else {
-    const rute = (urutan && urutan.rute) || [];
-    isi = rute.length === 0
+    const rute2 = (urutan && urutan.rute) || [];
+    isi = rute2.length === 0
       ? '<div class="kartu-eks"><div class="ke-kaki"><span class="ket">Belum ada urutan — ' +
         'urutan terbentuk dari penawaran yang <b>sudah disetujui</b>.</span></div></div>'
-      : rute.map(r => '<div class="urut-rute"><div class="ur-kop">' +
+      : rute2.map(r => '<div class="urut-rute"><div class="ur-kop">' +
           aman(r.kota) + ' · ' + aman(r.tipeMobil) + '</div>' +
           '<div class="gulir"><table class="k" style="min-width:460px;"><tbody>' +
           r.daftar.map(x => '<tr><td style="width:105px;"><span class="pil-u p' +
@@ -531,6 +610,102 @@ function render(){
   }
 
   document.getElementById('wadah').innerHTML = bar + isi;
+}
+
+function panelRute(){
+  if(!rute) return '<div class="kartu-eks"><div class="ke-kaki"><span class="ket">Memuat…</span></div></div>';
+
+  const ada = rute.daftar.length;
+  const tabel = ada
+    ? '<div class="gulir"><table class="k" style="min-width:520px;"><thead><tr>' +
+      '<th style="width:38px;">#</th><th>Kota</th><th>Tipe</th><th>Distributor</th>' +
+      '<th>Catatan</th></tr></thead><tbody>' +
+      rute.daftar.map((r,i) => '<tr><td class="mono" style="color:var(--muted);">' + (i+1) + '</td>' +
+        '<td class="mono"><b>' + aman(r.kota) + '</b></td>' +
+        '<td class="mono">' + aman(r.tipeMobil) + '</td>' +
+        '<td>' + aman(r.distributor || '') + '</td>' +
+        '<td style="color:var(--muted);font-size:11.5px;">' + aman(r.catatan || '') + '</td></tr>').join('') +
+      '</tbody></table></div>'
+    : '<div style="padding:22px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.7;">' +
+      'Belum ada daftar rute untuk ' + aman(rute.labelPeriode) + '.<br>' +
+      'Selama kosong, tiap ekspedisi melihat rutenya sendiri berdasarkan riwayat.</div>';
+
+  const contoh = rute.saran && rute.saran.length
+    ? rute.saran.slice(0, 60).map(x => x.kota + '\t' + x.tipeMobil).join('\n')
+    : 'DUMAI\t40 ft\nPALU\t40 ft\nTERNATE\t20 ft';
+
+  return '<div class="kartu-eks">' +
+    '<div class="ke-kop" style="cursor:default;">' +
+      '<span class="ke-nm">Rute ' + aman(rute.labelPeriode) + '</span>' +
+      '<span class="ke-dok">' + (ada ? ada + ' rute ditentukan' : 'belum ditentukan') + '</span>' +
+    '</div>' +
+    tabel +
+    '<div class="ke-kaki" style="display:block;">' +
+      '<div class="ket" style="margin-bottom:9px;">' +
+        'Tempel daftar rute dari Excel — <b>dua kolom</b>: kota dan tipe. ' +
+        'Boleh ditambah kolom ketiga (distributor) dan keempat (catatan).<br>' +
+        'Daftar ini <b>mengganti seluruh daftar sebelumnya</b> untuk periode ini, dan ' +
+        'dipakai semua ekspedisi.' +
+      '</div>' +
+      '<textarea id="tempel-rute" style="width:100%;min-height:130px;border:1px solid var(--line-tebal);' +
+        'padding:11px 13px;font-family:var(--mono);font-size:12.5px;line-height:1.6;" ' +
+        'placeholder="' + aman(contoh.split('\n').slice(0,3).join(' | ')) + '">' + aman(ruteDraf) + '</textarea>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<button class="btn-k" onclick="simpanRute()">Simpan daftar rute</button>' +
+        (rute.saran && rute.saran.length
+          ? '<button class="btn-k putih" onclick="isiDariRate()">Isi dari Template Rate (' +
+            rute.saran.length + ' rute)</button>' : '') +
+        (ada ? '<button class="btn-k putih" onclick="salinRute()">Salin daftar sekarang</button>' : '') +
+      '</div>' +
+    '</div></div>';
+}
+
+function isiDariRate(){
+  if(!rute || !rute.saran) return;
+  ruteDraf = rute.saran.map(x => x.kota + '\t' + x.tipeMobil).join('\n');
+  render();
+  setStatus(rute.saran.length + ' rute dari Template Rate dimuat — periksa dulu, lalu Simpan.');
+}
+
+function salinRute(){
+  const t = rute.daftar.map(r => [r.kota, r.tipeMobil, r.distributor || '', r.catatan || '']
+    .join('\t').replace(/\t+$/,'')).join('\n');
+  navigator.clipboard.writeText(t)
+    .then(() => setStatus('Daftar rute disalin.'))
+    .catch(() => setStatus('Gagal menyalin.', true));
+}
+
+async function simpanRute(){
+  const el = document.getElementById('tempel-rute');
+  const teks = el ? el.value : '';
+  ruteDraf = teks;
+
+  const isi = [];
+  teks.split(/\r?\n/).forEach(b => {
+    if(!b.trim()) return;
+    const k = b.split(/\t|;|\s{2,}|,/).map(x => x.trim()).filter(x => x !== '');
+    if(k.length < 2) return;
+    isi.push({ kota: k[0], tipeMobil: k[1], distributor: k[2] || '', catatan: k[3] || '' });
+  });
+
+  if(isi.length === 0){
+    setStatus('Tidak ada baris yang terbaca. Tiap baris minimal: kota, lalu tipe.', true);
+    return;
+  }
+  if(!confirm('Simpan ' + isi.length + ' rute untuk ' + rute.labelPeriode + '?\n\n' +
+      'Daftar ini MENGGANTI seluruh daftar sebelumnya, dan jadi rute yang diisi ' +
+      'semua ekspedisi bulan itu.')) return;
+
+  try{
+    setStatus('Menyimpan…');
+    const r = await gas({action:'rb_rute_simpan', adminPass, periode: periodePilih,
+                         data: JSON.stringify(isi)});
+    ruteDraf = '';
+    rute = await gas({action:'rb_rute_baca', adminPass, periode: periodePilih});
+    render();
+    setStatus(r.jumlah + ' rute tersimpan' +
+      (r.dilewati ? ' · ' + r.dilewati + ' baris dilewati (kembar atau tidak lengkap)' : '') + '.');
+  }catch(err){ setStatus('Gagal menyimpan: ' + err.message, true); }
 }
 
 function teksUndangan(nama){
