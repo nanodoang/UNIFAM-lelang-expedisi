@@ -432,7 +432,7 @@ table.rb td:first-child{max-width:250px;white-space:normal;}
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0uyYHcbeN4WnO3Fpo1Hrz33aSBPLh400RZx_UEX6byhgU/exec';
-const VERSI_HALAMAN = 'rb2';
+const VERSI_HALAMAN = 'rb3';
 
 let jsonpN = 0;
 function jsonp(url){
@@ -457,9 +457,19 @@ async function kirimKeServer(params){
   const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
   const url = GAS_URL + '?' + q;
 
+  /* Kiriman besar (mis. 50 rute sekaligus) tidak muat di alamat URL —
+     browser menolaknya dengan "Failed to fetch". Kirim lewat badan permintaan. */
+  const panjang = q.length > 1800;
+
   let sebabUtama = '';
   try {
-    const r = await fetch(url);
+    const r = panjang
+      ? await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(params)
+        })
+      : await fetch(url);
     if(!r.ok) {
       sebabUtama = 'server menjawab ' + r.status + ' ' + r.statusText;
     } else {
@@ -479,6 +489,11 @@ async function kirimKeServer(params){
     if(/password|action tidak dikenal|tidak ditemukan|halaman web|tidak terbaca/i.test(sebabUtama)){
       throw new Error(sebabUtama);
     }
+  }
+
+  if(panjang){
+    throw new Error((sebabUtama || 'gagal mengirim') +
+      ' — data cukup besar. Coba kirim bertahap.');
   }
 
   try {

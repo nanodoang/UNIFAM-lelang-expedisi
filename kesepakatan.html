@@ -338,9 +338,20 @@ async function kirimKeServer(params){
   const q = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
   const url = GAS_URL + '?' + q;
 
+  /* Alamat URL punya batas panjang. Kiriman besar — misalnya 50 rute lengkap
+     dengan alamat — melewatinya dan browser menolak dengan "Failed to fetch".
+     Karena itu yang panjang dikirim lewat badan permintaan. */
+  const panjang = q.length > 1800;
+
   let sebabUtama = '';
   try {
-    const r = await fetch(url);
+    const r = panjang
+      ? await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(params)
+        })
+      : await fetch(url);
     if(!r.ok) {
       sebabUtama = 'server menjawab ' + r.status + ' ' + r.statusText;
     } else {
@@ -360,6 +371,13 @@ async function kirimKeServer(params){
     if(/password|action tidak dikenal|tidak ditemukan|halaman web|tidak terbaca/i.test(sebabUtama)){
       throw new Error(sebabUtama);
     }
+  }
+
+  if(panjang){
+    /* jalur cadangan memakai alamat URL juga, jadi tidak bisa untuk kiriman panjang */
+    throw new Error((sebabUtama || 'gagal mengirim') +
+      ' — data yang dikirim cukup besar. Coba simpan bertahap, ' +
+      'misalnya 25 rute dulu lalu sisanya.');
   }
 
   try {
