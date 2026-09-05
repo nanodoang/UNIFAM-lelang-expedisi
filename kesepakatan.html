@@ -681,6 +681,7 @@ function panelRute(){
               'Laut (' + rute.jumlahLaut + ')</button>' : '') +
             '</span>' : '') +
         (ada ? '<button class="btn-k putih" onclick="salinRute()">Salin daftar sekarang</button>' : '') +
+        '<button class="btn-k putih" onclick="cekRute()">Cek tab</button>' +
       '</div>' +
     '</div></div>';
 }
@@ -716,6 +717,32 @@ function salinRute(){
   navigator.clipboard.writeText(t)
     .then(() => setStatus('Daftar rute disalin.'))
     .catch(() => setStatus('Gagal menyalin.', true));
+}
+
+async function cekRute(){
+  try{
+    setStatus('Memeriksa tab Rute Periode…');
+    const r = await gas({action:'rb_rute_cek', adminPass, periode: periodePilih});
+    const baris = (r.langkah || []).map(x =>
+      (x.ok ? '  OK   ' : '  GAGAL') + '  ' + x.teks + (x.ket ? '\n         ' + x.ket : ''))
+      .join('\n');
+    alert(
+      'PEMERIKSAAN TAB RUTE PERIODE\n\n' + baris +
+      (r.judulSekarang ? '\n\nJudul kolom sekarang:\n  ' + r.judulSekarang +
+        '\n\nSeharusnya:\n  ' + r.judulSeharusnya : '') +
+      (r.periodeTerisi ? '\n\nPeriode yang ada isinya:\n  ' + r.periodeTerisi : '') +
+      (r.saran ? '\n\n' + r.saran : ''));
+    rute = await gas({action:'rb_rute_baca', adminPass, periode: periodePilih});
+    render();
+    setStatus('Pemeriksaan selesai — lihat keterangan di kotak tadi.');
+  }catch(err){
+    alert('Pemeriksaan gagal:\n\n' + err.message +
+      (/action tidak dikenal/i.test(err.message)
+        ? '\n\nCode.gs versi terbaru BELUM di-deploy.\n' +
+          'Buka editor Apps Script, ganti seluruh isinya, lalu\n' +
+          'Manage deployments -> pensil -> New version -> Deploy.' : ''));
+    setStatus('Pemeriksaan gagal: ' + err.message, true);
+  }
 }
 
 async function simpanRute(){
@@ -759,7 +786,15 @@ async function simpanRute(){
         (r.dilewati ? ' · ' + r.dilewati + ' baris dilewati (kembar atau tidak lengkap)' : '') + '.');
     }
     render();
-  }catch(err){ setStatus('Gagal menyimpan: ' + err.message, true); }
+  }catch(err){
+    setStatus('Gagal menyimpan: ' + err.message, true);
+    alert('GAGAL MENYIMPAN DAFTAR RUTE\n\n' + err.message +
+      (/action tidak dikenal/i.test(err.message)
+        ? '\n\nCode.gs versi terbaru BELUM di-deploy.\n' +
+          'Buka editor Apps Script, ganti seluruh isinya, lalu\n' +
+          'Manage deployments -> pensil -> New version -> Deploy.'
+        : '\n\nTekan tombol "Cek tab" untuk melihat keadaan tab Rute Periode.'));
+  }
 }
 
 function teksUndangan(nama){
