@@ -348,6 +348,10 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 .btn-reset-bulan{background:none;border:1px solid var(--line-tebal);color:var(--muted);
   font-family:var(--mono);font-size:11px;padding:7px 11px;cursor:pointer;}
 .btn-reset-bulan:hover{border-color:var(--navy);color:var(--navy);}
+
+.cap-saring{grid-column:1 / -1;font-family:var(--mono);font-size:11px;color:var(--teal-tua);
+  background:rgba(21,150,163,.09);border:1px solid rgba(21,150,163,.35);
+  padding:6px 11px;margin-bottom:2px;}
 </style>
 </head>
 <body>
@@ -392,6 +396,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 <div id="status-bar">Memuat data&hellip;</div>
 
 <main>
+  <div id="bar-bulan-atas"></div>
   <div class="ringkas-kisi" id="ringkas"></div>
 
   <div class="section-title"><h2 id="judul-tabel">Per Bulan</h2><small id="ket-tabel"></small></div>
@@ -749,46 +754,72 @@ function gantiTab(t){
 function render(){
   if(!data) return;
 
-  const m = data.manual || {jumlah:0,total:0,selisih:0,persen:0,terukur:0,daftar:[]};
+  /* kotak pemilih bulan — selalu tampil di atas, terlepas dari tab mana
+     yang sedang dibuka, jadi ringkasan atas juga ikut tersaring */
+  { const wb = document.getElementById('bar-bulan-atas');
+    if(wb) wb.innerHTML = barisBulan(); }
+
+  const rk = ringkasTersaring();
+  const m = rk.manual || {jumlah:0,total:0,selisih:0,persen:0,terukur:0,daftar:[]};
   document.getElementById('ringkas').innerHTML = `
+    ${bulanPilih ? `<div class="cap-saring">Menampilkan ${labelBulan(bulanPilih)} saja</div>` : ''}
     <div class="kartu-angka"><div class="label">Lelang selesai</div>
-      <div class="nilai">${data.jumlah}</div></div>
+      <div class="nilai">${rk.jumlah}</div></div>
     <div class="kartu-angka"><div class="label">Total rate rank 1</div>
-      <div class="nilai">${rp(data.totalTarget)}</div></div>
+      <div class="nilai">${rp(rk.totalTarget)}</div></div>
     <div class="kartu-angka"><div class="label">Total harga pemenang</div>
-      <div class="nilai">${rp(data.totalMenang)}</div></div>
+      <div class="nilai">${rp(rk.totalMenang)}</div></div>
     <div class="kartu-angka"><div class="label">Order manual</div>
       <div class="nilai">${m.jumlah || 0}</div>
-      <div class="ket">${rp(m.total || 0)}</div></div>
+      <div class="ket">${m.galat ? '<span style="color:var(--red,#C8443A);">tidak bisa dibaca — lihat tab Order Manual</span>' : rp(m.total || 0)}</div></div>
     <div class="kartu-angka"><div class="label">Selisih order manual</div>
       <div class="nilai ${(m.selisih||0) <= 0 ? 'hemat' : 'rugi'}">${rp(Math.abs(m.selisih||0))}</div>
       <div class="ket">${m.terukur ? ((m.selisih||0) <= 0 ? 'di bawah' : 'di atas') + ' rank 1 · ' + pct(Math.abs(m.persen||0)) : 'belum ada pembanding'}</div></div>
     <div class="kartu-angka"><div class="label">Penghematan</div>
-      <div class="nilai ${data.totalHemat >= 0 ? 'hemat' : 'rugi'}">${rp(data.totalHemat)}</div>
-      <div class="ket">${pct(data.persen)} dari rate rank 1</div></div>`;
+      <div class="nilai ${rk.totalHemat >= 0 ? 'hemat' : 'rugi'}">${rp(rk.totalHemat)}</div>
+      <div class="ket">${pct(rk.persen)} dari rate rank 1</div></div>`;
 
   const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi', manual:'Order Manual'};
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
 
   const wadah = document.getElementById('wadah');
 
-  /* kotak pilihan bulan — tidak dipasang di tab Per Bulan,
-     karena di sana bulan sudah jadi barisnya sendiri */
-  { const lamaB = document.getElementById('bar-bulan');
-    if(lamaB) lamaB.remove();
-    if(tabAktif !== 'bulan'){
-      const htmlB = barisBulan();
-      if(htmlB){
-        const w = document.createElement('div');
-        w.id = 'bar-bulan';
-        w.innerHTML = htmlB;
-        wadah.parentNode.insertBefore(w, wadah);
-      }
-    } }
-
   if(tabAktif === 'manual') wadah.innerHTML = tabelManual();
   else if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
   else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring(), tabAktif);
+}
+
+/* Angka di kartu atas — mengikuti bulan yang dipilih, kalau ada */
+function ringkasTersaring(){
+  if(!bulanPilih) return {
+    jumlah: data.jumlah, totalTarget: data.totalTarget, totalMenang: data.totalMenang,
+    totalHemat: data.totalHemat, persen: data.persen, manual: data.manual
+  };
+
+  const r = rinciTersaring();
+  let totalTarget = 0, totalMenang = 0;
+  r.forEach(x => { totalTarget += x.target || 0; totalMenang += x.harga || 0; });
+  const totalHemat = totalTarget - totalMenang;
+
+  const m = manualTersaring();
+  let manTotal = 0, manRank1 = 0, manTerukur = 0, manTotalTerukur = 0;
+  m.forEach(x => {
+    manTotal += x.harga || 0;
+    if(x.selisih !== null && x.selisih !== undefined){
+      manRank1 += x.rank1; manTotalTerukur += x.harga; manTerukur++;
+    }
+  });
+
+  return {
+    jumlah: r.length, totalTarget, totalMenang, totalHemat,
+    persen: totalTarget ? (totalHemat / totalTarget * 100) : 0,
+    manual: {
+      daftar: m, jumlah: m.length, terukur: manTerukur, total: manTotal,
+      selisih: manRank1 ? (manTotalTerukur - manRank1) : 0,
+      persen: manRank1 ? ((manTotalTerukur - manRank1) / manRank1 * 100) : 0,
+      galat: (data.manual && data.manual.galat) || ''
+    }
+  };
 }
 
 function tabelKelompok(daftar, jenis){
@@ -810,13 +841,18 @@ function tabelKelompok(daftar, jenis){
 }
 
 function tabelManual(){
-  const m = data.manual || {daftar:[]};
+  const rk = ringkasTersaring();
+  const m = rk.manual || {daftar:[]};
   const r = manualTersaring();
 
   if(m.galat){
     return `<div class="empty" style="padding:34px;text-align:center;">
-      Tidak bisa membaca spreadsheet Pesanan Armada.<br><br>
-      <span style="font-family:var(--mono);font-size:11.5px;">${aman(m.galat)}</span></div>`;
+      <b style="display:block;color:var(--red,#C8443A);font-family:var(--disp);
+        font-size:16px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;">
+        Tidak bisa membaca Pesanan Armada</b>
+      <span style="font-family:var(--mono);font-size:11.5px;color:var(--muted);">${aman(m.galat)}</span>
+      <br><br>Buka <b>Panel lelang</b>, tekan tombol <b>Cek Armada</b> di bar atas
+      untuk memeriksa penyebabnya.</div>`;
   }
   if(r.length === 0){
     return `<div class="empty" style="padding:34px;text-align:center;">
