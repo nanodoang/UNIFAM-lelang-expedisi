@@ -539,6 +539,17 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .beda-kunci{font-family:var(--mono);font-size:9.5px;color:var(--muted);}
 .alasan-naik{font-size:11px;color:#8A5A0A;font-style:italic;}
 .kotak-tantang{background:#FDEDEB;border:1px solid rgba(200,68,58,.45);padding:12px 14px;margin-bottom:12px;}
+.kotak-riwayat{background:#F4FBF6;border:1px solid rgba(18,135,107,.4);padding:12px 14px;margin-bottom:12px;}
+.kotak-riwayat .kr-t{font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#0B6350;margin-bottom:7px;}
+.kotak-riwayat .kr-isi{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:9px;}
+.kotak-riwayat .kr-eks{font-weight:600;font-size:14px;}
+.kotak-riwayat .kr-harga{font-family:var(--mono,monospace);font-size:15px;font-weight:600;color:#0B6350;}
+.kotak-riwayat .kr-tgl{font-size:11.5px;color:var(--muted);}
+.btn-riwayat{background:#12876B;color:#fff;border:none;font-family:var(--disp);font-weight:700;
+  font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;padding:9px 15px;cursor:pointer;}
+.btn-riwayat:hover{background:#0B6350;}
+.kotak-riwayat .kr-ket{font-size:11px;color:#3E6F5F;line-height:1.6;margin-top:8px;}
 .kt-t{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.05em;
   text-transform:uppercase;color:#A5352C;}
 .kt-k{font-size:12.5px;color:#8A3A32;line-height:1.7;margin-top:5px;}
@@ -809,6 +820,7 @@ let jumlahBarisMentah = 0;
 let daftarOrder = [];
 let tglPilih = '';        // '' = semua tanggal
 let kotaPilih = '';       // '' = semua kota (tab Lelang)
+let tujuanPilih = '';     // '' = semua tujuan — "Distributor - Kota" spesifik
 let kotaPilihK = '';      // '' = semua kota (tab Kiriman)
 let rateInfo = {jumlah:0, kota:[]};
 let versiScript = '';
@@ -1845,8 +1857,31 @@ function semuaOrderGabung(){
   return out.sort((a,b) => urutTanggal(a.o.tanggalMuat) - urutTanggal(b.o.tanggalMuat));
 }
 
-function pilihKota(k){ kotaPilih = k; render(); }
+function pilihKota(k){ kotaPilih = k; tujuanPilih = ''; render(); }
 function pilihKotaK(k){ kotaPilihK = k; render(); }
+function pilihTujuan(t){ tujuanPilih = t; render(); }
+
+/* Nama tujuan yang dipakai konsisten di semua tempat: "Distributor - Kota" */
+function namaTujuan(l){ return `${l.customer} - ${l.kota}`; }
+
+/* Kotak pilihan tujuan — lebih spesifik daripada kota, karena satu kota
+   bisa punya beberapa distributor tujuan yang berbeda */
+function barisTujuanLelang(terbuka){
+  if(terbuka.length === 0) return '';
+  const hitung = new Map();
+  terbuka.forEach(l => { const t = namaTujuan(l); hitung.set(t, (hitung.get(t) || 0) + 1); });
+  if(hitung.size < 2) return '';
+
+  const tujuan = Array.from(hitung.keys()).sort();
+  return `<div class="bar-tanggal">
+    <span class="bt-l">Tujuan</span>
+    <select class="pilih-tgl" onchange="pilihTujuan(this.value)">
+      <option value="">Semua tujuan — ${terbuka.length} lelang</option>
+      ${tujuan.map(t => `<option value="${t}" ${tujuanPilih === t ? 'selected' : ''}>${t} — ${hitung.get(t)}</option>`).join('')}
+    </select>
+    ${tujuanPilih ? `<button class="btn-reset-tgl" onclick="pilihTujuan('')">tampilkan semua</button>` : ''}
+  </div>`;
+}
 
 /* Kotak pilihan kota untuk daftar lelang terbuka */
 function barisKotaLelang(terbuka){
@@ -2201,6 +2236,66 @@ function waKonfirmasi(l, win, eks){
 /* ---------- render ---------- */
 
 let tabAdmin = 'lelang';
+
+/* Panel pemenang sebelumnya — muncul di kartu lelang terbuka kalau ada
+   riwayat pemenang untuk kota+tipe yang sama. Memungkinkan pesan langsung
+   tanpa menunggu penawaran baru masuk. */
+function panelPemenangSebelumnya(l){
+  const p = l.pemenangSebelumnya;
+  if(!p) return '';
+
+  return `<div class="kotak-riwayat">
+    <div class="kr-t">Pemenang sebelumnya di rute ini</div>
+    <div class="kr-isi">
+      <span class="kr-eks">${p.ekspedisi}</span>
+      <span class="kr-harga">${formatRupiah(p.harga)}</span>
+      ${p.tanggalMuat ? `<span class="kr-tgl">terakhir muat ${p.tanggalMuat}</span>` : ''}
+    </div>
+    <button class="btn-riwayat" onclick="pesanLangsung('${l.id}')">
+      Pesan ke ${p.ekspedisi} sekarang</button>
+    <div class="kr-ket">Tanpa menunggu lelang ulang — harga memakai angka terakhir di atas.
+      Ekspedisi tetap boleh menawar seperti biasa kalau kamu ingin membandingkan dulu.</div>
+  </div>`;
+}
+
+/* Tandai pemenang + langsung buat order, memakai harga historis kalau
+   belum ada penawaran baru di lelang ini */
+async function pesanLangsung(idLelang){
+  const l = lelangList.find(x => x.id === idLelang);
+  const p = l && l.pemenangSebelumnya;
+  if(!l || !p) return;
+
+  const inp = document.getElementById('muat-' + idLelang);
+  const tglInput = inp ? inp.value : '';
+  const tgl = tglInput ? new Date(tglInput) : new Date(Date.now() + 86400000);
+  const tglTeks = `${String(tgl.getDate()).padStart(2,'0')}/${String(tgl.getMonth()+1).padStart(2,'0')}/${tgl.getFullYear()}`;
+
+  const bidBaru = bidsUntuk(idLelang).find(b => b.ekspedisi.toUpperCase() === p.ekspedisi.toUpperCase());
+  const hargaDipakai = bidBaru ? bidBaru.harga : p.harga;
+
+  if(!confirm(`Pesan langsung ke ${p.ekspedisi}?\n\n` +
+      `Tujuan     : ${l.customer} - ${l.kota}\n` +
+      `Tipe       : ${l.tipeMobil}\n` +
+      `Tanggal muat: ${tglTeks}\n` +
+      `Harga       : ${formatRupiah(hargaDipakai)}${bidBaru ? '' : ' (harga terakhir, belum ada penawaran baru)'}\n\n` +
+      `Lelang ini langsung ditutup dan order dibuat, tanpa menunggu ekspedisi lain menawar.`)) return;
+
+  try{
+    setStatus('Memesan…');
+    await gas({action:'pilih_pemenang', idLelang, pemenang: p.ekspedisi,
+               tanggalMuat: tglTeks,
+               alasan: 'Dipesan langsung ke pemenang sebelumnya (tanpa lelang ulang)'});
+    const r = await gas({action:'order_buat', idLelang, tanggalMuat: tglTeks,
+                         hargaManual: hargaDipakai});
+    await muat(true);
+    if(r.kirim && String(r.kirim).indexOf('GAGAL') === 0){
+      setStatus(`Order ${r.noOrder} dibuat, TAPI gagal kirim ke Pesanan Armada — ${r.kirim}`, true);
+    } else {
+      setStatus(`Order ${r.noOrder} dibuat langsung untuk ${p.ekspedisi} — ${formatRupiah(hargaDipakai)}, muat ${tglTeks}.`);
+    }
+  }catch(err){ setStatus('Gagal memesan langsung: ' + err.message, true); }
+}
+
 /* ---------- nego harga ---------- */
 /* Keadaan juara bertahan pada satu lelang — dihitung di sisi halaman
    supaya panel bisa menandai tanpa panggilan server tambahan */
@@ -2411,9 +2506,12 @@ function render(){
 
   const grid = document.getElementById('grid');
   const semuaTerbuka = lelangList.filter(l => l.status !== 'selesai');
-  const terbuka = kotaPilih ? semuaTerbuka.filter(l => l.kota === kotaPilih) : semuaTerbuka;
+  let terbuka = kotaPilih ? semuaTerbuka.filter(l => l.kota === kotaPilih) : semuaTerbuka;
+  terbuka = tujuanPilih ? terbuka.filter(l => namaTujuan(l) === tujuanPilih) : terbuka;
   document.getElementById('jumlah-lelang').textContent =
-    kotaPilih ? `${terbuka.length} di ${kotaPilih} · ${semuaTerbuka.length} total` : `${terbuka.length} aktif`;
+    (kotaPilih || tujuanPilih)
+      ? `${terbuka.length} di ${tujuanPilih || kotaPilih} · ${semuaTerbuka.length} total`
+      : `${terbuka.length} aktif`;
 
   { /* angka di tab */
     const selesaiN = lelangList.filter(l => l.status === 'selesai').length;
@@ -2440,8 +2538,21 @@ function render(){
       grid.parentNode.insertBefore(wadah, grid);
     } }
 
+  /* kotak pilihan tujuan — dibangun dari lelang yang sudah tersaring kota,
+     supaya daftarnya menyesuaikan kalau kota sudah dipilih lebih dulu */
+  { const lamaT = document.getElementById('bar-tujuan-lelang');
+    if(lamaT) lamaT.remove();
+    const dasarTujuan = kotaPilih ? semuaTerbuka.filter(l => l.kota === kotaPilih) : semuaTerbuka;
+    const htmlT = barisTujuanLelang(dasarTujuan);
+    if(htmlT){
+      const wadah2 = document.createElement('div');
+      wadah2.id = 'bar-tujuan-lelang';
+      wadah2.innerHTML = htmlT;
+      grid.parentNode.insertBefore(wadah2, grid);
+    } }
+
   grid.innerHTML = terbuka.length === 0
-    ? `<div class="empty">${kotaPilih ? 'Tidak ada lelang terbuka di ' + kotaPilih + '.' : 'Belum ada lelang terbuka saat ini.'}</div>`
+    ? `<div class="empty">${(tujuanPilih || kotaPilih) ? 'Tidak ada lelang terbuka di ' + (tujuanPilih || kotaPilih) + '.' : 'Belum ada lelang terbuka saat ini.'}</div>`
     : terbuka.map(l=>{
         const bids = bidsUntuk(l.id);
         const lewat = l.batasWaktu - Date.now() <= 0;
@@ -2522,6 +2633,7 @@ function render(){
           </div>
           <div class="card-body">
             ${ratePanel}
+            ${panelPemenangSebelumnya(l)}
             ${lewat ? `<div class="kotak-tutup">
               <div class="kt-teks">
                 <b>Lelang sudah tutup</b>
