@@ -540,6 +540,10 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .alasan-naik{font-size:11px;color:#8A5A0A;font-style:italic;}
 .kotak-tantang{background:#FDEDEB;border:1px solid rgba(200,68,58,.45);padding:12px 14px;margin-bottom:12px;}
 .cek-order{cursor:pointer;}
+.btn-ubah-harga{background:none;border:1px solid var(--line-tebal,#C3CAD9);color:var(--muted,#5A6480);
+  font-family:var(--mono,monospace);font-size:9.5px;padding:1px 6px;margin-left:6px;cursor:pointer;
+  vertical-align:middle;}
+.btn-ubah-harga:hover{border-color:var(--navy,#2A3180);color:var(--navy,#2A3180);}
 .lencana-combo{font-family:var(--mono,monospace);font-size:8.5px;letter-spacing:.06em;
   background:var(--teal,#1596A3);color:#fff;padding:1px 6px;margin-left:6px;white-space:nowrap;}
 .btn-bubar-combo{background:none;border:none;color:var(--muted);font-size:13px;line-height:1;
@@ -2071,7 +2075,9 @@ function tabelPerTanggal(){
       <td class="mono">${l.kota}</td>
       <td class="mono">${l.tipeMobil}</td>
       <td>${l.pemenang || '—'}</td>
-      <td class="kanan">${hrg ? formatRupiah(hrg) : '—'}</td>
+      <td class="kanan">${hrg ? formatRupiah(hrg) : '—'}${!batal
+        ? ` <button class="btn-ubah-harga" title="ubah harga order ini"
+            onclick="ubahHargaOrder('${o.id}','${o.noOrder}',${hrg})">ubah</button>` : ''}</td>
       <td class="mono">${k ? (k.noKontener || k.noPolisi || '—') : '—'}</td>
       <td>${k ? `<span class="pil-ok">Sudah konfirmasi</span>` : `<span class="pil-nunggu">Menunggu</span>`}</td>
       <td class="kanan">${eks && !k
@@ -2245,6 +2251,44 @@ async function buatOrder(idLelang){
       setStatus(`Order ${r.noOrder} dibuat untuk muat ${r.tanggalMuat} & terkirim ke planning draft.`);
     }
   }catch(err){ setStatus('Gagal membuat order: ' + err.message, true); }
+}
+
+/* Untuk kasus mis. combo: bukan potongan gabungan, tapi tiap kontener
+   sendiri harganya turun karena dipesan bareng. Wajib alasan. */
+function angkaSaja(v){
+  const d = String(v == null ? '' : v).replace(/[^0-9]/g, '');
+  return d ? parseInt(d, 10) : 0;
+}
+function tampilAngka(v){
+  const n = angkaSaja(v);
+  return n > 0 ? n.toLocaleString('id-ID') : '';
+}
+
+async function ubahHargaOrder(idOrder, noOrder, hargaSekarang){
+  const isiHarga = prompt(
+    `Ubah harga ${noOrder}\n\n` +
+    `Sekarang: ${formatRupiah(hargaSekarang)}\n\n` +
+    `Harga baru (angka saja):`, tampilAngka(hargaSekarang));
+  if(isiHarga === null) return;
+  const hargaBaru = angkaSaja(isiHarga);
+  if(!hargaBaru){ setStatus('Harga baru harus diisi.', true); return; }
+  if(hargaBaru === hargaSekarang) return;
+
+  const alasan = prompt(
+    `Alasan perubahan harga ${noOrder}\n\n` +
+    `${formatRupiah(hargaSekarang)} -> ${formatRupiah(hargaBaru)}\n\n` +
+    `Alasan (wajib diisi, mis. "potongan combo per kontener"):`, 'potongan combo per kontener');
+  if(alasan === null) return;
+  if(!String(alasan).trim()){ setStatus('Alasan wajib diisi.', true); return; }
+
+  try{
+    setStatus('Mengubah harga…');
+    const r = await gas({action:'order_ubah_harga', idOrder,
+                         hargaBaru: hargaBaru, alasan: String(alasan).trim()});
+    await muat(true);
+    setStatus(`${r.noOrder} diubah dari ${formatRupiah(r.hargaLama)} ke ${formatRupiah(r.hargaBaru)}.` +
+              (r.jejak ? ` Ikut diubah di: ${r.jejak}.` : ' Belum ada barisnya di Pesanan Armada.'));
+  }catch(err){ setStatus('Gagal mengubah harga: ' + err.message, true); }
 }
 
 async function geserTanggal(idOrder, noOrder, tglSekarang){
@@ -2809,6 +2853,8 @@ function render(){
               ? `<span class="cap-lama" title="dibuat sebelum ada tab Order">lama</span>`
               : `<button class="btn-mini" title="geser tanggal muat"
                    onclick="geserTanggal('${o.id}','${o.noOrder}','${o.tanggalMuat}')">tgl</button>
+                 <button class="btn-mini" title="ubah harga order ini"
+                   onclick="ubahHargaOrder('${o.id}','${o.noOrder}',${o.harga || 0})">harga</button>
                  <button class="btn-mini merah" title="batalkan order"
                    onclick="batalOrder('${o.id}','${o.noOrder}','${l.kota}')">batal</button>`}
           </td>
