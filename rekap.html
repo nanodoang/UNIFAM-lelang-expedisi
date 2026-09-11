@@ -406,6 +406,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
     <button id="t-eks" onclick="gantiTab('eks')">Per ekspedisi</button>
     <button id="t-rinci" onclick="gantiTab('rinci')">Rincian &amp; realisasi</button>
     <button id="t-manual" onclick="gantiTab('manual')">Order manual</button>
+    <button id="t-turun" onclick="gantiTab('turun')">Turun harga</button>
   </div>
 
   <button class="btn-salin" onclick="salin()">Salin tabel ini</button>
@@ -636,6 +637,7 @@ function daftarBulan(){
   const set = new Set();
   ((data && data.rinci) || []).forEach(x => { const b = bulanDari(x.tanggal); if(b) set.add(b); });
   ((data && data.manual && data.manual.daftar) || []).forEach(x => { const b = bulanDari(x.tanggal); if(b) set.add(b); });
+  ((data && data.turunHarga && data.turunHarga.daftar) || []).forEach(x => { const b = bulanDari(x.tanggalSekarang); if(b) set.add(b); });
   return Array.from(set).sort().reverse();
 }
 
@@ -746,7 +748,7 @@ async function muat(segar){
 
 function gantiTab(t){
   tabAktif = t;
-  ['bulan','eks','rinci','manual'].forEach(x =>
+  ['bulan','eks','rinci','manual','turun'].forEach(x =>
     document.getElementById('t-' + (x==='eks'?'eks':x)).className = (x===t ? 'aktif' : ''));
   render();
 }
@@ -779,12 +781,13 @@ function render(){
       <div class="nilai ${rk.totalHemat >= 0 ? 'hemat' : 'rugi'}">${rp(rk.totalHemat)}</div>
       <div class="ket">${pct(rk.persen)} dari rate rank 1</div></div>`;
 
-  const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi', manual:'Order Manual'};
+  const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi', manual:'Order Manual', turun:'Turun Harga'};
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
 
   const wadah = document.getElementById('wadah');
 
   if(tabAktif === 'manual') wadah.innerHTML = tabelManual();
+  else if(tabAktif === 'turun') wadah.innerHTML = tabelTurunHarga();
   else if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
   else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring(), tabAktif);
 }
@@ -837,6 +840,46 @@ function tabelKelompok(daftar, jenis){
       <td class="kanan">${rp(b.menang)}</td>
       <td class="kanan ${b.hemat >= 0 ? 'hemat' : 'rugi'}">${rp(b.hemat)}</td>
       <td class="kanan ${b.hemat >= 0 ? 'hemat' : 'rugi'}">${pct(b.persen)}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+/* Rute yang harga rank1-nya turun dibanding lelang sebelumnya — dari
+   ekspedisi manapun, tanpa batas minimal persen */
+function tabelTurunHarga(){
+  const t = (data && data.turunHarga) || { daftar: [], jumlah: 0, totalTurun: 0 };
+  const bulan = bulanPilih
+    ? t.daftar.filter(x => bulanDari(x.tanggalSekarang) === bulanPilih)
+    : t.daftar;
+
+  if(bulan.length === 0){
+    return `<div class="empty" style="padding:34px;text-align:center;">
+      ${bulanPilih ? 'Tidak ada rute yang turun harga di bulan ini.' : 'Belum ada rute yang harganya turun.'}<br><br>
+      Baru ditampilkan setelah satu rute (kota + tipe yang sama) punya minimal
+      2 lelang selesai untuk dibandingkan.</div>`;
+  }
+
+  const totalBulan = bulan.reduce((a, x) => a + x.selisih, 0);
+  document.getElementById('ket-tabel').textContent =
+    `${bulan.length} rute turun · total ${rp(totalBulan)} · dibandingkan dengan lelang sebelumnya untuk rute yang sama`;
+
+  return `<table class="rekap" style="min-width:820px;">
+    <thead><tr>
+      <th>Tujuan</th><th>Tipe</th>
+      <th style="text-align:right;">Rank 1 Sebelumnya</th><th>Tanggal</th>
+      <th style="text-align:right;">Rank 1 Sekarang</th><th>Tanggal</th>
+      <th style="text-align:right;">Turun</th><th>Ekspedisi</th>
+    </tr></thead>
+    <tbody>${bulan.map(x => `<tr>
+      <td style="font-weight:600;">${aman(x.customer)||'—'}<br>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400;">${aman(x.kota)}</span></td>
+      <td class="mono">${aman(x.tipeMobil)}</td>
+      <td class="kanan">${rp(x.hargaSebelumnya)}</td>
+      <td class="mono" style="font-size:11px;color:var(--muted);">${aman(x.tanggalSebelumnya)||'—'}</td>
+      <td class="kanan"><b>${rp(x.hargaSekarang)}</b></td>
+      <td class="mono" style="font-size:11px;color:var(--muted);">${aman(x.tanggalSekarang)||'—'}</td>
+      <td class="kanan hemat">&minus;${rp(x.selisih)}<br>
+        <span style="font-weight:400;font-size:11px;">(${x.persen.toFixed(1)}%)</span></td>
+      <td>${aman(x.ekspedisi)||'—'}</td>
     </tr>`).join('')}</tbody></table>`;
 }
 
@@ -941,6 +984,16 @@ function salin(){
       bersih(x.tanggal), bersih(x.noOrder), bersih(x.customer), bersih(x.kota), bersih(x.tipeMobil),
       bersih(x.pemenang), x.target, x.harga, x.hemat, bersih(x.noKontener), bersih(x.namaKapal),
       bersih(x.etd), bersih(x.eta), bersih(x.atd), bersih(x.ata), bersih(x.dooring), bersih(x.keterangan)
+    ].join('\t')));
+  } else if(tabAktif === 'turun'){
+    const t = (data.turunHarga && data.turunHarga.daftar) || [];
+    const list = bulanPilih ? t.filter(x => bulanDari(x.tanggalSekarang) === bulanPilih) : t;
+    baris.push(['Distributor','Kota','Tipe','Rank1 Sebelumnya','Tanggal','Rank1 Sekarang','Tanggal',
+                'Turun','Persen','Ekspedisi'].join('\t'));
+    list.forEach(x => baris.push([
+      bersih(x.customer), bersih(x.kota), bersih(x.tipeMobil),
+      x.hargaSebelumnya, bersih(x.tanggalSebelumnya), x.hargaSekarang, bersih(x.tanggalSekarang),
+      x.selisih, x.persen.toFixed(1), bersih(x.ekspedisi)
     ].join('\t')));
   } else {
     const d = tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring();
