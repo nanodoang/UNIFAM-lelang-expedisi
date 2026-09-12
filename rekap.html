@@ -237,6 +237,9 @@ table.rekap tr:last-child td{border-bottom:none;}
 td.mono{font-family:var(--mono);white-space:nowrap;}
 td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
 td.hemat{color:var(--teal);font-weight:700;}
+.tag-manual{font-family:var(--mono);font-size:9px;letter-spacing:.04em;
+  background:#F1F3F7;border:1px solid var(--line-tebal);color:var(--muted);
+  padding:1px 6px;white-space:nowrap;}
 td.rugi{color:var(--red);font-weight:700;}
 .tab-baris{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;
   overflow:hidden;box-shadow:0 2px 8px rgba(30,136,229,.07);margin-bottom:14px;width:fit-content;}
@@ -714,8 +717,7 @@ async function bangunReport(){
   if(b){ b.disabled = true; b.textContent = 'Menulis…'; }
   try{
     const r = await gas({action:'report_bangun'});
-    setStatus(`Tab Report diperbarui — ${r.baris} baris ` +
-              `(${r.dariLelang} dari lelang, ${r.dariManual} manual) · ${r.waktu}`);
+    setStatus(`Tab Report diperbarui — ${r.baris} baris · ${r.waktu}`);
   }catch(err){
     setStatus('Gagal menulis tab Report: ' + err.message, true);
   }
@@ -941,7 +943,8 @@ function tabelRinci(){
     </tr></thead>
     <tbody>${r.map(x => `<tr>
       <td class="mono">${aman(x.tanggal)||'—'}</td>
-      <td class="mono">${aman(x.noOrder)||'—'}</td>
+      <td class="mono">${aman(x.noOrder)||'—'}${x.asalManual
+        ? ` <span class="tag-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span>` : ''}</td>
       <td style="font-weight:600;">${aman(x.customer)}</td>
       <td class="mono">${aman(x.kota)}</td>
       <td class="mono">${aman(x.tipeMobil)}</td>
