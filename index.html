@@ -403,7 +403,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h99';
+const VERSI_HALAMAN = 'h103';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -1245,19 +1245,20 @@ function kartuTerbuka(){
     const adaDraf = draf[l.id] && angkaSaja(draf[l.id].harga) > 0;
     const terkunci = !!b && !tutup && !sedangUbah.has(l.id) && !adaDraf;
 
-    /* dua kotak harga: target dari UNIFAM, dan terendah dari seluruh peserta */
+    /* dua kotak harga: target dari UNIFAM (sudah dipotong 3%), dan rank 1
+       APA ADANYA (belum dipotong) — inilah yang harus dikalahkan ekspedisi.
+       Bukan penawaran terendah yang sedang masuk saat ini, karena itu bisa
+       saja masih mahal kalau belum ada yang menawar rendah. */
     const kotakHarga = `<div class="harga-baris">
       <div class="kotak-harga kh-target">
         <span class="l">Target rate UNIFAM</span>
         <span class="n">${l.target ? formatRupiah(l.target) : '—'}</span>
         <span class="k">acuan dari UNIFAM</span>
       </div>
-      <div class="kotak-harga kh-rendah ${l.terendah ? '' : 'belum'}">
-        <span class="l">Penawaran terendah</span>
-        <span class="n">${l.terendah ? formatRupiah(l.terendah) : '—'}</span>
-        <span class="k">${l.terendah
-            ? (l.jumlahPenawar || 0) + ' ekspedisi sudah menawar'
-            : 'belum ada yang menawar'}</span>
+      <div class="kotak-harga kh-rendah ${l.rateExisting ? '' : 'belum'}">
+        <span class="l">Rate yang harus dikalahkan</span>
+        <span class="n">${l.rateExisting ? formatRupiah(l.rateExisting) : '—'}</span>
+        <span class="k">rank 1 saat ini, belum dipotong margin</span>
       </div>
     </div>`;
 
@@ -1301,14 +1302,14 @@ function kartuTerbuka(){
       </div>`;
     }
 
-    /* posisi penawaran sendiri terhadap yang terendah */
+    /* posisi penawaran sendiri terhadap rank 1 mentah (yang harus dikalahkan) */
     let posisi = '';
-    if(b && b.harga && l.terendah){
-      posisi = (b.harga <= l.terendah)
-        ? `<div class="posisi unggul"><b>Penawaran Anda sedang unggul</b><br>
-             ${formatRupiah(b.harga)} — belum ada yang lebih rendah.</div>`
-        : `<div class="posisi kalah"><b>Ada yang lebih rendah dari Anda</b><br>
-             Penawaran Anda ${formatRupiah(b.harga)}, selisih ${formatRupiah(b.harga - l.terendah)} di atas terendah.</div>`;
+    if(b && b.harga && l.rateExisting){
+      posisi = (b.harga <= l.rateExisting)
+        ? `<div class="posisi unggul"><b>Penawaran Anda sudah di bawah rank 1</b><br>
+             ${formatRupiah(b.harga)} — sudah mengalahkan rate acuan.</div>`
+        : `<div class="posisi kalah"><b>Penawaran Anda masih di atas rank 1</b><br>
+             Penawaran Anda ${formatRupiah(b.harga)}, selisih ${formatRupiah(b.harga - l.rateExisting)} di atas rate yang harus dikalahkan.</div>`;
     }
 
     const capWaktu = tutup
