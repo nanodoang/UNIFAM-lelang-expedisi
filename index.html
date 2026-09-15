@@ -403,7 +403,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h103';
+const VERSI_HALAMAN = 'h104';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -1258,7 +1258,7 @@ function kartuTerbuka(){
       <div class="kotak-harga kh-rendah ${l.rateExisting ? '' : 'belum'}">
         <span class="l">Rate yang harus dikalahkan</span>
         <span class="n">${l.rateExisting ? formatRupiah(l.rateExisting) : '—'}</span>
-        <span class="k">rank 1 saat ini, belum dipotong margin</span>
+        <span class="k">rank 1 saat ini</span>
       </div>
     </div>`;
 
