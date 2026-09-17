@@ -2264,6 +2264,38 @@ function tampilAngka(v){
   return n > 0 ? n.toLocaleString('id-ID') : '';
 }
 
+/* Untuk kiriman yang order-nya dibuat LANGSUNG di Pesanan Armada, tanpa
+   lewat tombol "+ Buat order baru" — tidak ada baris Order kita untuk
+   diubah, jadi harganya dikoreksi di level lelang sebagai gantinya. */
+async function ubahHargaLelang(idLelang, kota, hargaSekarang){
+  const isiHarga = prompt(
+    `Ubah harga lelang ${kota}\n\n` +
+    `Ini untuk kiriman yang order-nya dibuat LANGSUNG di Pesanan Armada\n` +
+    `(bukan lewat tombol "+ Buat order baru" di sini).\n\n` +
+    `Sekarang: ${formatRupiah(hargaSekarang)}\n\n` +
+    `Harga baru (angka saja):`, tampilAngka(hargaSekarang));
+  if(isiHarga === null) return;
+  const hargaBaru = angkaSaja(isiHarga);
+  if(!hargaBaru){ setStatus('Harga baru harus diisi.', true); return; }
+  if(hargaBaru === hargaSekarang) return;
+
+  const alasan = prompt(
+    `Alasan perubahan harga ${kota}\n\n` +
+    `${formatRupiah(hargaSekarang)} -> ${formatRupiah(hargaBaru)}\n\n` +
+    `Alasan (wajib diisi, mis. "hasil nego, order dibuat langsung di Pesanan Armada"):`,
+    'hasil nego, order dibuat langsung di Pesanan Armada');
+  if(alasan === null) return;
+  if(!String(alasan).trim()){ setStatus('Alasan wajib diisi.', true); return; }
+
+  try{
+    setStatus('Mengubah harga…');
+    const r = await gas({action:'lelang_ubah_harga', idLelang,
+                         hargaBaru: hargaBaru, alasan: String(alasan).trim()});
+    await muat(true);
+    setStatus(`${r.kota} diubah dari ${formatRupiah(r.hargaLama)} ke ${formatRupiah(r.hargaBaru)}.`);
+  }catch(err){ setStatus('Gagal mengubah harga: ' + err.message, true); }
+}
+
 async function ubahHargaOrder(idOrder, noOrder, hargaSekarang){
   const isiHarga = prompt(
     `Ubah harga ${noOrder}\n\n` +
@@ -2873,6 +2905,13 @@ function render(){
                Pemenang sudah dipilih, tapi <b>No Order belum dibuat</b> — jadi belum masuk
                ke Pesanan Armada dan link konfirmasi belum bisa dikirim.
                Tekan tombol di bawah, boleh lebih dari sekali kalau kirimannya beberapa kali.
+               <div class="po-kosong" style="margin-top:9px;">
+                 Sudah pesan LANGSUNG di Pesanan Armada, di luar tombol ini?
+                 <a href="#" onclick="event.preventDefault();ubahHargaLelang('${l.id}','${l.kota}',
+                   ${(function(){ const bb=bidsUntuk(l.id).find(x=>x.ekspedisi===l.pemenang);
+                     return l.hargaFinal || (bb?bb.harga:0) || 0; })()})">Ubah harga di sini</a>
+                 supaya Rincian &amp; Realisasi ikut benar.
+               </div>
              </div>`
           : `<table class="tabel-order">
                <thead><tr><th></th><th>No Order</th><th>Tgl Muat</th><th>Kontener / Polisi</th>
