@@ -621,9 +621,21 @@ let data = null, tabAktif = 'bulan';
 let bulanPilih = '';      // '' = semua bulan, isi 'yyyy-MM'
 
 /* 'dd/mm/yyyy' -> 'yyyy-MM' */
+const NAMA_BULAN_PENDEK = {jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,aug:8,
+  sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
+
 function bulanDari(teks){
-  const m = String(teks||'').trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  return m ? `${m[3]}-${String(m[2]).padStart(2,'0')}` : '';
+  const t = String(teks||'').trim();
+  /* format dd/mm/yyyy atau dd-mm-yyyy */
+  const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return `${m[3]}-${String(m[2]).padStart(2,'0')}`;
+  /* format "16 Sep 2026" — kadang ada sisa teks ("CEK") di belakangnya */
+  const m2 = t.match(/(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})/);
+  if(m2){
+    const bln = NAMA_BULAN_PENDEK[m2[2].slice(0,3).toLowerCase()];
+    if(bln) return `${m2[3]}-${String(bln).padStart(2,'0')}`;
+  }
+  return '';
 }
 
 const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
