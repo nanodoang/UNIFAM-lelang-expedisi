@@ -216,7 +216,8 @@ footer{max-width:1000px;margin:28px auto 0;padding:15px 20px;color:#8D96AC;
 }
 
 /* --- dua kotak harga bersebelahan --- */
-.harga-baris{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.harga-baris{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:6px;}
+.ket-kalahkan{font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.5;}
 .kotak-harga{border:1px solid;padding:10px 13px;}
 .kotak-harga .l{font-family:var(--disp);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;font-weight:600;display:block;}
@@ -403,7 +404,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h104';
+const VERSI_HALAMAN = 'h106';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -943,6 +944,7 @@ async function simpanRealisasi(id){
                etd: keLokal(amb('etd-r')),
                eta: keLokal(amb('eta-r')),
                namaKapal: String(amb('kapal-r')).trim(),
+               noKontener: String(amb('kontener-r')).trim(),
                atd: keLokal(document.getElementById(`atd-${id}`).value),
                ata: keLokal(document.getElementById(`ata-${id}`).value),
                dooring: keLokal(document.getElementById(`dooring-${id}`).value),
@@ -1245,22 +1247,17 @@ function kartuTerbuka(){
     const adaDraf = draf[l.id] && angkaSaja(draf[l.id].harga) > 0;
     const terkunci = !!b && !tutup && !sedangUbah.has(l.id) && !adaDraf;
 
-    /* dua kotak harga: target dari UNIFAM (sudah dipotong 3%), dan rank 1
-       APA ADANYA (belum dipotong) — inilah yang harus dikalahkan ekspedisi.
-       Bukan penawaran terendah yang sedang masuk saat ini, karena itu bisa
-       saja masih mahal kalau belum ada yang menawar rendah. */
+    /* Target UNIFAM tetap ditampilkan. Rate rank 1 yang harus dikalahkan
+       TIDAK ditampilkan sebagai angka — cukup keterangan saja, supaya
+       ekspedisi tidak tahu persis berapa yang harus mereka kalahkan. */
     const kotakHarga = `<div class="harga-baris">
       <div class="kotak-harga kh-target">
         <span class="l">Target rate UNIFAM</span>
         <span class="n">${l.target ? formatRupiah(l.target) : '—'}</span>
         <span class="k">acuan dari UNIFAM</span>
       </div>
-      <div class="kotak-harga kh-rendah ${l.rateExisting ? '' : 'belum'}">
-        <span class="l">Rate yang harus dikalahkan</span>
-        <span class="n">${l.rateExisting ? formatRupiah(l.rateExisting) : '—'}</span>
-        <span class="k">rank 1 saat ini</span>
-      </div>
-    </div>`;
+    </div>
+    <div class="ket-kalahkan">Penawaran Anda harus mengalahkan rate rank 1 saat ini untuk bisa menang.</div>`;
 
     /* --- juara bertahan: harga terkunci --- */
     let kotakJuara = '';
@@ -1302,14 +1299,15 @@ function kartuTerbuka(){
       </div>`;
     }
 
-    /* posisi penawaran sendiri terhadap rank 1 mentah (yang harus dikalahkan) */
+    /* posisi penawaran sendiri terhadap rank 1 — TANPA angka selisih,
+       supaya rank 1-nya tidak bisa dihitung mundur dari harga sendiri */
     let posisi = '';
     if(b && b.harga && l.rateExisting){
       posisi = (b.harga <= l.rateExisting)
-        ? `<div class="posisi unggul"><b>Penawaran Anda sudah di bawah rank 1</b><br>
-             ${formatRupiah(b.harga)} — sudah mengalahkan rate acuan.</div>`
-        : `<div class="posisi kalah"><b>Penawaran Anda masih di atas rank 1</b><br>
-             Penawaran Anda ${formatRupiah(b.harga)}, selisih ${formatRupiah(b.harga - l.rateExisting)} di atas rate yang harus dikalahkan.</div>`;
+        ? `<div class="posisi unggul"><b>Penawaran Anda sudah mengalahkan rate rank 1</b><br>
+             ${formatRupiah(b.harga)} — posisi Anda unggul.</div>`
+        : `<div class="posisi kalah"><b>Penawaran Anda belum mengalahkan rate rank 1</b><br>
+             ${formatRupiah(b.harga)} — coba turunkan penawaran Anda.</div>`;
     }
 
     const capWaktu = tutup
@@ -1555,7 +1553,8 @@ function tabelRiwayat(){
       ? ` <span class="tanda-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span>` : ''}</td>
     <td class="mono">${amanHTML(r.kota)}</td>
     <td class="kanan">${r.rate ? formatRupiah(r.rate) : '—'}</td>
-    <td class="mono">${amanHTML(r.noKontener)||'—'}</td>
+    <td><input id="kontener-r-${r.id}" class="ket" type="text" placeholder="mis. TCLU 1234567…"
+               value="${amanHTML(r.noKontener)}" oninput="ubahRealisasi('${r.id}')"></td>
     <td><input id="kapal-r-${r.id}" class="ket" type="text" placeholder="nama kapal…"
                value="${amanHTML(r.namaKapal)}" oninput="ubahRealisasi('${r.id}')"></td>
     <td><input id="etd-r-${r.id}" type="date" value="${keISO(r.etd)}" onchange="ubahRealisasi('${r.id}')"></td>
@@ -1574,7 +1573,7 @@ function tabelRiwayat(){
     <table>
       <thead><tr>
         <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th>
-        <th>No Kontener</th><th class="isi">Kapal</th><th class="isi">ETD</th><th class="isi">ETA</th>
+        <th class="isi">No Kontener</th><th class="isi">Kapal</th><th class="isi">ETD</th><th class="isi">ETA</th>
         <th class="isi">ATD</th><th class="isi">ATA</th><th class="isi">Dooring</th><th class="isi">Keterangan</th>
       </tr></thead>
       <tbody>${baris}</tbody>
