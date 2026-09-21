@@ -2082,6 +2082,10 @@ function tabelPerTanggal(){
       <td>${k ? `<span class="pil-ok">Sudah konfirmasi</span>` : `<span class="pil-nunggu">Menunggu</span>`}</td>
       <td class="kanan">${eks && !k
         ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>` : ''}</td>
+      <td class="kanan">${!batal
+        ? `<button class="btn-mini merah" title="batalkan order ini"
+             onclick="batalOrder('${o.id}','${o.noOrder}','${l.kota}')">batal</button>`
+        : '<span class="pil-batal">dibatalkan</span>'}</td>
     </tr>`;
   }).join('');
 
@@ -2094,10 +2098,10 @@ function tabelPerTanggal(){
       <small>${semua.length} order · ${belum} belum konfirmasi · total ${formatRupiah(total)}</small>
     </div>
     <div class="panel-box" style="padding:0;"><div class="gulir">
-      <table class="tabel-order" style="min-width:800px;">
+      <table class="tabel-order" style="min-width:880px;">
         <thead><tr><th></th><th>No Order</th><th>Distributor</th><th>Kota</th><th>Tipe</th>
           <th>Ekspedisi</th><th class="kanan">Harga</th><th>Kontener / Polisi</th>
-          <th>Status</th><th></th></tr></thead>
+          <th>Status</th><th></th><th></th></tr></thead>
         <tbody>${baris}</tbody>
       </table>
     </div></div>
