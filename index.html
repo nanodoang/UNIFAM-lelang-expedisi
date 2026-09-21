@@ -180,6 +180,14 @@ td.tebal{font-weight:600;}
 .tanda-manual{font-family:var(--mono);font-size:9px;letter-spacing:.04em;
   background:#F1F3F7;border:1px solid var(--line-tebal);color:var(--muted);
   padding:1px 6px;white-space:nowrap;}
+.bar-bulan-riwayat{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap;}
+.bar-bulan-riwayat .l{font-family:var(--disp,inherit);font-weight:700;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.bar-bulan-riwayat select{background:#fff;border:1px solid var(--line-tebal);
+  padding:7px 10px;font-family:var(--mono);font-size:12.5px;}
+.btn-reset-bulan-r{background:none;border:1px solid var(--line-tebal);color:var(--muted);
+  font-size:11.5px;padding:6px 11px;cursor:pointer;}
+.btn-reset-bulan-r:hover{border-color:var(--navy,#2A3180);color:var(--navy,#2A3180);}
 table input{padding:6px 8px;font-size:11.5px;min-width:118px;}
 table input.ket{min-width:150px;font-family:var(--sans);}
 .tak-ada{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px;font-style:italic;}
@@ -404,7 +412,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h106';
+const VERSI_HALAMAN = 'h107';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -475,6 +483,7 @@ let sesi = null, namaEkspedisi = '', tabAktif = 'terbuka';
 let rbData = null, rbMemuat = false;   // rate bulanan, dimuat saat tabnya dibuka
 let rbAktif = false, rbLabel = '', rbStatus = 'draft';   // keadaan dari server
 let daftarTerbuka = [], daftarRiwayat = [], daftarTidakMenang = [], pesanSalah = '', belumKonfirmasi = 0;
+let bulanRiwayatPilih = '';
 
 /* Selisih jam HP terhadap jam server. Hitung mundur memakai jam server,
    supaya HP yang jamnya meleset tidak salah menghitung batas waktu. */
@@ -540,6 +549,35 @@ function keLokal(iso){
   const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso).trim();
 }
+const NAMA_BULAN_PENDEK = {jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,aug:8,
+  sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
+
+/* Tgl Muat di Pesanan Armada kadang "16/9/2026", kadang "16 Sep 2026" (bahkan
+   ada sisa tulisan lain di belakangnya, mis. "CEK") — dua-duanya harus
+   terbaca supaya tidak ada baris yang hilang saat disaring atau diurutkan. */
+function bulanDariTeks(teks){
+  const t = String(teks||'').trim();
+  const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return `${m[3]}-${String(m[2]).padStart(2,'0')}`;
+  const m2 = t.match(/(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})/);
+  if(m2){
+    const bln = NAMA_BULAN_PENDEK[m2[2].slice(0,3).toLowerCase()];
+    if(bln) return `${m2[3]}-${String(bln).padStart(2,'0')}`;
+  }
+  return '';
+}
+function waktuDariTeks(teks){
+  const t = String(teks||'').trim();
+  let m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1])).getTime();
+  m = t.match(/(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})/);
+  if(m){
+    const bln = NAMA_BULAN_PENDEK[m[2].slice(0,3).toLowerCase()];
+    if(bln) return new Date(Number(m[3]), bln-1, Number(m[1])).getTime();
+  }
+  return 0;
+}
+
 function amanHTML(t){
   return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1541,13 +1579,44 @@ function tabelSelesai(){
     Harga pemenang tidak ditampilkan.</div>`;
 }
 
+function pilihBulanRiwayat(b){ bulanRiwayatPilih = b; render(); }
+
 function tabelRiwayat(){
   if(daftarRiwayat.length === 0){
     return belumKonfirmasi > 0
       ? `<div class="empty-state">Ada ${belumKonfirmasi} pengiriman yang Anda menangkan, tapi belum muncul di sini karena form konfirmasi armadanya belum diisi.<br><br>Silakan buka link konfirmasi yang dikirim admin lewat WhatsApp terlebih dahulu.</div>`
       : `<div class="empty-state">Belum ada pengiriman yang dimenangkan.</div>`;
   }
-  const baris = daftarRiwayat.map(r => `<tr>
+
+  /* urut dari tanggal muat TERBARU dulu — tahan format "16 Sep 2026" juga,
+     bukan cuma "16/9/2026" */
+  const terurut = daftarRiwayat.slice().sort((a, b) =>
+    waktuDariTeks(b.tanggalMuat) - waktuDariTeks(a.tanggalMuat));
+
+  const bulanAda = Array.from(new Set(
+    terurut.map(r => bulanDariTeks(r.tanggalMuat)).filter(x => x))).sort().reverse();
+  const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni',
+                      'Juli','Agustus','September','Oktober','November','Desember'];
+  const labelBulan = k => { const b = k.split('-'); return `${NAMA_BULAN[Number(b[1])-1]} ${b[0]}`; };
+
+  const kotakBulan = bulanAda.length > 1 ? `<div class="bar-bulan-riwayat">
+    <span class="l">Bulan</span>
+    <select onchange="pilihBulanRiwayat(this.value)">
+      <option value="">Semua bulan — ${terurut.length}</option>
+      ${bulanAda.map(k => `<option value="${k}" ${bulanRiwayatPilih===k?'selected':''}>${labelBulan(k)}</option>`).join('')}
+    </select>
+    ${bulanRiwayatPilih ? `<button class="btn-reset-bulan-r" onclick="pilihBulanRiwayat('')">tampilkan semua</button>` : ''}
+  </div>` : '';
+
+  const tersaring = bulanRiwayatPilih
+    ? terurut.filter(r => bulanDariTeks(r.tanggalMuat) === bulanRiwayatPilih)
+    : terurut;
+
+  if(tersaring.length === 0){
+    return kotakBulan + `<div class="empty-state">Tidak ada pengiriman di ${labelBulan(bulanRiwayatPilih)}.</div>`;
+  }
+
+  const baris = tersaring.map(r => `<tr>
     <td class="mono">${amanHTML(r.tanggalMuat)||'—'}</td>
     <td class="tebal">${amanHTML(r.customer)}${r.asalManual
       ? ` <span class="tanda-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span>` : ''}</td>
@@ -1565,11 +1634,11 @@ function tabelRiwayat(){
     <td><input id="ket-${r.id}" class="ket" type="text" placeholder="catatan…" value="${amanHTML(r.keterangan)}" oninput="ubahRealisasi('${r.id}')"></td>
   </tr>`).join('');
 
-  const belum = daftarRiwayat.filter(r => !r.ata || !r.dooring).length;
+  const belum = tersaring.filter(r => !r.ata || !r.dooring).length;
   const catatan = belumKonfirmasi > 0
     ? ` · ${belumKonfirmasi} pengiriman menunggu form konfirmasi diisi`
     : '';
-  return `<div class="kotak-tabel"><div class="gulir">
+  return kotakBulan + `<div class="kotak-tabel"><div class="gulir">
     <table>
       <thead><tr>
         <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th>
@@ -1579,7 +1648,7 @@ function tabelRiwayat(){
       <tbody>${baris}</tbody>
     </table>
   </div></div>
-  <div class="ket-bawah">${daftarRiwayat.length} pengiriman · ${belum} belum lengkap ATA / Dooring${catatan}</div>`;
+  <div class="ket-bawah">${tersaring.length} pengiriman${bulanRiwayatPilih ? ' di ' + labelBulan(bulanRiwayatPilih) : ''} · ${belum} belum lengkap ATA / Dooring${catatan}</div>`;
 }
 
 /* ---------- mulai ---------- */
