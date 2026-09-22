@@ -231,7 +231,8 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 table.rekap{width:100%;border-collapse:collapse;font-size:12.5px;}
 table.rekap thead th{text-align:left;font-family:var(--mono);font-size:9.5px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;border-bottom:1.5px solid var(--line);
-  background:#FBFDFF;white-space:nowrap;}
+  background:#FBFDFF;white-space:nowrap;
+  position:sticky;top:var(--tinggi-bar,64px);z-index:3;}
 table.rekap td{padding:9px 12px;border-bottom:1px solid var(--line);}
 table.rekap tr:last-child td{border-bottom:none;}
 
@@ -247,7 +248,7 @@ table.rekap.beku th.b6,table.rekap.beku td.b6{position:sticky;left:582px;width:1
 table.rekap.beku td.b1,table.rekap.beku td.b2,table.rekap.beku td.b3,
 table.rekap.beku td.b4,table.rekap.beku td.b5,table.rekap.beku td.b6{background:#fff;z-index:1;}
 table.rekap.beku th.b1,table.rekap.beku th.b2,table.rekap.beku th.b3,
-table.rekap.beku th.b4,table.rekap.beku th.b5,table.rekap.beku th.b6{background:#FBFDFF;z-index:2;}
+table.rekap.beku th.b4,table.rekap.beku th.b5,table.rekap.beku th.b6{background:#FBFDFF;z-index:4;}
 td.mono{font-family:var(--mono);white-space:nowrap;}
 td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
 td.hemat{color:var(--teal);font-weight:700;}
@@ -502,6 +503,11 @@ function segarkanWaktuAdmin(){
   document.addEventListener(ev, segarkanWaktuAdmin, {passive:true}));
 
 /* Periksa berkala, supaya terkunci walaupun halaman cuma dibiarkan terbuka */
+window.addEventListener('resize', () => {
+  const ba = document.querySelector('.bar-atas');
+  if(ba) document.documentElement.style.setProperty('--tinggi-bar', ba.offsetHeight + 'px');
+});
+
 setInterval(() => {
   if(document.getElementById('gerbang')) return;
   if(!ambilPassAdmin()){
@@ -783,6 +789,12 @@ function gantiTab(t){
 
 function render(){
   if(!data) return;
+
+  /* Tinggi bar-atas dipakai supaya baris judul tabel menempel TEPAT di
+     bawahnya (bukan tertutup) saat digulir ke bawah. Diukur ulang tiap
+     render, karena di layar sempit isinya bisa melipat jadi dua baris. */
+  { const ba = document.querySelector('.bar-atas');
+    if(ba) document.documentElement.style.setProperty('--tinggi-bar', ba.offsetHeight + 'px'); }
 
   /* kotak pemilih bulan — selalu tampil di atas, terlepas dari tab mana
      yang sedang dibuka, jadi ringkasan atas juga ikut tersaring */
