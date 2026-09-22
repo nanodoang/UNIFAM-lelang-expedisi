@@ -234,6 +234,20 @@ table.rekap thead th{text-align:left;font-family:var(--mono);font-size:9.5px;col
   background:#FBFDFF;white-space:nowrap;}
 table.rekap td{padding:9px 12px;border-bottom:1px solid var(--line);}
 table.rekap tr:last-child td{border-bottom:none;}
+
+/* Kolom beku (Tgl Muat s.d. Ekspedisi) di tabel Rincian & Realisasi —
+   tetap kelihatan waktu digeser ke samping lihat kolom-kolom sesudahnya. */
+table.rekap.beku th.b1,table.rekap.beku td.b1{position:sticky;left:0;width:86px;min-width:86px;}
+table.rekap.beku th.b2,table.rekap.beku td.b2{position:sticky;left:86px;width:150px;min-width:150px;}
+table.rekap.beku th.b3,table.rekap.beku td.b3{position:sticky;left:236px;width:170px;min-width:170px;}
+table.rekap.beku th.b4,table.rekap.beku td.b4{position:sticky;left:406px;width:110px;min-width:110px;}
+table.rekap.beku th.b5,table.rekap.beku td.b5{position:sticky;left:516px;width:66px;min-width:66px;}
+table.rekap.beku th.b6,table.rekap.beku td.b6{position:sticky;left:582px;width:118px;min-width:118px;
+  box-shadow:2px 0 5px -2px rgba(18,23,43,.18);}
+table.rekap.beku td.b1,table.rekap.beku td.b2,table.rekap.beku td.b3,
+table.rekap.beku td.b4,table.rekap.beku td.b5,table.rekap.beku td.b6{background:#fff;z-index:1;}
+table.rekap.beku th.b1,table.rekap.beku th.b2,table.rekap.beku th.b3,
+table.rekap.beku th.b4,table.rekap.beku th.b5,table.rekap.beku th.b6{background:#FBFDFF;z-index:2;}
 td.mono{font-family:var(--mono);white-space:nowrap;}
 td.kanan{text-align:right;font-family:var(--mono);white-space:nowrap;}
 td.hemat{color:var(--teal);font-weight:700;}
@@ -947,20 +961,21 @@ function tabelRinci(){
   if(r.length === 0) return `<div class="empty" style="padding:34px;text-align:center;">Belum ada data.</div>`;
   const belum = r.filter(x => !x.ata || !x.dooring).length;
   document.getElementById('ket-tabel').textContent = `${r.length} pengiriman · ${belum} belum lengkap ATA/Dooring`;
-  return `<table class="rekap" style="min-width:1150px;">
+  return `<table class="rekap beku" style="min-width:1150px;">
     <thead><tr>
-      <th>Tgl Muat</th><th>No Order</th><th>Distributor</th><th>Kota</th><th>Tipe</th><th>Ekspedisi</th>
+      <th class="b1">Tgl Muat</th><th class="b2">No Order</th><th class="b3">Distributor</th>
+      <th class="b4">Kota</th><th class="b5">Tipe</th><th class="b6">Ekspedisi</th>
       <th style="text-align:right;">Rank 1</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Hemat</th>
       <th>Kontener</th><th>Kapal</th><th>ETD</th><th>ETA</th><th>ATD</th><th>ATA</th><th>Dooring</th><th>Keterangan</th>
     </tr></thead>
     <tbody>${r.map(x => `<tr>
-      <td class="mono">${aman(x.tanggal)||'—'}</td>
-      <td class="mono">${aman(x.noOrder)||'—'}${x.asalManual
+      <td class="mono b1">${aman(x.tanggal)||'—'}</td>
+      <td class="mono b2">${aman(x.noOrder)||'—'}${x.asalManual
         ? ` <span class="tag-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span>` : ''}</td>
-      <td style="font-weight:600;">${aman(x.customer)}</td>
-      <td class="mono">${aman(x.kota)}</td>
-      <td class="mono">${aman(x.tipeMobil)}</td>
-      <td>${aman(x.pemenang)}</td>
+      <td class="b3" style="font-weight:600;">${aman(x.customer)}</td>
+      <td class="mono b4">${aman(x.kota)}</td>
+      <td class="mono b5">${aman(x.tipeMobil)}</td>
+      <td class="b6">${aman(x.pemenang)}</td>
       <td class="kanan">${rp(x.target)}</td>
       <td class="kanan">${rp(x.harga)}</td>
       <td class="kanan ${x.hemat >= 0 ? 'hemat' : 'rugi'}">${rp(x.hemat)}</td>
