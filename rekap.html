@@ -228,11 +228,17 @@ input[type="date"],input[type="time"]{font-family:var(--mono);min-height:44px;}
 .kotak-tabel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
   box-shadow:0 2px 10px rgba(30,136,229,.07);}
 .gulir{overflow-x:auto;}
+/* Khusus tabel Rincian & Realisasi (kolom+baris beku): area tabelnya jadi
+   wilayah gulir SENDIRI dengan tinggi terbatas — supaya "sticky" bekerja
+   sungguhan (overflow-x:auto diam-diam membuat overflow-y ikut jadi auto,
+   jadi kalau tidak dikasih tinggi sendiri, baris judul tidak pernah
+   benar-benar menempel saat halaman digulir). */
+.gulir.gulir-tinggi{overflow-y:auto;max-height:68vh;}
 table.rekap{width:100%;border-collapse:collapse;font-size:12.5px;}
 table.rekap thead th{text-align:left;font-family:var(--mono);font-size:9.5px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;border-bottom:1.5px solid var(--line);
   background:#FBFDFF;white-space:nowrap;
-  position:sticky;top:var(--tinggi-bar,64px);z-index:3;}
+  position:sticky;top:0;z-index:3;}
 table.rekap td{padding:9px 12px;border-bottom:1px solid var(--line);}
 table.rekap tr:last-child td{border-bottom:none;}
 
@@ -503,11 +509,6 @@ function segarkanWaktuAdmin(){
   document.addEventListener(ev, segarkanWaktuAdmin, {passive:true}));
 
 /* Periksa berkala, supaya terkunci walaupun halaman cuma dibiarkan terbuka */
-window.addEventListener('resize', () => {
-  const ba = document.querySelector('.bar-atas');
-  if(ba) document.documentElement.style.setProperty('--tinggi-bar', ba.offsetHeight + 'px');
-});
-
 setInterval(() => {
   if(document.getElementById('gerbang')) return;
   if(!ambilPassAdmin()){
@@ -790,12 +791,6 @@ function gantiTab(t){
 function render(){
   if(!data) return;
 
-  /* Tinggi bar-atas dipakai supaya baris judul tabel menempel TEPAT di
-     bawahnya (bukan tertutup) saat digulir ke bawah. Diukur ulang tiap
-     render, karena di layar sempit isinya bisa melipat jadi dua baris. */
-  { const ba = document.querySelector('.bar-atas');
-    if(ba) document.documentElement.style.setProperty('--tinggi-bar', ba.offsetHeight + 'px'); }
-
   /* kotak pemilih bulan — selalu tampil di atas, terlepas dari tab mana
      yang sedang dibuka, jadi ringkasan atas juga ikut tersaring */
   { const wb = document.getElementById('bar-bulan-atas');
@@ -825,6 +820,8 @@ function render(){
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
 
   const wadah = document.getElementById('wadah');
+
+  wadah.classList.toggle('gulir-tinggi', tabAktif === 'rinci');
 
   if(tabAktif === 'manual') wadah.innerHTML = tabelManual();
   else if(tabAktif === 'turun') wadah.innerHTML = tabelTurunHarga();
