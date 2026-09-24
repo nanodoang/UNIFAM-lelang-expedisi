@@ -166,6 +166,16 @@ body.ada-bilah{padding-bottom:96px;}
 /* ---------- tabel riwayat ---------- */
 .kotak-tabel{background:var(--panel);border:1px solid var(--line);}
 .gulir{overflow-x:auto;}
+/* Sama seperti di halaman Rekap admin: overflow-x:auto diam-diam bikin
+   overflow-y ikut jadi auto, jadi baris judul tidak pernah benar-benar
+   menempel kalau tidak dikasih tinggi gulir sendiri. */
+.gulir.gulir-tinggi{overflow-y:auto;max-height:62vh;}
+.gulir.gulir-tinggi table thead th{position:sticky;top:0;z-index:3;}
+table.beku th.rb1,table.beku td.rb1{position:sticky;left:0;width:78px;min-width:78px;background:#fff;z-index:1;}
+table.beku th.rb2,table.beku td.rb2{position:sticky;left:78px;width:150px;min-width:150px;background:#fff;z-index:1;}
+table.beku th.rb3,table.beku td.rb3{position:sticky;left:228px;width:100px;min-width:100px;background:#fff;
+  z-index:1;box-shadow:2px 0 5px -2px rgba(18,23,43,.18);}
+table.beku thead th.rb1,table.beku thead th.rb2,table.beku thead th.rb3{z-index:4;background:#F7F9FC;}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:940px;}
 thead th{text-align:left;font-family:var(--disp);font-size:9.5px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.13em;padding:10px 11px;
@@ -412,7 +422,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h107';
+const VERSI_HALAMAN = 'h108';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -1617,10 +1627,10 @@ function tabelRiwayat(){
   }
 
   const baris = tersaring.map(r => `<tr>
-    <td class="mono">${amanHTML(r.tanggalMuat)||'—'}</td>
-    <td class="tebal">${amanHTML(r.customer)}${r.asalManual
+    <td class="mono rb1">${amanHTML(r.tanggalMuat)||'—'}</td>
+    <td class="tebal rb2">${amanHTML(r.customer)}${r.asalManual
       ? ` <span class="tanda-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span>` : ''}</td>
-    <td class="mono">${amanHTML(r.kota)}</td>
+    <td class="mono rb3">${amanHTML(r.kota)}</td>
     <td class="kanan">${r.rate ? formatRupiah(r.rate) : '—'}</td>
     <td><input id="kontener-r-${r.id}" class="ket" type="text" placeholder="mis. TCLU 1234567…"
                value="${amanHTML(r.noKontener)}" oninput="ubahRealisasi('${r.id}')"></td>
@@ -1638,10 +1648,10 @@ function tabelRiwayat(){
   const catatan = belumKonfirmasi > 0
     ? ` · ${belumKonfirmasi} pengiriman menunggu form konfirmasi diisi`
     : '';
-  return kotakBulan + `<div class="kotak-tabel"><div class="gulir">
-    <table>
+  return kotakBulan + `<div class="kotak-tabel"><div class="gulir gulir-tinggi">
+    <table class="beku">
       <thead><tr>
-        <th>Tgl Muat</th><th>Distributor</th><th>Kota</th><th>Rate</th>
+        <th class="rb1">Tgl Muat</th><th class="rb2">Distributor</th><th class="rb3">Kota</th><th>Rate</th>
         <th class="isi">No Kontener</th><th class="isi">Kapal</th><th class="isi">ETD</th><th class="isi">ETA</th>
         <th class="isi">ATD</th><th class="isi">ATA</th><th class="isi">Dooring</th><th class="isi">Keterangan</th>
       </tr></thead>
