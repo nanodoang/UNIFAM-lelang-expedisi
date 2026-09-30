@@ -423,7 +423,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 
 /* Penanda versi berkas ini — muncul di baris status supaya ketahuan
    apakah index.html yang terbuka sudah yang terbaru atau masih lama. */
-const VERSI_HALAMAN = 'h109';
+const VERSI_HALAMAN = 'h110';
 
 const params = new URLSearchParams(window.location.search);
 const ekspedisiDariLink = (params.get('ekspedisi') || '').toUpperCase();
@@ -1610,14 +1610,17 @@ function tabelRiwayat(){
                       'Juli','Agustus','September','Oktober','November','Desember'];
   const labelBulan = k => { const b = k.split('-'); return `${NAMA_BULAN[Number(b[1])-1]} ${b[0]}`; };
 
-  const kotakBulan = bulanAda.length > 1 ? `<div class="bar-bulan-riwayat">
+  const kotakBulan = `<div class="bar-bulan-riwayat">
+    ${bulanAda.length > 1 ? `
     <span class="l">Bulan</span>
     <select onchange="pilihBulanRiwayat(this.value)">
       <option value="">Semua bulan — ${terurut.length}</option>
       ${bulanAda.map(k => `<option value="${k}" ${bulanRiwayatPilih===k?'selected':''}>${labelBulan(k)}</option>`).join('')}
     </select>
     ${bulanRiwayatPilih ? `<button class="btn-reset-bulan-r" onclick="pilihBulanRiwayat('')">tampilkan semua</button>` : ''}
-  </div>` : '';
+    ` : ''}
+    <button id="btn-salin-riwayat" class="btn-reset-bulan-r" style="margin-left:auto;" onclick="salinRiwayat()">Salin ke Excel</button>
+  </div>`;
 
   const tersaring = bulanRiwayatPilih
     ? terurut.filter(r => bulanDariTeks(r.tanggalMuat) === bulanRiwayatPilih)
@@ -1661,6 +1664,56 @@ function tabelRiwayat(){
     </table>
   </div></div>
   <div class="ket-bawah">${tersaring.length} pengiriman${bulanRiwayatPilih ? ' di ' + labelBulan(bulanRiwayatPilih) : ''} · ${belum} belum lengkap ATA / Dooring${catatan}</div>`;
+}
+
+/* ---------- salin Riwayat dipakai ke Excel ---------- */
+function salinRiwayat(){
+  if(!daftarRiwayat || daftarRiwayat.length === 0) return;
+
+  const terurut = daftarRiwayat.slice().sort((a, b) =>
+    waktuDariTeks(b.tanggalMuat) - waktuDariTeks(a.tanggalMuat));
+  const tersaring = bulanRiwayatPilih
+    ? terurut.filter(r => bulanDariTeks(r.tanggalMuat) === bulanRiwayatPilih)
+    : terurut;
+  if(tersaring.length === 0) return;
+
+  const bersih = v => String(v == null ? '' : v).replace(/\t/g, ' ').replace(/\r?\n/g, ' ');
+  const header = ['Tgl Muat','Distributor','Kota','No Kontener','Rate','Kapal',
+                   'ETD','ETA','ATD','ATA','Dooring','Keterangan'];
+  const baris = tersaring.map(r => [
+    r.tanggalMuat, r.customer + (r.asalManual ? ' (non-lelang)' : ''), r.kota, r.noKontener,
+    r.rate || '', r.namaKapal, r.etd, r.eta, r.atd, r.ata, r.dooring, r.keterangan
+  ].map(bersih).join('\t'));
+
+  salinTeksKeClipboard(header.join('\t') + '\n' + baris.join('\n'), 'btn-salin-riwayat');
+}
+
+function salinTeksKeClipboard(teks, idTombol){
+  const tandaiSukses = () => {
+    const tombol = document.getElementById(idTombol);
+    if(!tombol) return;
+    const asli = tombol.textContent;
+    tombol.textContent = '✓ Tersalin';
+    tombol.disabled = true;
+    setTimeout(() => { tombol.textContent = asli; tombol.disabled = false; }, 1800);
+  };
+  const fallback = () => {
+    const area = document.createElement('textarea');
+    area.value = teks;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try{ document.execCommand('copy'); tandaiSukses(); }
+    catch(e){ alert('Gagal menyalin otomatis. Coba tekan dan tahan tabel di atas untuk menyalin manual.'); }
+    document.body.removeChild(area);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(teks).then(tandaiSukses).catch(fallback);
+  } else {
+    fallback();
+  }
 }
 
 /* ---------- mulai ---------- */
