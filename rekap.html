@@ -709,6 +709,7 @@ function ekspedisiTersaring(){
   if(!bulanPilih) return (data && data.perEkspedisi) || [];
   const peta = new Map();
   rinciTersaring().forEach(x => {
+    if(x.tanpaPembanding) return;      // tanpa rank1 tidak ikut hitung penghematan
     const k = String(x.pemenang || '').toUpperCase();
     if(!peta.has(k)) peta.set(k, {nama:k, jumlah:0, target:0, menang:0});
     const v = peta.get(k);
@@ -839,8 +840,9 @@ function ringkasTersaring(){
 
   const r = rinciTersaring();
   let totalTarget = 0, totalMenang = 0;
-  r.forEach(x => { totalTarget += x.target || 0; totalMenang += x.harga || 0; });
+  r.forEach(x => { if(x.tanpaPembanding) return; totalTarget += x.target || 0; totalMenang += x.harga || 0; });
   const totalHemat = totalTarget - totalMenang;
+  const jumlahTerukur = r.filter(x => !x.tanpaPembanding).length;
 
   const m = manualTersaring();
   let manTotal = 0, manRank1 = 0, manTerukur = 0, manTotalTerukur = 0;
@@ -852,7 +854,7 @@ function ringkasTersaring(){
   });
 
   return {
-    jumlah: r.length, totalTarget, totalMenang, totalHemat,
+    jumlah: jumlahTerukur, totalTarget, totalMenang, totalHemat,
     persen: totalTarget ? (totalHemat / totalTarget * 100) : 0,
     manual: {
       daftar: m, jumlah: m.length, terukur: manTerukur, total: manTotal,
@@ -987,9 +989,9 @@ function tabelRinci(){
       <td class="mono b5">${aman(x.tipeMobil)}</td>
       <td class="b6">${aman(x.pemenang)}</td>
       <td class="mono b7">${aman(x.noKontener)||'—'}</td>
-      <td class="kanan">${rp(x.target)}</td>
-      <td class="kanan">${rp(x.harga)}</td>
-      <td class="kanan ${x.hemat >= 0 ? 'hemat' : 'rugi'}">${rp(x.hemat)}</td>
+      <td class="kanan">${x.target == null ? '<span title="Rute ini belum ada di tab Rate">—</span>' : rp(x.target)}</td>
+      <td class="kanan">${x.harga == null ? '—' : rp(x.harga)}</td>
+      <td class="kanan ${x.hemat == null ? '' : (x.hemat >= 0 ? 'hemat' : 'rugi')}">${x.hemat == null ? '—' : rp(x.hemat)}</td>
       <td>${aman(x.namaKapal)||'—'}</td>
       <td class="mono">${aman(x.etd)||'—'}</td>
       <td class="mono">${aman(x.eta)||'—'}</td>
@@ -1022,7 +1024,7 @@ function salin(){
                 'No Kontener','Kapal','ETD','ETA','ATD','ATA','Dooring','Keterangan'].join('\t'));
     rinciTersaring().forEach(x => baris.push([
       bersih(x.tanggal), bersih(x.noOrder), bersih(x.customer), bersih(x.kota), bersih(x.tipeMobil),
-      bersih(x.pemenang), x.target, x.harga, x.hemat, bersih(x.noKontener), bersih(x.namaKapal),
+      bersih(x.pemenang), x.target ?? '', x.harga ?? '', x.hemat ?? '', bersih(x.noKontener), bersih(x.namaKapal),
       bersih(x.etd), bersih(x.eta), bersih(x.atd), bersih(x.ata), bersih(x.dooring), bersih(x.keterangan)
     ].join('\t')));
   } else if(tabAktif === 'turun'){
