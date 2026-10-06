@@ -44,6 +44,7 @@ main{max-width:620px;margin:0 auto;padding:0 24px;}
   border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
 .muat-box .lbl{font-family:var(--mono);font-size:10.5px;color:#B67A16;text-transform:uppercase;letter-spacing:.05em;}
 .muat-box .tgl{font-size:18px;font-weight:700;color:#8A5A0A;font-family:var(--mono);}
+.muat-box .jam{display:block;font-size:14px;font-weight:600;margin-top:2px;}
 .form-wrap{border-top:1px solid var(--line);margin-top:16px;padding:16px 18px 18px;background:#FBFDFF;}
 .form-judul{font-size:13.5px;font-weight:700;margin-bottom:13px;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -365,8 +366,9 @@ function render(){
       </div>
 
       <div class="muat-box">
-        <span class="lbl">Permintaan<br>Pick Up / Muat</span>
-        <span class="tgl">${lelang.tanggalMuat || lelang.tanggal || '—'}</span>
+        <span class="lbl">Jadwal<br>Pick Up / Muat</span>
+        <span class="tgl">${lelang.jadwalTanggal || lelang.tanggalMuat || lelang.tanggal || '—'}${lelang.jadwalJam
+          ? `<span class="jam">jam ${lelang.jadwalJam}</span>` : ''}</span>
       </div>
 
       <div class="form-wrap">
