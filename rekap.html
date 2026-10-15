@@ -415,6 +415,31 @@ table.hl tr.win td:first-child{box-shadow:inset 3px 0 0 var(--teal)}
 .hl-kosong{padding:10px 12px;color:var(--red);font-size:13px}
 .hl-pct{display:inline-block;height:8px;background:var(--teal);vertical-align:middle;margin-right:6px}
 .hl-cat{font-size:12px;color:var(--muted);padding:4px 14px 14px;line-height:1.6}
+/* ===== v109: tab Ranking rate ===== */
+.rr-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:#FAFBFD}
+.rr-ctl select,.rr-ctl input[type=search]{font-family:var(--sans);font-size:14px;border:1px solid var(--line-tebal);background:#fff;padding:7px 9px}
+.rr-ctl input[type=search]{min-width:170px}
+.rr-ctl .cek{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.rr-rute{font-family:var(--disp);font-weight:700;font-size:17px;color:var(--navy)}
+.rr-tipe{font-family:var(--mono);font-size:11px;border:1px solid var(--line-tebal);padding:0 6px;margin-left:6px;color:var(--muted)}
+.rr-rk{display:flex;flex-direction:column;gap:1px}
+.rr-rk .e{font-weight:600}
+.rr-rk .h{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.rr-rk.r1 .h{color:var(--navy);font-weight:600}
+.rr-src{display:inline-block;font-family:var(--disp);font-weight:700;font-size:10px;letter-spacing:.08em;padding:0 5px;margin-left:4px;vertical-align:1px}
+.rr-src.lelang{background:rgba(21,150,163,.14);color:var(--teal-tua)}
+.rr-src.deal{background:rgba(42,49,128,.12);color:var(--navy)}
+.rr-src.manual{background:#EEF0F5;color:var(--muted)}
+.rr-alt{font-size:11px;color:var(--muted)}
+.rr-med{display:inline-block;width:18px;height:18px;border-radius:50%;color:#fff;font-family:var(--disp);font-weight:700;font-size:11px;text-align:center;line-height:18px;margin-right:5px;vertical-align:1px}
+.rr-med.g1{background:#B8860B}.rr-med.g2{background:#7A8394}.rr-med.g3{background:#A0612B}
+.rr-ganti{font-size:11.5px;color:var(--amber);font-weight:600}
+.rr-kecil{font-size:11.5px;color:var(--muted)}
+.rr-tren .h{font-family:var(--mono);font-weight:600;color:var(--navy)}
+.rr-tren .e{font-size:11.5px;color:var(--muted)}
+.rr-bar{display:inline-block;height:10px;vertical-align:middle}
+.rr-lagi{display:block;margin:10px auto 14px;font-family:var(--sans);border:1px solid var(--line-tebal);background:#fff;padding:8px 14px;cursor:pointer;font-weight:600}
+@media(max-width:640px){.rr-ctl input[type=search]{flex:1}}
 @media(max-width:640px){.hl-tiles{grid-template-columns:repeat(2,1fr)}.hl-kp .meta{margin-left:0;text-align:left;width:100%}.hl-sub{margin-left:0}}
 </style>
 </head>
@@ -472,6 +497,7 @@ table.hl tr.win td:first-child{box-shadow:inset 3px 0 0 var(--teal)}
     <button id="t-manual" onclick="gantiTab('manual')">Order manual</button>
     <button id="t-turun" onclick="gantiTab('turun')">Turun harga</button>
     <button id="t-hasil" onclick="gantiTab('hasil')">Hasil lelang</button>
+    <button id="t-ranking" onclick="gantiTab('ranking')">Ranking rate</button>
   </div>
 
   <button class="btn-salin" onclick="salin()">Salin tabel ini</button>
@@ -681,6 +707,7 @@ function kunciPanel(){
 
 let data = null, tabAktif = 'bulan';
 let dataHasil = null, hlMinggu = '', hlSub = 'tujuan', hlMemuat = false;
+let dataRank = null, rrMemuat = false, rrSub = 'rank', rrBatas = 60, RR = null;
 let bulanPilih = '';      // '' = semua bulan, isi 'yyyy-MM'
 
 /* 'dd/mm/yyyy' -> 'yyyy-MM' */
@@ -827,7 +854,8 @@ async function muat(segar){
 function gantiTab(t){
   tabAktif = t;
   if(t === 'hasil' && !dataHasil && !hlMemuat) muatHasil();
-  ['bulan','eks','rinci','manual','turun','hasil'].forEach(x =>
+  if(t === 'ranking' && !dataRank && !rrMemuat) muatRanking();
+  ['bulan','eks','rinci','manual','turun','hasil','ranking'].forEach(x =>
     document.getElementById('t-' + (x==='eks'?'eks':x)).className = (x===t ? 'aktif' : ''));
   render();
 }
@@ -842,12 +870,20 @@ function render(){
 
   /* v108: tab Hasil Lelang punya pemilih minggu & angka sendiri —
      filter bulan dan kartu penghematan di atas disembunyikan */
-  const diHasil = tabAktif === 'hasil';
+  const diHasil = tabAktif === 'hasil' || tabAktif === 'ranking';
   ['bar-bulan-atas','ringkas'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display = diHasil ? 'none' : ''; });
   if(diHasil){
-    document.getElementById('judul-tabel').textContent = 'Hasil Lelang';
     const w = document.getElementById('wadah');
     w.classList.remove('gulir-tinggi');
+    if(tabAktif === 'ranking'){
+      document.getElementById('judul-tabel').textContent = 'Ranking Rate';
+      /* kerangka (kotak cari dll.) dipasang sekali; ketikan di kotak cari
+         hanya memperbarui isi tabel supaya kursor tidak lompat */
+      if(!document.getElementById('rr-isi')) w.innerHTML = rrKerangka();
+      rrIsi();
+      return;
+    }
+    document.getElementById('judul-tabel').textContent = 'Hasil Lelang';
     w.innerHTML = tampilHasil();
     return;
   }
@@ -1081,6 +1117,11 @@ function salin(){
       bersih(x.pemenang), x.target ?? '', x.harga ?? '', x.hemat ?? '', bersih(x.noKontener), bersih(x.namaKapal),
       bersih(x.etd), bersih(x.eta), bersih(x.atd), bersih(x.ata), bersih(x.dooring), bersih(x.keterangan)
     ].join('\t')));
+  } else if(tabAktif === 'ranking'){
+    if(!RR) return;
+    const {batas} = rrKonteks();
+    baris.push(['Kota','Tipe Mobil','Rank','Ekspedisi','Harga','Sumber','Tanggal'].join('\t'));
+    rrDaftar().forEach(r => rrRanking(r, batas).forEach((z,i) => baris.push([bersih(r.kota), bersih(r.tipe), i+1, bersih(z.e), z.h, z.src, z.tgl || ''].join('\t'))));
   } else if(tabAktif === 'hasil'){
     baris.push(['Tutup','Tujuan','Distributor','Tipe','Patokan','Rank','Ekspedisi','Harga','Menang','Kapal','Waktu isi'].join('\t'));
     hlLelangMinggu().forEach(l => {
@@ -1222,6 +1263,168 @@ function hlPerEkspedisi(ls){
         <td class="r m">${r.termurah}</td><td class="r m">${r.menang}</td></tr>`; }).join('')}
   </table></div>
   <div class="hl-cat">"Bisa ikut" = lelang minggu ini yang kotanya masuk area layanan ekspedisi tsb (kota layanan kosong = semua kota). Akun berawalan NANO tidak dihitung.</div>`;
+}
+
+/* ===================== v109: RANKING RATE GABUNGAN =====================
+   Per rute (kota + tipe), tiap ekspedisi: harga lelang/deal TERBARU dibanding
+   rate manual (sheet Rangking rate) — dipakai yang termurah, lalu diurutkan. */
+async function muatRanking(){
+  rrMemuat = true;
+  try{
+    setStatus('Memuat ranking rate…');
+    dataRank = await gas({action:'ranking_rate'});
+    RR = rrSusun(dataRank);
+    setStatus(`${Object.keys(RR.rute).length} rute · ${dataRank.versi || ''} · ${new Date().toLocaleTimeString('id-ID')}` +
+      (dataRank.galatManual ? ' · rate manual GAGAL dibaca: ' + dataRank.galatManual : ''), !!dataRank.galatManual);
+  }catch(err){
+    setStatus('Gagal memuat ranking rate: ' + err.message, true);
+  }
+  rrMemuat = false;
+  if(tabAktif === 'ranking'){ const w = document.getElementById('wadah'); if(w) w.innerHTML = ''; render(); }
+}
+
+const rrSama = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const rrTipe = t => { const s = rrSama(t); const m = s.match(/^(20|40)FT(.*)$/); return m ? `${m[1]} FT${m[2] ? ' ' + m[2] : ''}` : String(t).toUpperCase().trim(); };
+const rrKontener = t => /^(20|40)FT/.test(rrSama(t));
+const rrTgl = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function rrSenin(s){ const d = new Date(s.slice(0,10)+'T00:00'); d.setDate(d.getDate() - (d.getDay()+6)%7); return d; }
+const rrGeser = (k, n) => { const d = new Date(k+'T00:00'); d.setDate(d.getDate()+n); return rrTgl(d); };
+const rrPendek = s => { const d = new Date(s.slice(0,10)+'T00:00'); return `${d.getDate()} ${HL_BLN[d.getMonth()]}`; };
+const rrRp = n => n ? Number(n).toLocaleString('id-ID') : '—';
+
+function rrSusun(d){
+  const lewat = new Set((d.dilewati || []).map(x => String(x).toUpperCase()));
+  const rute = {};
+  const ambil = (kota, tipe) => { const k = rrSama(kota) + '|' + rrSama(tipe);
+    return rute[k] = rute[k] || {kunci:k, kota:String(kota).toUpperCase().trim(), tipe:rrTipe(tipe), manual:{}, kejadian:[]}; };
+  d.manual.forEach(m => { if(lewat.has(m.e)) return; const r = ambil(m.k, m.t);
+    if(!r.manual[m.e] || m.h < r.manual[m.e]) r.manual[m.e] = m.h; });
+  const byId = {};
+  d.lelang.forEach(l => { byId[l.id] = l; if(l.combo) return; const r = ambil(l.kota, l.tipe);
+    l.b.forEach(b => { if(!lewat.has(b.e)) r.kejadian.push({e:b.e, h:b.h, src:'lelang', tgl:l.tutup.slice(0,10)}); }); });
+  d.orders.forEach(o => { const l = byId[o.l]; if(!l || l.combo || lewat.has(o.e)) return;
+    ambil(l.kota, l.tipe).kejadian.push({e:o.e, h:o.h, src:'deal', tgl:(o.w || l.tutup).slice(0,10)}); });
+  Object.values(rute).forEach(r => r.kejadian.sort((a,b) => a.tgl.localeCompare(b.tgl)));
+  const minggu = [...new Set(d.lelang.map(l => rrTgl(rrSenin(l.tutup))))].sort();
+  return {rute, minggu};
+}
+
+/* ranking satu rute pada batas tanggal (eksklusif; kosong = terkini) */
+function rrRanking(r, batas){
+  const baru = {};
+  r.kejadian.forEach(k => { if(!batas || k.tgl < batas) baru[k.e] = k; });
+  const eks = new Set([...Object.keys(r.manual), ...Object.keys(baru)]);
+  return [...eks].map(e => {
+    const man = r.manual[e], lel = baru[e];
+    if(lel && (!man || lel.h <= man)) return {e, h:lel.h, src:lel.src, tgl:lel.tgl, lain: man ? {src:'manual', h:man} : null};
+    return {e, h:man, src:'manual', lain: lel ? {src:lel.src, h:lel.h} : null};
+  }).sort((a,b) => a.h - b.h || a.e.localeCompare(b.e));
+}
+
+function rrKerangka(){
+  if(!RR) return `<div class="empty" style="padding:34px;text-align:center;">${rrMemuat ? 'Memuat ranking rate…' : 'Belum ada data.'}</div>`;
+  const opsi = RR.minggu.slice().reverse().map(k => `<option value="${k}">s.d. minggu ${hlLabel(k)}</option>`).join('');
+  return `<div class="rr-ctl">
+      <select id="rr-periode" onchange="rrBatas=60;rrIsi()"><option value="">Terkini</option>${opsi}</select>
+      <input type="search" id="rr-cari" placeholder="Cari kota…" oninput="rrBatas=60;rrIsi()">
+      <select id="rr-jenis" onchange="rrBatas=60;rrIsi()"><option value="kontener">Kontainer</option><option value="darat">Darat</option><option value="semua">Semua</option></select>
+      <label class="cek"><input type="checkbox" id="rr-aktif" onchange="rrBatas=60;rrIsi()"> hanya yang berubah di periode ini</label>
+      <div class="hl-sub">
+        <button id="rr-s-rank" onclick="rrSub='rank';rrIsi()">Per rute</button>
+        <button id="rr-s-tren" onclick="rrSub='tren';rrIsi()">Tren</button>
+        <button id="rr-s-eks" onclick="rrSub='eks';rrIsi()">Ekspedisi</button>
+      </div>
+    </div>
+    <div id="rr-isi"></div>`;
+}
+
+function rrKonteks(){
+  const k = (document.getElementById('rr-periode') || {}).value || '';
+  const awal = k || (RR.minggu.length ? RR.minggu[RR.minggu.length-1] : '');
+  return { batas: k ? rrGeser(k, 7) : '', awal, sebelum: awal };
+}
+function rrDaftar(){
+  const {batas, awal} = rrKonteks();
+  const q = rrSama((document.getElementById('rr-cari') || {}).value);
+  const j = (document.getElementById('rr-jenis') || {}).value || 'kontener';
+  const hanya = (document.getElementById('rr-aktif') || {}).checked;
+  return Object.values(RR.rute).filter(r => {
+    if(q && !rrSama(r.kota).includes(q)) return false;
+    if(j === 'kontener' && !rrKontener(r.tipe)) return false;
+    if(j === 'darat' && rrKontener(r.tipe)) return false;
+    if(hanya && !r.kejadian.some(k => k.tgl >= awal && (!batas || k.tgl < batas))) return false;
+    return true;
+  }).sort((a,b) => a.kota.localeCompare(b.kota) || a.tipe.localeCompare(b.tipe));
+}
+
+function rrIsi(){
+  const el = document.getElementById('rr-isi'); if(!el || !RR) return;
+  ['rank','tren','eks'].forEach(s => { const b = document.getElementById('rr-s-'+s); if(b) b.className = s === rrSub ? 'on' : ''; });
+  const rs = rrDaftar(), {batas, sebelum} = rrKonteks();
+  let dariLelang = 0, ganti = 0, turun = 0;
+  rs.forEach(r => { const a = rrRanking(r, batas)[0], b = rrRanking(r, sebelum)[0]; if(!a) return;
+    if(a.src !== 'manual') dariLelang++; if(b && a.e !== b.e) ganti++; if(b && a.h < b.h) turun++; });
+  document.getElementById('ket-tabel').textContent = `${rs.length} rute`;
+  const tiles = `<div class="hl-tiles">
+    <div class="hl-tile"><div class="l">Rute</div><div class="v">${rs.length}</div><div class="s">sesuai saringan</div></div>
+    <div class="hl-tile"><div class="l">Rank 1 dari lelang/deal</div><div class="v" style="color:var(--teal-tua)">${dariLelang}</div><div class="s">lebih murah dari rate manual</div></div>
+    <div class="hl-tile"><div class="l">Rank 1 turun</div><div class="v" style="color:var(--teal-tua)">${turun}</div><div class="s">dibanding minggu sebelumnya</div></div>
+    <div class="hl-tile"><div class="l">Juara berganti</div><div class="v" style="color:var(--amber)">${ganti}</div><div class="s">dibanding minggu sebelumnya</div></div></div>`;
+  el.innerHTML = tiles + (rrSub === 'tren' ? rrTren(rs) : rrSub === 'eks' ? rrEks(rs, batas) : rrPerRute(rs, batas, sebelum));
+}
+
+function rrLencana(x){
+  const t = x.src === 'manual' ? 'MANUAL' : (x.src === 'deal' ? 'DEAL ' : 'LELANG ') + rrPendek(x.tgl);
+  return `<span class="rr-src ${x.src}">${t}</span>`;
+}
+function rrSel(u, i){
+  const x = u[i]; if(!x) return '<span class="rr-kecil">—</span>';
+  const lain = x.lain ? `<span class="rr-alt">${x.lain.src} ${rrRp(x.lain.h)}</span>` : '';
+  return `<div class="rr-rk ${i===0?'r1':''}"><span class="e"><span class="rr-med g${i+1}">${i+1}</span>${aman(x.e)}</span>
+    <span class="h">${rrRp(x.h)}${rrLencana(x)}</span>${lain}</div>`;
+}
+function rrPerRute(rs, batas, sebelum){
+  if(!rs.length) return '<div class="hl-cat">Tidak ada rute yang cocok.</div>';
+  const baris = rs.slice(0, rrBatas).map(r => {
+    const u = rrRanking(r, batas), p = rrRanking(r, sebelum);
+    let ub = '<span class="rr-kecil">—</span>';
+    if(u[0] && p[0]){ const d = u[0].h - p[0].h;
+      ub = d || u[0].e !== p[0].e ? `<span class="${d<0?'hl-turun':d>0?'hl-naik':''}" style="font-weight:600">${d<0?'▼':d>0?'▲':'='} ${d ? rrRp(Math.abs(d)) : 'harga sama'}</span>
+          <div class="rr-kecil">sebelumnya ${aman(p[0].e)} ${rrRp(p[0].h)}</div>${u[0].e !== p[0].e ? '<div class="rr-ganti">juara berganti</div>' : ''}`
+        : '<span class="rr-kecil">tetap</span>'; }
+    else if(u[0] && !p[0]) ub = '<span class="rr-kecil">rute baru</span>';
+    const lain = u.slice(3, 6).map(z => aman(z.e) + ' ' + rrRp(z.h)).join(' · ') + (u.length > 6 ? ' …' : '');
+    return `<tr><td><span class="rr-rute">${aman(r.kota)}</span><span class="rr-tipe">${aman(r.tipe)}</span></td>
+      <td>${rrSel(u,0)}</td><td>${rrSel(u,1)}</td><td>${rrSel(u,2)}</td><td>${ub}</td>
+      <td class="rr-kecil" style="white-space:normal;min-width:140px">${u.length} ekspedisi${lain ? '<br>' + lain : ''}</td></tr>`;
+  }).join('');
+  return `<div class="gulir"><table class="hl"><tr><th>Rute</th><th>Rank 1</th><th>Rank 2</th><th>Rank 3</th><th>vs minggu sebelumnya</th><th>Lainnya</th></tr>${baris}</table></div>
+    ${rs.length > rrBatas ? `<button class="rr-lagi" onclick="rrBatas += 60; rrIsi()">Tampilkan lagi (${rs.length - rrBatas} rute)</button>` : ''}
+    <div class="hl-cat"><span class="rr-src lelang">LELANG</span> penawaran di lelang · <span class="rr-src deal">DEAL</span> harga order (pesan langsung & nego) ·
+      <span class="rr-src manual">MANUAL</span> sheet Rangking rate. Per ekspedisi dipakai yang termurah antara harga lelang/deal terbaru dan rate manualnya;
+      yang kalah ditulis kecil. Ekspedisi ${aman((dataRank.dilewati || []).join(', ') || '-')} tidak dihitung (setelan RATE_EKS_DILEWATI).</div>`;
+}
+function rrTren(rs){
+  const kol = RR.minggu.slice(-6);
+  const aktif = rs.filter(r => r.kejadian.some(k => k.tgl >= kol[0]));
+  const baris = aktif.slice(0, rrBatas).map(r => { let prev = null;
+    return `<tr><td><span class="rr-rute">${aman(r.kota)}</span><span class="rr-tipe">${aman(r.tipe)}</span></td>${kol.map(k => {
+      const a = rrRanking(r, rrGeser(k, 7))[0]; if(!a) return '<td class="rr-kecil">·</td>';
+      const t = prev ? (a.h < prev.h ? ' <span class="hl-turun">▼</span>' : a.h > prev.h ? ' <span class="hl-naik">▲</span>' : '') : ''; prev = a;
+      return `<td class="rr-tren"><div class="h">${rrRp(a.h)}${t}</div><div class="e">${aman(a.e)}${rrLencana(a)}</div></td>`; }).join('')}</tr>`; }).join('');
+  return `<div class="gulir"><table class="hl"><tr><th>Rute</th>${kol.map(k => `<th>s.d. ${rrPendek(rrGeser(k, 6))}</th>`).join('')}</tr>${baris}</table></div>
+    ${aktif.length > rrBatas ? `<button class="rr-lagi" onclick="rrBatas += 60; rrIsi()">Tampilkan lagi</button>` : ''}
+    <div class="hl-cat">Rank 1 yang berlaku di akhir tiap minggu. Hanya rute yang pernah dilelang 6 minggu terakhir.</div>`;
+}
+function rrEks(rs, batas){
+  const st = {};
+  rs.forEach(r => rrRanking(r, batas).forEach((z,i) => { st[z.e] = st[z.e] || {e:z.e, r:[0,0,0], n:0}; st[z.e].n++; if(i<3) st[z.e].r[i]++; }));
+  const rows = Object.values(st).sort((a,b) => b.r[0]-a.r[0] || b.r[1]-a.r[1] || b.n-a.n);
+  const maks = Math.max(1, ...rows.map(r => r.n));
+  return `<div class="gulir"><table class="hl"><tr><th>Ekspedisi</th><th class="r">Rank 1</th><th class="r">Rank 2</th><th class="r">Rank 3</th><th class="r">Rute punya harga</th><th>Komposisi</th></tr>
+    ${rows.map(r => `<tr><td><b>${aman(r.e)}</b></td><td class="r m">${r.r[0]}</td><td class="r m">${r.r[1]}</td><td class="r m">${r.r[2]}</td><td class="r m">${r.n}</td>
+      <td><span class="rr-bar" style="width:${r.r[0]/maks*160}px;background:#B8860B"></span><span class="rr-bar" style="width:${r.r[1]/maks*160}px;background:#7A8394"></span><span class="rr-bar" style="width:${r.r[2]/maks*160}px;background:#A0612B"></span><span class="rr-bar" style="width:${(r.n-r.r[0]-r.r[1]-r.r[2])/maks*160}px;background:#DDE2EC"></span></td></tr>`).join('')}
+  </table></div>`;
 }
 
 muat();
