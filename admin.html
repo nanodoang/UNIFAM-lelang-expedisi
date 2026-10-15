@@ -613,6 +613,13 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .pilih-alih .hg{font-family:var(--mono);}
 .pilih-alih .kp{font-size:11.5px;color:var(--muted);}
 .jendela.lebar{max-width:460px;}
+/* tabel lebar digeser di dalam kotaknya sendiri, bukan melebarkan seluruh halaman di HP */
+.gulir{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;}
+.btn-mini.oranye{background:#fff;border:1px solid var(--amber);color:#8A5A0A;}
+.btn-mini.oranye:hover{background:#FFF4E5;}
+.btn-mini.hijau{background:var(--teal);border:1px solid var(--teal);color:#fff;}
+.pil-acc{display:inline-block;background:#FFF4E5;border:1px solid rgba(217,130,15,.55);color:#8A5A0A;font-family:var(--disp);
+  font-weight:700;font-size:10.5px;letter-spacing:.08em;padding:1px 6px;margin-left:4px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -1533,6 +1540,18 @@ function waAlihkan(l){
   return `https://wa.me/${nomor}?text=${encodeURIComponent(teks)}`;
 }
 
+/* v110b: versi ringkas untuk tabel saat sedang menyaring */
+function bisaDialihkan(l){ return !l.combo && l.approval !== 'MENUNGGU' && bidsUntuk(l.id).some(b => b.ekspedisi !== l.pemenang); }
+function tombolAlihMini(l){
+  return bisaDialihkan(l) ? `<button class="btn-mini oranye" title="pemenang tidak bisa support — alihkan ke peringkat berikutnya"
+    onclick="bukaAlihkan('${l.id}')">alihkan</button>` : '';
+}
+function aksiApprovalMini(l){
+  return `<span class="pil-acc">MENUNGGU APPROVAL</span>
+    <a class="tautan-kecil" target="_blank" href="${waAlihkan(l)}">minta via WA</a>
+    <button class="btn-mini hijau" onclick="setujuiAlihkan('${l.id}')">✓ approval</button>`;
+}
+
 function blokTungguApproval(l){
   const m = String(l.alasanPilih || '').match(/^Dialihkan dari (.+?) \(/);
   return `<div class="tunggu-acc"><b class="jdl">⏳ Menunggu approval pengalihan</b>
@@ -2226,8 +2245,8 @@ function tabelPerTanggal(){
       <td class="kanan">${eks && !k
         ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>` : ''}
         ${(o.ekspedisi || l.pemenang) ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, o.ekspedisi || l.pemenang)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}</td>
-      <td class="kanan">${!batal
-        ? `<button class="btn-mini merah" title="batalkan order ini"
+      <td class="kanan" style="white-space:nowrap;">${!batal
+        ? `${tombolAlihMini(l)} <button class="btn-mini merah" title="batalkan order ini"
              onclick="batalOrder('${o.id}','${o.noOrder}','${l.kota}')">batal</button>`
         : '<span class="pil-batal">dibatalkan</span>'}</td>
     </tr>`;
@@ -2283,10 +2302,12 @@ function panelBuatOrder(){
         return b ? formatRupiah(b.harga) : '—';
       })()}</td>
       <td class="mono">${jml} order${terakhir ? `<br><span class="ket-kecil">terakhir ${terakhir}</span>` : ''}</td>
-      <td class="kanan">
+      <td class="kanan" style="white-space:nowrap;">
+        ${l.approval === 'MENUNGGU' ? aksiApprovalMini(l) : `
         ${diTgl ? `<span class="ket-ada">sudah ${diTgl}x di ${tglPilih}</span>` : ''}
+        ${tombolAlihMini(l)}
         <button class="btn-mini biru" onclick="buatOrderCepat('${l.id}')">+ buat order${
-          tglPilih ? ' ' + tglPilih : ''}</button>
+          tglPilih ? ' ' + tglPilih : ''}</button>`}
       </td>
     </tr>`;
   }).join('');
