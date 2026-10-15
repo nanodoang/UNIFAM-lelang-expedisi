@@ -377,6 +377,10 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 .cap-saring{grid-column:1 / -1;font-family:var(--mono);font-size:11px;color:var(--teal-tua);
   background:rgba(21,150,163,.09);border:1px solid rgba(21,150,163,.35);
   padding:6px 11px;margin-bottom:2px;}
+/* ===== v111: link SPK order manual ===== */
+.link-spk-m{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.08em;color:var(--navy);border:1px solid var(--navy);
+  padding:0 5px;text-decoration:none;margin-left:4px;white-space:nowrap;}
+.link-spk-m:hover{background:var(--navy);color:#fff;}
 /* ===== v108: tab Hasil Lelang ===== */
 /* deretan tab boleh digeser ke samping di HP, bukan melebarkan seluruh halaman */
 .tab-baris{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -1044,7 +1048,7 @@ function tabelManual(){
       <th style="text-align:right;">Selisih</th><th>Kontener / Polisi</th>
     </tr></thead>
     <tbody>${r.map(x => `<tr>
-      <td class="mono">${aman(x.noOrder)}</td>
+      <td class="mono">${aman(x.noOrder)} ${linkSpkManual(x.noOrder, x.ekspedisi)}</td>
       <td class="mono">${aman(x.tanggal)||'—'}</td>
       <td style="font-weight:600;">${aman(x.customer)||'—'}</td>
       <td class="mono">${aman(x.kota)||'—'}</td>
@@ -1073,7 +1077,7 @@ function tabelRinci(){
     <tbody>${r.map(x => `<tr>
       <td class="mono b1">${aman(x.tanggal)||'—'}</td>
       <td class="mono b2">${aman(x.noOrder)||'—'}${x.asalManual
-        ? ` <span class="tag-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span>` : ''}</td>
+        ? ` <span class="tag-manual" title="Kiriman ini bukan dari lelang di aplikasi ini">non-lelang</span> ${linkSpkManual(x.noOrder, x.pemenang)}` : ''}</td>
       <td class="b3" style="font-weight:600;">${aman(x.customer)}</td>
       <td class="mono b4">${aman(x.kota)}</td>
       <td class="mono b5">${aman(x.tipeMobil)}</td>
@@ -1152,6 +1156,13 @@ function salin(){
   navigator.clipboard.writeText(teks)
     .then(() => setStatus(`${baris.length - 1} baris disalin — tinggal paste ke Excel.`))
     .catch(() => setStatus('Gagal menyalin. Coba pakai browser di laptop.', true));
+}
+
+/* v111: dokumen SPK untuk order manual (Pesanan Armada) */
+function linkSpkManual(no, eks){
+  if(!no || !eks) return '';
+  return `<a class="link-spk-m" target="_blank" title="dokumen SPK / bukti harga"
+    href="spk.html?no=${encodeURIComponent(no)}&ekspedisi=${encodeURIComponent(eks)}">SPK</a>`;
 }
 
 /* ===================== v108: HASIL LELANG ===================== */

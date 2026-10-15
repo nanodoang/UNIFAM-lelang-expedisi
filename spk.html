@@ -72,6 +72,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3NTsaRctj_PsQogkamjw0
 const params = new URLSearchParams(window.location.search);
 const idOrder  = params.get('order') || '';
 const idLelang = params.get('id') || '';       // link lama tetap dilayani
+const noManual = params.get('no') || '';       // v111: order manual (Pesanan Armada)
 const namaEkspedisi = (params.get('ekspedisi') || '').toUpperCase();
 
 let jsonpN = 0;
@@ -139,6 +140,18 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 function setStatus(t, err){ const e = document.getElementById('status'); e.textContent = t; e.className = err ? 'err' : ''; }
 
 async function muat(){
+  if(noManual && namaEkspedisi){
+    try{
+      const d = await gas({action:'spk_manual', no:noManual, ekspedisi:namaEkspedisi});
+      renderManual(d);
+      setStatus('Data terbaru · ' + new Date().toLocaleTimeString('id-ID'));
+      document.title = (d.spk && d.spk.nomor ? d.spk.nomor.replace(/\//g,'-') : 'SPK') + ' — UNIFAM';
+    }catch(err){
+      setStatus('Gagal memuat: ' + err.message, true);
+      document.getElementById('isi').innerHTML = '<div class="kosong">' + esc(err.message) + '</div>';
+    }
+    return;
+  }
   if((!idOrder && !idLelang) || !namaEkspedisi){
     document.getElementById('isi').innerHTML = '<div class="kosong">Link SPK tidak lengkap.</div>';
     setStatus('Link tidak lengkap', true); return;
@@ -221,6 +234,76 @@ function render(d){
     <div class="kaki"><span>Kode cek: ${esc(s.kode)}</span><span>Dicetak ${esc(s.dicetak)} dari aplikasi Lelang UNIFAM</span></div>
   </div>`;
 }
+/* ===================== v111: SPK ORDER MANUAL ===================== */
+function renderManual(d){
+  const pl = d.plan || {}, s = d.spk || {};
+  const unit = d.unit || [];
+  const kejadian = [];
+  if(pl.harga) kejadian.push(`<tr><td class="m">${esc(pl.tanggal) || '—'}</td><td>Order dibuat UNIFAM di Pesanan Armada${pl.sales ? ' (sales ' + esc(pl.sales) + ')' : ''}</td><td class="r">${angka(pl.harga)}</td></tr>`);
+  unit.forEach((u,i) => {
+    const sh = u.statusHarga;
+    let ket;
+    if(/tidak tersedia/i.test(u.status)) ket = `${esc(d.ekspedisi)} menyatakan armada <b>tidak tersedia</b>`;
+    else if(/^sesuai$/i.test(sh)) ket = `Dikonfirmasi ${esc(d.ekspedisi)}: <b>harga sesuai</b>`;
+    else if(/tidak sesuai/i.test(sh)) ket = `Dikonfirmasi ${esc(d.ekspedisi)}: <b>harga tidak sesuai</b>, mengajukan harga sendiri${u.alasan ? ' — ' + esc(u.alasan) : ''}`;
+    else ket = `Armada dikonfirmasi ${esc(d.ekspedisi)} (tanpa konfirmasi harga)`;
+    ket += unit.length > 1 ? ` <span style="color:var(--muted);font-size:12px">· unit ${i+1}${u.noPolisi ? ' ' + esc(u.noPolisi) : ''}</span>` : '';
+    kejadian.push(`<tr><td class="m">${esc(u.waktu) || '—'}</td><td>${ket}</td><td class="r">${u.harga ? angka(u.harga) : '—'}</td></tr>`);
+  });
+
+  const st = d.statusHarga;
+  const kotak = st === 'sesuai'
+    ? `<div class="stempel">✓ DISETUJUI EKSPEDISI</div><br>${esc(d.ekspedisi)}, lewat konfirmasi Pesanan Armada<br><span class="m">${esc((unit.find(u => /^sesuai$/i.test(u.statusHarga)) || {}).waktu || '')} · harga ${rp(d.hargaUnit)}</span>`
+    : st === 'beda'
+      ? `<div class="stempel" style="border-color:var(--amber);color:var(--amber)">HARGA DIAJUKAN EKSPEDISI</div><br><span style="font-size:12px">${esc(d.ekspedisi)} mengisi harga ${rp(d.hargaUnit)}${pl.harga ? ', berbeda dari harga order UNIFAM ' + rp(pl.harga) : ''}. Pastikan sudah disepakati sebelum dibayar.</span>`
+      : `<div class="stempel belum">BELUM ADA KONFIRMASI HARGA</div><br><span class="catatan-merah">Ekspedisi belum memilih "Sesuai" / "Tidak sesuai" untuk harga order ini di Pesanan Armada. Harga di atas adalah harga order UNIFAM.</span>`;
+
+  const unitTabel = unit.length ? `<div class="bagian">Armada</div><table class="tabel">
+    <tr><th>No Polisi</th><th>Kontener</th><th>Sopir</th><th>Kapal / ETD</th><th>Status</th></tr>
+    ${unit.map(u => `<tr><td class="m">${esc(u.noPolisi) || '—'}</td><td class="m">${esc(u.noKontener) || '—'}</td><td>${esc(u.sopir) || '—'}</td>
+      <td>${esc(u.kapal) || '—'}${u.etd ? '<br><span class="m" style="font-size:12px">ETD ' + esc(u.etd) + '</span>' : ''}</td><td>${esc(u.status) || '—'}</td></tr>`).join('')}
+  </table>` : '';
+
+  const jadwal = (pl.tanggal || (unit[0] && unit[0].tglMuat) || '—') + (pl.jam && /\d/.test(pl.jam) ? ', jam ' + pl.jam : '');
+  document.getElementById('isi').innerHTML = `
+  <div class="kertas">
+    <div class="watermark">UNIFAM</div>
+    <div class="kop">
+      <img src="${LOGO}" alt="UNIFAM">
+      <div><div class="pt">PT. UNIFAM</div><div class="al">Divisi Logistik &amp; Transportasi · Gudang Cikande</div></div>
+      <div class="kanan"><div class="jenis">SURAT PERINTAH KIRIM</div><div class="nomor">${esc(s.nomor)}</div></div>
+    </div>
+    <h2>SURAT PERINTAH KIRIM</h2>
+    <div class="sub">Bukti kesepakatan harga angkutan — order langsung (non-lelang)</div>
+    <table class="info">
+      <tr><td>No Order</td><td class="m"><b>${esc(d.noOrder)}</b></td></tr>
+      <tr><td>Ekspedisi</td><td><b>${esc(d.ekspedisi)}</b></td></tr>
+      <tr><td>Rute</td><td>Cikande → ${esc(d.kota)}</td></tr>
+      <tr><td>Penerima</td><td>${esc(d.customer)}${d.alamat ? '<br><span style="color:var(--muted);font-size:12px">' + esc(d.alamat) + '</span>' : ''}</td></tr>
+      <tr><td>Tipe armada</td><td>${esc(d.tipe)}${pl.karton ? ' · ' + angka(pl.karton) + ' karton' : ''}${pl.cbm ? ' · ' + Number(pl.cbm).toLocaleString('id-ID',{maximumFractionDigits:1}) + ' CBM' : ''}${unit.length > 1 ? ' · ' + unit.length + ' unit' : ''}</td></tr>
+      <tr><td>Jadwal muat</td><td>${esc(jadwal)}</td></tr>
+      <tr><td>Dasar penunjukan</td><td>Order langsung UNIFAM lewat aplikasi Pesanan Armada (tanpa lelang)</td></tr>
+      ${d.dibatalkan ? `<tr><td>Status</td><td style="color:var(--red);font-weight:700">ORDER DIHAPUS / DIBATALKAN DI PESANAN ARMADA</td></tr>` : ''}
+    </table>
+    ${unitTabel}
+    <div class="bagian">Riwayat harga</div>
+    <table class="tabel">
+      <tr><th style="width:132px">Waktu</th><th>Keterangan</th><th class="r" style="width:130px">Harga</th></tr>
+      ${kejadian.join('') || '<tr><td colspan="3">—</td></tr>'}
+      <tr class="final"><td colspan="2">HARGA YANG BERLAKU / DITAGIHKAN${unit.length > 1 ? ' (per unit)' : ''}</td><td class="r">${d.hargaUnit ? rp(d.hargaUnit) : '—'}</td></tr>
+      ${unit.length > 1 && d.total ? `<tr class="final"><td colspan="2">TOTAL ${unit.filter(u => !/tidak tersedia/i.test(u.status)).length || unit.length} UNIT</td><td class="r">${rp(d.total)}</td></tr>` : ''}
+    </table>
+    <div class="syarat">All in — termasuk TKBM, stripping, dan krani. Belum termasuk PPN.
+      Tagihan di luar harga ini tanpa persetujuan tertulis baru dari PT. UNIFAM tidak dapat diproses.</div>
+    <div class="ttd">
+      <div class="kotak"><div class="siapa">Diterbitkan oleh</div>PT. UNIFAM — Logistik &amp; Transportasi<br>
+        <span class="m">Order ${esc(d.noOrder)}</span></div>
+      <div class="kotak"><div class="siapa">Persetujuan ekspedisi</div>${kotak}</div>
+    </div>
+    <div class="kaki"><span>Kode cek: ${esc(s.kode)}</span><span>Dicetak ${esc(s.dicetak)} dari aplikasi Lelang UNIFAM</span></div>
+  </div>`;
+}
+
 muat();
 </script>
 </body>
