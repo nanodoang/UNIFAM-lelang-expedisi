@@ -589,6 +589,30 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
   text-transform:uppercase;color:#5E3C06;margin-bottom:3px;}
 
 .tab-admin .hit.perlu{background:var(--amber);color:#fff;}
+/* ===== v110: alihkan pemenang + approval ===== */
+.btn-alih{width:100%;background:#fff;border:1px solid var(--amber);color:#8A5A0A;font-family:var(--disp);font-weight:700;
+  font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;padding:10px;cursor:pointer;margin-top:9px;}
+.btn-alih:hover{background:#FFF4E5;}
+.btn-order:disabled{background:#B8C0D0;cursor:not-allowed;}
+.tunggu-acc{background:#FFF4E5;border:1px solid rgba(217,130,15,.55);padding:11px 13px;margin:0 0 10px;font-size:13px;line-height:1.55;color:#6B4206;}
+.tunggu-acc b.jdl{display:block;font-family:var(--disp);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#8A5A0A;margin-bottom:3px;}
+.tunggu-acc .tombol2{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;}
+.tunggu-acc .tombol2 a,.tunggu-acc .tombol2 button{flex:1;min-width:140px;text-align:center;font-family:var(--disp);font-weight:700;font-size:13px;
+  letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer;text-decoration:none;border:none;}
+.tunggu-acc .wa{background:var(--amber);color:#3D2607;}
+.tunggu-acc .ok{background:var(--teal);color:#fff;}
+.acc-ok{font-size:12px;color:#0B6350;background:rgba(18,135,107,.08);border:1px solid rgba(18,135,107,.3);padding:6px 10px;margin:0 0 10px;}
+.pilih-alih{border:1px solid var(--line);margin:12px 0;max-height:260px;overflow:auto;}
+.pilih-alih label{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;line-height:1.45;
+  text-transform:none!important;letter-spacing:normal!important;font-family:var(--sans)!important;font-weight:400!important;color:var(--text)!important;margin:0!important;}
+#alih-alasan{width:100%;box-sizing:border-box;}
+.pilih-alih label:last-child{border-bottom:none;}
+.pilih-alih label.lama{background:#F4F5F8;color:var(--muted);cursor:not-allowed;}
+.pilih-alih input{margin-top:3px;accent-color:var(--navy);}
+.pilih-alih .nm{font-weight:700;}
+.pilih-alih .hg{font-family:var(--mono);}
+.pilih-alih .kp{font-size:11.5px;color:var(--muted);}
+.jendela.lebar{max-width:460px;}
 </style>
 </head>
 <body>
@@ -1419,6 +1443,118 @@ function batalPaste(){ pendingPreview=[]; document.getElementById('paste-area').
 
 /* ---------- pilih pemenang ---------- */
 let approvalInfo = { wa:'', nama:'', keGrup:false };
+
+/* ===================== v110: ALIHKAN PEMENANG ===================== */
+function bukaAlihkan(idLelang){
+  const l = lelangList.find(x => x.id === idLelang); if(!l) return;
+  const bids = bidsUntuk(idLelang);
+  const lama = bids.find(b => b.ekspedisi === l.pemenang);
+  const hargaLama = l.hargaFinal || (lama ? lama.harga : 0);
+  const calon = bids.filter(b => b.ekspedisi !== l.pemenang);
+  const orders = orderUntuk(idLelang).filter(o => o.status !== 'batal' && String(o.ekspedisi || l.pemenang).toUpperCase() === String(l.pemenang).toUpperCase());
+  const sudahKonf = orders.filter(o => konfirmasiList.some(k => k.idLelang === o.id));
+  const peringkat = e => bids.findIndex(b => b.ekspedisi === e) + 1;
+
+  const w = document.createElement('div');
+  w.className = 'tirai'; w.id = 'tirai-alih';
+  w.innerHTML = `<div class="jendela lebar">
+    <span class="tanda-menang">ALIHKAN PEMENANG</span>
+    <h2>${l.kota} · ${l.tipeMobil}</h2>
+    <div style="font-size:13px;color:var(--muted);line-height:1.55">Pemenang sekarang <b style="color:var(--text)">${l.pemenang}</b>
+      (peringkat ${peringkat(l.pemenang) || '-'}${hargaLama ? ', ' + formatRupiah(hargaLama) : ''}). Pilih penggantinya:</div>
+    <div class="pilih-alih">
+      ${bids.map(b => {
+        const isLama = b.ekspedisi === l.pemenang;
+        const pertama = !isLama && b === calon[0];
+        const beda = hargaLama ? b.harga - hargaLama : 0;
+        return `<label class="${isLama ? 'lama' : ''}">
+          <input type="radio" name="alih-ke" value="${b.ekspedisi}" ${isLama ? 'disabled' : ''} ${pertama ? 'checked' : ''}>
+          <span><span class="nm">#${peringkat(b.ekspedisi)} ${b.ekspedisi}</span>${isLama ? ' — pemenang sekarang' : ''}<br>
+            <span class="hg">${formatRupiah(b.harga)}</span>${!isLama && beda ? ` <span style="color:${beda > 0 ? 'var(--red)' : 'var(--teal)'}">(${beda > 0 ? '+' : '−'}${formatRupiah(Math.abs(beda))})</span>` : ''}
+            ${b.namaKapal || b.etd ? `<br><span class="kp">Kapal ${b.namaKapal || '-'}${b.etd ? ' · ETD ' + b.etd : ''}${b.eta ? ' · ETA ' + b.eta : ''}</span>` : ''}</span>
+        </label>`; }).join('')}
+    </div>
+    <div class="kolom">
+      <label>Alasan</label>
+      <input id="alih-alasan" type="text" value="Jadwal kapal ${l.pemenang} tidak support">
+    </div>
+    ${orders.length ? `<div class="peringatan-kecil" style="margin-top:10px;">${orders.length} order aktif milik ${l.pemenang}
+      (${orders.map(o => o.noOrder).join(', ')}) akan <b>DIBATALKAN</b> dan dihapus dari Pesanan Armada.
+      ${sudahKonf.length ? `<br><b>${sudahKonf.length} di antaranya sudah dikonfirmasi armadanya</b> — pastikan ${l.pemenang} sudah diberi tahu.` : ''}</div>` : ''}
+    <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.55">Sesudah dialihkan, lelang berstatus <b>menunggu approval</b>.
+      Order untuk pemenang baru baru bisa dibuat setelah tombol <b>Approval diterima</b> ditekan.</div>
+    <div class="baris-tombol">
+      <button class="btn-primary" style="flex:1;" id="btn-alih" onclick="kirimAlihkan('${idLelang}')">Alihkan &amp; minta approval</button>
+      <button class="btn-nanti" style="width:auto;margin:0;" onclick="document.getElementById('tirai-alih').remove()">Batal</button>
+    </div></div>`;
+  w.onclick = ev => { if(ev.target === w) w.remove(); };
+  document.body.appendChild(w);
+}
+
+async function kirimAlihkan(idLelang){
+  const pilih = document.querySelector('input[name="alih-ke"]:checked');
+  const inp = document.getElementById('alih-alasan');
+  const alasan = inp ? inp.value.trim() : '';
+  if(!pilih){ setStatus('Pilih ekspedisi penggantinya dulu.', true); return; }
+  if(!alasan){ inp.style.borderColor = 'var(--red)'; return; }
+  const btn = document.getElementById('btn-alih'); if(btn) btn.disabled = true;
+  try{
+    setStatus('Mengalihkan pemenang…');
+    const r = await gas({action:'alihkan_pemenang', idLelang, ke:pilih.value, alasan});
+    const t = document.getElementById('tirai-alih'); if(t) t.remove();
+    await muat(true);
+    setStatus(`Pemenang dialihkan ${r.dari} → ${r.ke}${r.dibatalkan && r.dibatalkan.length ? ' · order dibatalkan: ' + r.dibatalkan.join(', ') : ''} · menunggu approval.`);
+    const l = lelangList.find(x => x.id === idLelang);
+    if(l) window.open(waAlihkan(l), '_blank');
+  }catch(err){
+    setStatus('Gagal mengalihkan: ' + err.message, true);
+    if(btn) btn.disabled = false;
+  }
+}
+
+/* pesan WA permintaan approval pengalihan */
+function waAlihkan(l){
+  const bids = bidsUntuk(l.id);
+  const baru = bids.find(b => b.ekspedisi === l.pemenang);
+  const m = String(l.alasanPilih || '').match(/^Dialihkan dari (.+?) \(([\d.]+)\): (.*)$/);
+  const dari = m ? m[1] : '-', hargaDari = m ? m[2] : '', alasan = m ? m[3] : (l.alasanPilih || '-');
+  const teks = [
+    `Mohon APPROVAL pengalihan pemenang lelang:`,
+    [`Tujuan     : Cikande -> ${l.kota}`, `Distributor: ${l.customer}`, `Tipe       : ${l.tipeMobil}`,
+     `Tgl muat   : ${l.tanggalMuat || l.tanggal || '-'}`].join('\n'),
+    [`Pemenang awal : ${dari}${hargaDari ? ' — Rp ' + hargaDari : ''}`,
+     `*Dialihkan ke : ${l.pemenang}${baru ? ' — ' + formatRupiah(baru.harga) : ''}*`,
+     baru && (baru.namaKapal || baru.etd) ? `Kapal ${baru.namaKapal || '-'}${baru.etd ? ' · ETD ' + baru.etd : ''}` : ''].filter(x => x).join('\n'),
+    `Alasan: ${alasan}`,
+    `Kontainer belum dipesan sampai ada persetujuan. Terima kasih.`
+  ].join('\n\n');
+  if(approvalInfo.keGrup) return `https://wa.me/?text=${encodeURIComponent(teks)}`;
+  const nomor = (approvalInfo.wa || '').replace(/[^0-9]/g, '');
+  return `https://wa.me/${nomor}?text=${encodeURIComponent(teks)}`;
+}
+
+function blokTungguApproval(l){
+  const m = String(l.alasanPilih || '').match(/^Dialihkan dari (.+?) \(/);
+  return `<div class="tunggu-acc"><b class="jdl">⏳ Menunggu approval pengalihan</b>
+    ${m ? `Dialihkan dari <b>${m[1]}</b> ke <b>${l.pemenang}</b>.` : `Pemenang dialihkan ke <b>${l.pemenang}</b>.`}
+    Kontainer jangan dipesan dulu sampai disetujui.
+    <div class="tombol2">
+      <a class="wa" target="_blank" href="${waAlihkan(l)}">Minta approval via WA</a>
+      <button class="ok" onclick="setujuiAlihkan('${l.id}')">✓ Approval diterima</button>
+    </div></div>`;
+}
+
+async function setujuiAlihkan(idLelang){
+  const oleh = prompt('Disetujui oleh siapa? (nama atasan yang memberi approval)');
+  if(oleh === null) return;
+  if(!oleh.trim()){ setStatus('Nama yang menyetujui wajib diisi.', true); return; }
+  try{
+    setStatus('Menyimpan approval…');
+    await gas({action:'alihkan_setujui', idLelang, oleh:oleh.trim()});
+    await muat(true);
+    setStatus('Approval tercatat — sekarang order kontener bisa dibuat.');
+  }catch(err){ setStatus('Gagal menyimpan approval: ' + err.message, true); }
+}
 
 async function batalPemenang(idLelang, namaEks, noOrder){
   const pesan = [
@@ -2931,11 +3067,19 @@ function render(){
                  <th>Status</th><th></th></tr></thead>
                <tbody>${barisOrder}</tbody>
              </table>`}
-        <button class="btn-order" onclick="buatOrder('${l.id}')">+ Buat order baru</button>
+        ${l.approval === 'MENUNGGU'
+          ? `<button class="btn-order" disabled title="tunggu approval dulu">Menunggu approval — order belum bisa dibuat</button>`
+          : `<button class="btn-order" onclick="buatOrder('${l.id}')">+ Buat order baru</button>`}
         ${!eks ? `<div class="po-kosong">Nomor WA ${l.pemenang || '—'} belum terdaftar — lengkapi di Daftar Ekspedisi supaya link konfirmasi bisa dikirim.</div>` : ''}
       </div>`;
 
       const tombolBatal = `<button class="btn-batal-menang" onclick="batalPemenang('${l.id}','${(l.pemenang||'').replace(/'/g,"\\'")}','')">Batalkan / ganti pemenang</button>`;
+      /* v110: alihkan ke peringkat berikutnya (mis. jadwal kapal pemenang tidak cocok) */
+      const adaCadangan = bidsUntuk(l.id).some(b => b.ekspedisi !== l.pemenang);
+      const tombolAlih = adaCadangan && !l.combo
+        ? `<button class="btn-alih" onclick="bukaAlihkan('${l.id}')">Pemenang tidak bisa support? Alihkan ke peringkat berikutnya</button>` : '';
+      const blokAcc = l.approval === 'MENUNGGU' ? blokTungguApproval(l)
+        : (String(l.approval || '').indexOf('OK') === 0 ? `<div class="acc-ok">✓ Pengalihan disetujui — ${l.approval.slice(3)}</div>` : '');
 
       return `<div class="card">
         <div class="card-head dengan-cek">
@@ -2952,7 +3096,9 @@ function render(){
         </div>
         <div class="card-body">
           <div class="pemenang-banner">🏆 ${l.pemenang || '—'}${win ? ' · ' + formatRupiah(win.harga) + ' /unit' : ''}</div>
+          ${blokAcc}
           ${panelOrder}
+          ${tombolAlih}
           ${tombolBatal}
         </div></div>`;
     }).join('')}</div>`;
