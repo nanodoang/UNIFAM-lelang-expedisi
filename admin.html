@@ -1504,18 +1504,37 @@ async function kirimAlihkan(idLelang){
   const alasan = inp ? inp.value.trim() : '';
   if(!pilih){ setStatus('Pilih ekspedisi penggantinya dulu.', true); return; }
   if(!alasan){ inp.style.borderColor = 'var(--red)'; return; }
-  const btn = document.getElementById('btn-alih'); if(btn) btn.disabled = true;
+  const ke = pilih.value;
+  const t = document.getElementById('tirai-alih'); if(t) t.remove();
+
+  /* v110c: tampilkan hasilnya SEKETIKA (tidak menunggu server & muat ulang
+     seluruh panel). Kalau server menolak, panel dimuat ulang apa adanya. */
+  const l = lelangList.find(x => x.id === idLelang);
+  const dari = l ? l.pemenang : '';
+  const lama = bidsUntuk(idLelang).find(b => b.ekspedisi === dari);
+  const hargaDari = l ? (l.hargaFinal || (lama ? lama.harga : 0)) : 0;
+  const dibatalkanLokal = [];
+  if(l){
+    daftarOrder.forEach(o => {
+      if(o.idLelang === idLelang && o.status !== 'batal' && String(o.ekspedisi || '').toUpperCase() === String(dari).toUpperCase()){
+        o.status = 'batal'; o.alasanBatal = 'Dialihkan ke ' + ke + ': ' + alasan; dibatalkanLokal.push(o.noOrder);
+      }
+    });
+    l.pemenang = ke; l.approval = 'MENUNGGU'; l.hargaFinal = 0;
+    l.alasanPilih = `Dialihkan dari ${dari} (${Number(hargaDari).toLocaleString('id-ID')}): ${alasan}`;
+    render();
+  }
+  setStatus(`Mengalihkan ${dari} → ${ke}… (menyimpan ke server)`);
+  if(l) window.open(waAlihkan(l), '_blank');
+
   try{
-    setStatus('Mengalihkan pemenang…');
-    const r = await gas({action:'alihkan_pemenang', idLelang, ke:pilih.value, alasan});
-    const t = document.getElementById('tirai-alih'); if(t) t.remove();
-    await muat(true);
-    setStatus(`Pemenang dialihkan ${r.dari} → ${r.ke}${r.dibatalkan && r.dibatalkan.length ? ' · order dibatalkan: ' + r.dibatalkan.join(', ') : ''} · menunggu approval.`);
-    const l = lelangList.find(x => x.id === idLelang);
-    if(l) window.open(waAlihkan(l), '_blank');
+    const r = await gas({action:'alihkan_pemenang', idLelang, ke, alasan});
+    const pesan = `Pemenang dialihkan ${r.dari} → ${r.ke}${r.dibatalkan && r.dibatalkan.length ? ' · order dibatalkan: ' + r.dibatalkan.join(', ') : ''} · menunggu approval.`;
+    setStatus(pesan);
+    muat(true).then(() => setStatus(pesan)).catch(() => {});      // sinkron di belakang layar
   }catch(err){
-    setStatus('Gagal mengalihkan: ' + err.message, true);
-    if(btn) btn.disabled = false;
+    setStatus('Gagal mengalihkan: ' + err.message + ' — data dimuat ulang.', true);
+    muat(true).catch(() => {});
   }
 }
 
@@ -1567,12 +1586,23 @@ async function setujuiAlihkan(idLelang){
   const oleh = prompt('Disetujui oleh siapa? (nama atasan yang memberi approval)');
   if(oleh === null) return;
   if(!oleh.trim()){ setStatus('Nama yang menyetujui wajib diisi.', true); return; }
+  const l = lelangList.find(x => x.id === idLelang);
+  const sebelum = l ? l.approval : '';
+  if(l){
+    const n = new Date(), p = x => String(x).padStart(2,'0');
+    l.approval = `OK: ${oleh.trim()} ${p(n.getDate())}/${p(n.getMonth()+1)}/${n.getFullYear()} ${p(n.getHours())}:${p(n.getMinutes())}`;
+    render();                                      // tombol buat order langsung terbuka
+  }
+  setStatus('Menyimpan approval…');
   try{
-    setStatus('Menyimpan approval…');
     await gas({action:'alihkan_setujui', idLelang, oleh:oleh.trim()});
-    await muat(true);
-    setStatus('Approval tercatat — sekarang order kontener bisa dibuat.');
-  }catch(err){ setStatus('Gagal menyimpan approval: ' + err.message, true); }
+    const pesan = 'Approval tercatat — sekarang order kontener bisa dibuat.';
+    setStatus(pesan);
+    muat(true).then(() => setStatus(pesan)).catch(() => {});
+  }catch(err){
+    if(l){ l.approval = sebelum; render(); }
+    setStatus('Gagal menyimpan approval: ' + err.message, true);
+  }
 }
 
 async function batalPemenang(idLelang, namaEks, noOrder){
