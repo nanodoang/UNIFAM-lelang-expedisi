@@ -1915,6 +1915,11 @@ function linkKonfirmasiOrder(order, ekspedisi){
   return `${BASE_URL}/konfirmasi.html?${kunci}&ekspedisi=${encodeURIComponent(ekspedisi)}`;
 }
 
+/* v108: dokumen SPK (bukti harga) untuk satu order */
+function linkSpkOrder(order, ekspedisi){
+  return linkKonfirmasiOrder(order, ekspedisi).replace('/konfirmasi.html?', '/spk.html?');
+}
+
 function waKonfirmasiOrder(l, order, eks){
   const rinci = [
     `No Order   : ${order.noOrder}`,
@@ -2081,7 +2086,8 @@ function tabelPerTanggal(){
       <td class="mono">${k ? (k.noKontener || k.noPolisi || '—') : '—'}</td>
       <td>${k ? `<span class="pil-ok">Sudah konfirmasi</span>` : `<span class="pil-nunggu">Menunggu</span>`}</td>
       <td class="kanan">${eks && !k
-        ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>` : ''}</td>
+        ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>` : ''}
+        ${eks ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, eks)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}</td>
       <td class="kanan">${!batal
         ? `<button class="btn-mini merah" title="batalkan order ini"
              onclick="batalOrder('${o.id}','${o.noOrder}','${l.kota}')">batal</button>`
@@ -2885,6 +2891,7 @@ function render(){
             ${eks && !sudah && !batal
               ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>`
               : ''}
+            ${eks ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, eks)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}
             ${batal ? '' : o.caraLama
               ? `<span class="cap-lama" title="dibuat sebelum ada tab Order">lama</span>`
               : `<button class="btn-mini" title="geser tanggal muat"

@@ -377,6 +377,45 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
 .cap-saring{grid-column:1 / -1;font-family:var(--mono);font-size:11px;color:var(--teal-tua);
   background:rgba(21,150,163,.09);border:1px solid rgba(21,150,163,.35);
   padding:6px 11px;margin-bottom:2px;}
+/* ===== v108: tab Hasil Lelang ===== */
+/* deretan tab boleh digeser ke samping di HP, bukan melebarkan seluruh halaman */
+.tab-baris{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tab-baris button{white-space:nowrap;flex-shrink:0;}
+.hl-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:#FAFBFD}
+.hl-bar label{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.hl-bar select{font-family:var(--sans);font-size:14px;border:1px solid var(--line-tebal);background:#fff;padding:7px 9px}
+.hl-sub{display:flex;gap:0;margin-left:auto}
+.hl-sub button{border:1px solid var(--line-tebal);background:#fff;font-family:var(--disp);font-weight:700;letter-spacing:.05em;font-size:14px;padding:6px 12px;cursor:pointer;color:var(--muted)}
+.hl-sub button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.hl-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px}
+.hl-tile{border:1px solid var(--line);padding:10px 12px}
+.hl-tile .l{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.hl-tile .v{font-family:var(--mono);font-size:21px;font-weight:600;color:var(--navy)}
+.hl-tile .s{font-size:11.5px;color:var(--muted)}
+.hl-kartu{border:1px solid var(--line);margin:0 14px 12px}
+.hl-kp{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:9px 12px;border-bottom:1px solid var(--line);background:#FAFBFD}
+.hl-kp .tuj{font-family:var(--disp);font-weight:700;font-size:18px;color:var(--navy)}
+.hl-kp .cust{font-size:12.5px;color:var(--muted)}
+.hl-kp .meta{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
+.hl-tag{font-family:var(--mono);font-size:11px;border:1px solid var(--line-tebal);padding:0 6px;background:#fff}
+.hl-tag.buka{border-color:var(--amber);color:var(--amber)}
+.hl-tag.combo{border-color:var(--teal);color:var(--teal)}
+table.hl{width:100%;border-collapse:collapse;font-size:13px}
+table.hl td,table.hl th{padding:6px 12px;border-bottom:1px solid #EEF0F5;text-align:left;white-space:nowrap}
+table.hl th{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+table.hl .r{text-align:right}
+table.hl td.m{font-family:var(--mono)}
+table.hl tr.win td{background:rgba(21,150,163,.09);font-weight:700}
+table.hl tr.win td:first-child{box-shadow:inset 3px 0 0 var(--teal)}
+.hl-menang{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.1em;color:#fff;background:var(--teal);padding:1px 6px;margin-left:6px}
+.hl-naik{color:var(--red)}.hl-turun{color:var(--teal-tua)}
+.hl-absen{padding:7px 12px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);white-space:normal}
+.hl-absen b{color:var(--tinta);font-weight:600}
+.hl-alasan{padding:7px 12px;font-size:12px;background:#FFF8EC;border-top:1px solid #F4E2C2;color:#7A4A06}
+.hl-kosong{padding:10px 12px;color:var(--red);font-size:13px}
+.hl-pct{display:inline-block;height:8px;background:var(--teal);vertical-align:middle;margin-right:6px}
+.hl-cat{font-size:12px;color:var(--muted);padding:4px 14px 14px;line-height:1.6}
+@media(max-width:640px){.hl-tiles{grid-template-columns:repeat(2,1fr)}.hl-kp .meta{margin-left:0;text-align:left;width:100%}.hl-sub{margin-left:0}}
 </style>
 </head>
 <body>
@@ -432,6 +471,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:.03em;}
     <button id="t-rinci" onclick="gantiTab('rinci')">Rincian &amp; realisasi</button>
     <button id="t-manual" onclick="gantiTab('manual')">Order manual</button>
     <button id="t-turun" onclick="gantiTab('turun')">Turun harga</button>
+    <button id="t-hasil" onclick="gantiTab('hasil')">Hasil lelang</button>
   </div>
 
   <button class="btn-salin" onclick="salin()">Salin tabel ini</button>
@@ -640,6 +680,7 @@ function kunciPanel(){
 
 
 let data = null, tabAktif = 'bulan';
+let dataHasil = null, hlMinggu = '', hlSub = 'tujuan', hlMemuat = false;
 let bulanPilih = '';      // '' = semua bulan, isi 'yyyy-MM'
 
 /* 'dd/mm/yyyy' -> 'yyyy-MM' */
@@ -785,7 +826,8 @@ async function muat(segar){
 
 function gantiTab(t){
   tabAktif = t;
-  ['bulan','eks','rinci','manual','turun'].forEach(x =>
+  if(t === 'hasil' && !dataHasil && !hlMemuat) muatHasil();
+  ['bulan','eks','rinci','manual','turun','hasil'].forEach(x =>
     document.getElementById('t-' + (x==='eks'?'eks':x)).className = (x===t ? 'aktif' : ''));
   render();
 }
@@ -797,6 +839,18 @@ function render(){
      yang sedang dibuka, jadi ringkasan atas juga ikut tersaring */
   { const wb = document.getElementById('bar-bulan-atas');
     if(wb) wb.innerHTML = barisBulan(); }
+
+  /* v108: tab Hasil Lelang punya pemilih minggu & angka sendiri —
+     filter bulan dan kartu penghematan di atas disembunyikan */
+  const diHasil = tabAktif === 'hasil';
+  ['bar-bulan-atas','ringkas'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display = diHasil ? 'none' : ''; });
+  if(diHasil){
+    document.getElementById('judul-tabel').textContent = 'Hasil Lelang';
+    const w = document.getElementById('wadah');
+    w.classList.remove('gulir-tinggi');
+    w.innerHTML = tampilHasil();
+    return;
+  }
 
   const rk = ringkasTersaring();
   const m = rk.manual || {jumlah:0,total:0,selisih:0,persen:0,terukur:0,daftar:[]};
@@ -1027,6 +1081,14 @@ function salin(){
       bersih(x.pemenang), x.target ?? '', x.harga ?? '', x.hemat ?? '', bersih(x.noKontener), bersih(x.namaKapal),
       bersih(x.etd), bersih(x.eta), bersih(x.atd), bersih(x.ata), bersih(x.dooring), bersih(x.keterangan)
     ].join('\t')));
+  } else if(tabAktif === 'hasil'){
+    baris.push(['Tutup','Tujuan','Distributor','Tipe','Patokan','Rank','Ekspedisi','Harga','Menang','Kapal','Waktu isi'].join('\t'));
+    hlLelangMinggu().forEach(l => {
+      if(!l.b.length) baris.push([l.tutup.slice(0,10), bersih(l.kota), bersih(l.cust), bersih(l.tipe), l.patokan || '', '',
+        l.menang ? bersih(l.menang) + ' (tanpa penawaran)' : '(tidak ada penawar)', l.final || '', l.menang ? 'YA' : '', '', ''].join('\t'));
+      l.b.forEach((b,i) => baris.push([l.tutup.slice(0,10), bersih(l.kota), bersih(l.cust), bersih(l.tipe), l.patokan || '',
+        i+1, bersih(b.e), b.h, b.e === l.menang ? 'YA' : '', bersih(b.kp), b.w.replace('T',' ')].join('\t')));
+    });
   } else if(tabAktif === 'turun'){
     const t = (data.turunHarga && data.turunHarga.daftar) || [];
     const list = bulanPilih ? t.filter(x => bulanDari(x.tanggalSekarang) === bulanPilih) : t;
@@ -1049,6 +1111,117 @@ function salin(){
   navigator.clipboard.writeText(teks)
     .then(() => setStatus(`${baris.length - 1} baris disalin — tinggal paste ke Excel.`))
     .catch(() => setStatus('Gagal menyalin. Coba pakai browser di laptop.', true));
+}
+
+/* ===================== v108: HASIL LELANG ===================== */
+async function muatHasil(){
+  hlMemuat = true;
+  try{
+    setStatus('Memuat hasil lelang…');
+    dataHasil = await gas({action:'hasil_lelang'});
+    setStatus(`${dataHasil.lelang.length} lelang · ${dataHasil.versi || ''} · ${new Date().toLocaleTimeString('id-ID')}`);
+  }catch(err){
+    setStatus('Gagal memuat hasil lelang: ' + err.message, true);
+  }
+  hlMemuat = false;
+  if(tabAktif === 'hasil') render();
+}
+
+const HL_HARI = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const HL_BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function hlTgl(s){ if(!s) return '—'; const d = new Date(s); return isNaN(d) ? '—' : `${HL_HARI[d.getDay()]} ${d.getDate()} ${HL_BLN[d.getMonth()]}`; }
+const hlJam = s => s ? s.slice(11,16) : '';
+const hlAngka = n => n ? Number(n).toLocaleString('id-ID') : '—';
+/* minggu Senin–Minggu, dihitung dari waktu lelang ditutup (tanggal lokal, bukan UTC) */
+function hlSenin(s){ const d = new Date(s.slice(0,10)+'T00:00'); d.setDate(d.getDate() - (d.getDay()+6)%7); return d; }
+const hlKunci = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function hlLabel(k){ const a = new Date(k+'T00:00'), b = new Date(a); b.setDate(b.getDate()+6);
+  return `${a.getDate()} ${HL_BLN[a.getMonth()]} – ${b.getDate()} ${HL_BLN[b.getMonth()]} ${b.getFullYear()}`; }
+const hlSama = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+function hlLayak(l){ return dataHasil.eks.filter(e => !e.k.length || e.k.some(k => hlSama(k) === hlSama(l.kota))).map(e => e.n); }
+function hlDaftarMinggu(){ return [...new Set(dataHasil.lelang.map(l => hlKunci(hlSenin(l.tutup))))].sort().reverse(); }
+function hlLelangMinggu(){
+  if(!dataHasil) return [];
+  if(!hlMinggu) hlMinggu = hlDaftarMinggu()[0] || '';
+  return dataHasil.lelang.filter(l => hlKunci(hlSenin(l.tutup)) === hlMinggu)
+    .sort((a,b) => a.tutup.localeCompare(b.tutup) || a.kota.localeCompare(b.kota));
+}
+function hlPilihMinggu(v){ hlMinggu = v; render(); }
+function hlPilihSub(v){ hlSub = v; render(); }
+
+function tampilHasil(){
+  if(!dataHasil) return `<div class="empty" style="padding:34px;text-align:center;">${hlMemuat ? 'Memuat hasil lelang…' : 'Belum ada data.'}</div>`;
+  const ls = hlLelangMinggu();
+  const mg = hlDaftarMinggu();
+  const nBid = ls.reduce((s,l) => s + l.b.length, 0);
+  const aktif = new Set(ls.flatMap(l => l.b.map(b => b.e)));
+  const tanpa = ls.filter(l => !l.b.length).length;
+  document.getElementById('ket-tabel').textContent = `${ls.length} lelang · ${nBid} penawaran`;
+  const atas = `<div class="hl-bar">
+      <label>Minggu</label>
+      <select onchange="hlPilihMinggu(this.value)">${mg.map((k,i) => `<option value="${k}" ${k===hlMinggu?'selected':''}>${hlLabel(k)}${i===0?' (terbaru)':''}</option>`).join('')}</select>
+      <div class="hl-sub">
+        <button class="${hlSub==='tujuan'?'on':''}" onclick="hlPilihSub('tujuan')">Per tujuan</button>
+        <button class="${hlSub==='eks'?'on':''}" onclick="hlPilihSub('eks')">Per ekspedisi</button>
+      </div>
+    </div>
+    <div class="hl-tiles">
+      <div class="hl-tile"><div class="l">Lelang</div><div class="v">${ls.length}</div><div class="s">${ls.filter(l=>l.status==='selesai').length} sudah ada pemenang</div></div>
+      <div class="hl-tile"><div class="l">Penawaran</div><div class="v">${nBid}</div><div class="s">rata-rata ${ls.length?(nBid/ls.length).toFixed(1):0} per lelang</div></div>
+      <div class="hl-tile"><div class="l">Ekspedisi ikut</div><div class="v">${aktif.size}</div><div class="s">dari ${dataHasil.eks.length} terdaftar</div></div>
+      <div class="hl-tile"><div class="l">Tanpa penawar</div><div class="v" style="color:${tanpa?'var(--red)':'var(--navy)'}">${tanpa}</div><div class="s">lelang tidak ada yang isi</div></div>
+    </div>`;
+  if(!ls.length) return atas + '<div class="hl-cat">Tidak ada lelang di minggu ini.</div>';
+  return atas + (hlSub === 'eks' ? hlPerEkspedisi(ls) : hlPerTujuan(ls));
+}
+
+function hlPerTujuan(ls){
+  return ls.map(l => {
+    const ikut = new Set(l.b.map(b => b.e));
+    const absen = hlLayak(l).filter(n => !ikut.has(n));
+    const baris = l.b.map((b,i) => {
+      const win = l.menang && b.e === l.menang;
+      const vs = l.patokan ? b.h - l.patokan : null;
+      return `<tr class="${win?'win':''}"><td class="m">#${i+1}</td>
+        <td>${aman(b.e)}${win?'<span class="hl-menang">MENANG</span>':''}</td>
+        <td class="r m">${hlAngka(b.h)}</td>
+        <td class="r m ${vs>0?'hl-naik':'hl-turun'}">${vs===null?'—':(vs>0?'+':'')+(vs===0?'0':hlAngka(vs))}</td>
+        <td>${aman(b.kp)||'—'}</td><td class="m">${hlTgl(b.w)} ${hlJam(b.w)}</td></tr>`;
+    }).join('');
+    const bukanTermurah = l.menang && l.b.length && ikut.has(l.menang) && l.b[0].e !== l.menang;
+    const luar = l.menang && !ikut.has(l.menang);
+    return `<div class="hl-kartu">
+      <div class="hl-kp"><span class="tuj">${aman(l.kota)}</span><span class="hl-tag">${aman(l.tipe)}${l.jml>1?' ×'+l.jml:''}</span>
+        ${l.status!=='selesai'?'<span class="hl-tag buka">MASIH TERBUKA</span>':''}${l.combo?'<span class="hl-tag combo">COMBO</span>':''}
+        <span class="cust">${aman(l.cust)}</span>
+        <span class="meta">tutup ${hlTgl(l.tutup)} ${hlJam(l.tutup)} · muat ${hlTgl(l.muat)}<br>patokan ${hlAngka(l.patokan)}</span></div>
+      ${l.b.length ? `<div class="gulir"><table class="hl"><tr><th>Rank</th><th>Ekspedisi</th><th class="r">Harga</th><th class="r">vs patokan</th><th>Kapal</th><th>Waktu isi</th></tr>${baris}</table></div>`
+                   : '<div class="hl-kosong">Tidak ada ekspedisi yang mengisi harga.</div>'}
+      ${luar ? `<div class="hl-alasan"><b>Pemenang: ${aman(l.menang)}</b> — tidak mengisi penawaran di lelang ini${l.final?', harga '+hlAngka(l.final):''}${l.alasan?'. Alasan: '+aman(l.alasan):''}.</div>` : ''}
+      ${bukanTermurah ? `<div class="hl-alasan">Pemenang bukan termurah${l.alasan?' — alasan: '+aman(l.alasan):''}</div>` : ''}
+      <div class="hl-absen">Tidak ikut: ${absen.length ? absen.map(n => `<b>${aman(n)}</b>`).join(', ') : '— semua ikut'}</div>
+    </div>`;
+  }).join('');
+}
+
+function hlPerEkspedisi(ls){
+  const st = {};
+  const baru = n => ({n, layak:0, ikut:0, menang:0, termurah:0});
+  dataHasil.eks.forEach(e => st[e.n] = baru(e.n));
+  ls.forEach(l => {
+    hlLayak(l).forEach(n => st[n].layak++);
+    l.b.forEach((b,i) => { if(!st[b.e]) st[b.e] = baru(b.e); st[b.e].ikut++; if(i===0) st[b.e].termurah++; });
+    if(l.menang){ if(!st[l.menang]) st[l.menang] = baru(l.menang); st[l.menang].menang++; }
+  });
+  const rows = Object.values(st).sort((a,b) => b.ikut-a.ikut || b.menang-a.menang || a.n.localeCompare(b.n));
+  return `<div class="gulir"><table class="hl" style="margin:0 0 4px">
+    <tr><th>Ekspedisi</th><th class="r">Bisa ikut</th><th class="r">Ikut</th><th>Partisipasi</th><th class="r">Termurah</th><th class="r">Menang</th></tr>
+    ${rows.map(r => { const p = r.layak ? Math.round(r.ikut/r.layak*100) : 0;
+      return `<tr><td><b>${aman(r.n)}</b></td><td class="r m">${r.layak}</td><td class="r m">${r.ikut}</td>
+        <td><span class="hl-pct" style="width:${Math.min(p,100)*0.8}px"></span><span class="m">${p}%</span></td>
+        <td class="r m">${r.termurah}</td><td class="r m">${r.menang}</td></tr>`; }).join('')}
+  </table></div>
+  <div class="hl-cat">"Bisa ikut" = lelang minggu ini yang kotanya masuk area layanan ekspedisi tsb (kota layanan kosong = semua kota). Akun berawalan NANO tidak dihitung.</div>`;
 }
 
 muat();

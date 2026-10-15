@@ -123,6 +123,22 @@ footer{font-family:var(--mono);}
 .no-order .no-l{font-family:var(--disp);font-size:10px;letter-spacing:.16em;
   text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:600;}
 .no-order .no-v{font-family:var(--mono);font-size:16px;font-weight:600;letter-spacing:.03em;}
+/* v108: persetujuan harga */
+.setuju-box{margin:14px 18px 0;border:2px solid var(--teal);background:rgba(21,150,163,.06);padding:13px 14px;}
+.setuju-box .l{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal-tua);text-transform:uppercase;}
+.setuju-box .harga{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--navy);margin:3px 0 2px;}
+.setuju-box .syarat{font-size:12px;color:var(--muted);}
+.setuju-box .jejak{font-size:12.5px;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);line-height:1.65;}
+.setuju-box .jejak s{color:var(--muted);}
+.setuju-box .cek{display:flex;gap:10px;align-items:flex-start;margin-top:11px;font-size:13.5px;line-height:1.45;cursor:pointer;
+  text-transform:none!important;letter-spacing:normal!important;font-family:var(--sans)!important;font-weight:400!important;color:var(--text)!important;}
+.setuju-box .cek b{font-weight:700;}
+.setuju-box .cek input{width:21px;height:21px;accent-color:var(--teal);flex-shrink:0;margin-top:1px;}
+.setuju-box .cek.merah{outline:2px solid var(--red);outline-offset:4px;}
+.setuju-box.sah{border-color:rgba(18,135,107,.5);background:rgba(18,135,107,.06);}
+.setuju-box .ok{font-size:13px;color:#0B6350;font-weight:600;margin-top:9px;}
+.gugur{background:#FFF4E5;border:1px solid rgba(217,130,15,.5);padding:9px 11px;font-size:12.5px;line-height:1.55;margin-top:10px;color:#7A4A06;}
+.link-spk{display:inline-block;margin-top:9px;font-size:13px;font-weight:600;color:var(--navy);}
 </style>
 </head>
 <body>
@@ -198,7 +214,7 @@ async function kirimKeServer(params){
   }
 }
 
-let lelang = null, bidSaya = null, konfirmasiSaya = null, orderIni = null;
+let lelang = null, bidSaya = null, konfirmasiSaya = null, orderIni = null, hargaInfo = null;
 
 function setStatus(teks, kelas){
   const el = document.getElementById('status-bar');
@@ -246,6 +262,7 @@ async function muat(){
     lelang = d.lelang || null;
     bidSaya = d.bid || null;
     konfirmasiSaya = d.konfirmasi || null;
+    hargaInfo = d.harga || null;
     setStatus(`Data terbaru · ${new Date().toLocaleTimeString('id-ID')}`);
     render();
   }catch(err){
@@ -272,8 +289,22 @@ async function kirimKonfirmasi(){
     document.getElementById('nokontener').style.borderColor = '';
   }
 
+  /* v108: harga wajib disetujui dulu */
+  const perlu = perluSetuju();
+  if(perlu){
+    const cb = document.getElementById('cek-setuju');
+    if(!cb || !cb.checked){
+      const lbl = document.getElementById('lbl-setuju');
+      if(lbl){ lbl.classList.add('merah'); lbl.scrollIntoView({behavior:'smooth', block:'center'}); }
+      setStatus('Centang persetujuan harga terlebih dulu.', 'err');
+      return;
+    }
+  }
+
   const data = {
     action: 'konfirmasi_submit',
+    setuju: perlu ? '1' : '',
+    hargaSetuju: perlu ? hargaInfo.berlaku : '',
     idOrder: (orderIni ? orderIni.id : idOrder), idLelang, ekspedisi: namaEkspedisi, jenis,
     noPolisi,
     namaDriver: ambilNilai('driver'),
@@ -296,6 +327,48 @@ async function kirimKonfirmasi(){
     setStatus('Gagal kirim: ' + err.message, 'err');
     btn.disabled = false;
   }
+}
+
+/* ---- v108: persetujuan harga ---- */
+function perluSetuju(){
+  return !!(hargaInfo && hargaInfo.berlaku && !(hargaInfo.setuju && hargaInfo.setuju.sah));
+}
+function linkSpk(){
+  const q = new URLSearchParams({ order: orderIni ? orderIni.id : idOrder, ekspedisi: namaEkspedisi });
+  if(!orderIni && idLelang) q.set('id', idLelang);
+  return 'spk.html?' + q.toString();
+}
+function blokSetuju(){
+  const h = hargaInfo;
+  if(!h || !h.berlaku) return '';
+  const jejak = [];
+  if(h.awal && h.awal.harga && h.awal.harga !== h.berlaku){
+    jejak.push(`Penawaran awal Anda: <s>${formatRupiah(h.awal.harga)}</s>${h.awal.waktu ? ' (' + h.awal.waktu + ')' : ''}`);
+  }
+  (h.riwayat || []).forEach(r => jejak.push(`Diubah ${r.waktu}: ${formatRupiah(r.lama)} → <b>${formatRupiah(r.baru)}</b>${r.alasan ? ' — "' + r.alasan + '"' : ''}`));
+  if(!(h.riwayat || []).length && h.catatanLama) jejak.push('Perubahan: ' + h.catatanLama);
+  const jejakHtml = jejak.length ? `<div class="jejak">${jejak.join('<br>')}</div>` : '';
+
+  if(h.setuju && h.setuju.sah){
+    return `<div class="setuju-box sah">
+      <div class="l">Harga yang ditagihkan</div>
+      <div class="harga">${formatRupiah(h.berlaku)}</div>
+      <div class="syarat">All in — termasuk TKBM, stripping, krani. Belum termasuk PPN.</div>
+      ${jejakHtml}
+      <div class="ok">✓ Sudah Anda setujui ${h.setuju.waktu}</div>
+      <a class="link-spk" href="${linkSpk()}" target="_blank">Lihat / simpan dokumen SPK →</a>
+    </div>`;
+  }
+  const gugur = h.setuju && !h.setuju.sah
+    ? `<div class="gugur">Harga order ini <b>berubah</b> dari ${formatRupiah(h.setuju.harga)} (Anda setujui ${h.setuju.waktu}) menjadi <b>${formatRupiah(h.berlaku)}</b>. Mohon setujui harga terbaru.</div>` : '';
+  return `<div class="setuju-box">
+    <div class="l">Harga yang ditagihkan</div>
+    <div class="harga">${formatRupiah(h.berlaku)}</div>
+    <div class="syarat">All in — termasuk TKBM, stripping, krani. Belum termasuk PPN.</div>
+    ${jejakHtml}${gugur}
+    <label class="cek" id="lbl-setuju"><input type="checkbox" id="cek-setuju" onchange="document.getElementById('lbl-setuju').classList.remove('merah')">
+      <span>Saya, atas nama <b>${namaEkspedisi}</b>, menyetujui harga <b>${formatRupiah(h.berlaku)}</b> untuk order ini dan akan menagihkan sesuai harga tersebut.</span></label>
+  </div>`;
 }
 
 function render(){
@@ -360,7 +433,7 @@ function render(){
           <dt>Customer</dt><dd>${lelang.customer}</dd>
           ${lelang.alamat ? `<dt>Alamat</dt><dd>${lelang.alamat}</dd>` : ''}
           <dt>Muatan</dt><dd>${lelang.tipeMobil} · ${formatKarton(lelang.karton)} karton · ${formatCbm(lelang.cbm)} CBM</dd>
-          ${bidSaya ? `<dt>Harga Deal</dt><dd>${formatRupiah(bidSaya.harga)}</dd>` : ''}
+          ${(hargaInfo && hargaInfo.berlaku) || bidSaya ? `<dt>Harga Deal</dt><dd>${formatRupiah(hargaInfo && hargaInfo.berlaku ? hargaInfo.berlaku : bidSaya.harga)}</dd>` : ''}
           ${bidSaya && bidSaya.namaKapal ? `<dt>Kapal</dt><dd>${bidSaya.namaKapal} · ETD ${bidSaya.etd||'-'} · ETA ${bidSaya.eta||'-'}</dd>` : ''}
         </dl>
       </div>
@@ -370,6 +443,8 @@ function render(){
         <span class="tgl">${lelang.jadwalTanggal || lelang.tanggalMuat || lelang.tanggal || '—'}${lelang.jadwalJam
           ? `<span class="jam">jam ${lelang.jadwalJam}</span>` : ''}</span>
       </div>
+
+      ${blokSetuju()}
 
       <div class="form-wrap">
         ${k ? `<div class="sudah">✓ Sudah dikonfirmasi ${new Date(k.waktu).toLocaleString('id-ID')}<br>
