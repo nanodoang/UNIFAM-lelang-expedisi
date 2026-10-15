@@ -1917,7 +1917,9 @@ function linkKonfirmasiOrder(order, ekspedisi){
 
 /* v108: dokumen SPK (bukti harga) untuk satu order */
 function linkSpkOrder(order, ekspedisi){
-  return linkKonfirmasiOrder(order, ekspedisi).replace('/konfirmasi.html?', '/spk.html?');
+  /* terima nama ATAU objek ekspedisi {nama, wa} */
+  const nama = (ekspedisi && typeof ekspedisi === 'object') ? ekspedisi.nama : ekspedisi;
+  return linkKonfirmasiOrder(order, nama || '').replace('/konfirmasi.html?', '/spk.html?');
 }
 
 function waKonfirmasiOrder(l, order, eks){
@@ -2087,7 +2089,7 @@ function tabelPerTanggal(){
       <td>${k ? `<span class="pil-ok">Sudah konfirmasi</span>` : `<span class="pil-nunggu">Menunggu</span>`}</td>
       <td class="kanan">${eks && !k
         ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>` : ''}
-        ${eks ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, eks)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}</td>
+        ${(o.ekspedisi || l.pemenang) ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, o.ekspedisi || l.pemenang)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}</td>
       <td class="kanan">${!batal
         ? `<button class="btn-mini merah" title="batalkan order ini"
              onclick="batalOrder('${o.id}','${o.noOrder}','${l.kota}')">batal</button>`
@@ -2891,7 +2893,7 @@ function render(){
             ${eks && !sudah && !batal
               ? `<a class="tautan-kecil" target="_blank" href="${waKonfirmasiOrder(l, o, eks)}">kirim WA</a>`
               : ''}
-            ${eks ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, eks)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}
+            ${(o.ekspedisi || l.pemenang) ? `<a class="tautan-kecil" target="_blank" href="${linkSpkOrder(o, o.ekspedisi || l.pemenang)}" title="dokumen SPK / bukti harga">SPK</a>` : ''}
             ${batal ? '' : o.caraLama
               ? `<span class="cap-lama" title="dibuat sebelum ada tab Order">lama</span>`
               : `<button class="btn-mini" title="geser tanggal muat"
