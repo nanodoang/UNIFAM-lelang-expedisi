@@ -620,6 +620,25 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .btn-mini.hijau{background:var(--teal);border:1px solid var(--teal);color:#fff;}
 .pil-acc{display:inline-block;background:#FFF4E5;border:1px solid rgba(217,130,15,.55);color:#8A5A0A;font-family:var(--disp);
   font-weight:700;font-size:10.5px;letter-spacing:.08em;padding:1px 6px;margin-left:4px;white-space:nowrap;}
+
+/* v112: pengajuan harga dari ekspedisi */
+.pj-kartu{background:#fff;border:1px solid var(--line);border-left:5px solid var(--amber);padding:13px 15px;margin-bottom:10px}
+.pj-kartu.putus-setuju{border-left-color:#12876B}.pj-kartu.putus-tolak{border-left-color:var(--red)}
+.pj-kartu .jdl{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.04em;color:#8A5A0A;text-transform:uppercase}
+.pj-kartu .baris{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0;font-size:13.5px}
+.pj-kartu .baris span{display:block;font-family:var(--disp);font-size:10.5px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.pj-kartu .baris b{font-family:var(--mono)}
+.pj-kartu .alasan{font-size:13px;background:#FAFBFD;border:1px solid var(--line);padding:7px 10px;margin-bottom:10px}
+.pj-tb{display:flex;gap:8px;flex-wrap:wrap}
+.pj-tb button,.pj-tb a{font-family:var(--disp);font-weight:700;font-size:13.5px;letter-spacing:.05em;padding:10px 13px;border:1px solid var(--line);
+  background:#fff;color:var(--muted);cursor:pointer;flex:1;min-width:170px;text-align:center;text-decoration:none}
+.pj-tb .setuju{background:#1596A3;border-color:#1596A3;color:#fff}
+.pj-tb .alih{border-color:var(--amber);color:#8A5A0A}
+.pj-tb .wa{background:#1F9E52;border-color:#1F9E52;color:#fff}
+.pj-tb button:disabled{opacity:.5;cursor:default}
+.pj-ket{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
+details.pj-riwayat{margin:4px 0 10px;font-size:13px}
+details.pj-riwayat summary{cursor:pointer;color:var(--muted);font-family:var(--disp);letter-spacing:.06em;text-transform:uppercase;font-size:12px;padding:4px 0}
 </style>
 </head>
 <body>
@@ -690,6 +709,8 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
     </span>
     <span class="panah">&rarr;</span>
   </a>
+
+  <div id="kotak-pengajuan"></div>
 
   <div class="tab-admin">
     <button id="t-lelang" class="aktif" onclick="gantiTabAdmin('lelang')">
@@ -1178,6 +1199,11 @@ function pakaiData(d){
   daftarOrder = d.order || [];
   rateInfo = d.rate || {jumlah:0, kota:[]};
   approvalInfo = d.approval || {wa:'', nama:'', keGrup:false};
+  if(d.pengajuan){
+    const baru = new Set(pengajuanList.filter(x => x._baru).map(x => x.id));
+    pengajuanList = d.pengajuan;
+    pengajuanList.forEach(x => { if(baru.has(x.id)) x._baru = true; });
+  }
   if(Array.isArray(rateInfo)) rateInfo = {jumlah:rateInfo.length, kota:rateInfo.map(r=>String(r.kota||'').toUpperCase())};
   versiScript = d.versi || '(script versi lama)';
   const idAda = new Set(lelangList.map(l => l.id));
@@ -1186,6 +1212,7 @@ function pakaiData(d){
   if(el) el.textContent = `${daftarEkspedisi.length} ekspedisi terdaftar · kelola akun & password`;
   cekVersiBackend(d.versi);
   render();
+  renderPengajuan();
 }
 
 /* Paksa ambil ulang dari spreadsheet — dipakai setelah mengedit tab Rate,
@@ -1450,6 +1477,100 @@ function batalPaste(){ pendingPreview=[]; document.getElementById('paste-area').
 
 /* ---------- pilih pemenang ---------- */
 let approvalInfo = { wa:'', nama:'', keGrup:false };
+
+
+/* ===================== v112: PENGAJUAN HARGA DARI EKSPEDISI =====================
+   Ekspedisi yang memilih "harga tidak sesuai" di link konfirmasi mengajukan harga
+   sendiri. Order (lelang maupun order langsung) tertahan sampai diputus di sini. */
+let pengajuanList = [];
+function eksWa(nama){
+  const e = daftarEkspedisi.find(x => String(x.nama).toUpperCase() === String(nama).toUpperCase());
+  return e && e.wa ? e.wa : '';
+}
+function linkKonfirmasiPengajuan(p){
+  if(p.jenis === 'lelang'){
+    const o = daftarOrder.find(x => x.id === p.idOrder);
+    return o ? linkKonfirmasiOrder(o, p.ekspedisi) : `${BASE_URL}/konfirmasi.html?order=${encodeURIComponent(p.idOrder)}&ekspedisi=${encodeURIComponent(p.ekspedisi)}`;
+  }
+  return `${BASE_URL}/konfirmasi.html?order=${encodeURIComponent(p.noOrder)}&eksp=${encodeURIComponent(p.ekspedisi)}`;
+}
+function waKeputusan(p){
+  const setuju = p.status === 'disetujui';
+  const teks = setuju
+    ? `Halo ${p.ekspedisi}, pengajuan harga untuk order *${p.noOrder}* (${p.tujuan}) sebesar *${formatRupiah(p.hargaUsul)}* telah *DISETUJUI* PT. UNIFAM.\n\nSilakan lengkapi data armada & driver melalui link berikut:\n${linkKonfirmasiPengajuan(p)}\n\nTerima kasih 🙏`
+    : `Halo ${p.ekspedisi}, mohon maaf, pengajuan harga untuk order *${p.noOrder}* (${p.tujuan}) sebesar ${formatRupiah(p.hargaUsul)} *belum dapat kami setujui*${p.catatan ? ' — ' + p.catatan : ''}.\n\nApabila tetap bersedia dengan harga order ${formatRupiah(p.hargaAwal)}, mohon konfirmasi melalui link berikut:\n${linkKonfirmasiPengajuan(p)}\n\nTerima kasih atas pengertiannya 🙏`;
+  const wa = eksWa(p.ekspedisi);
+  return wa ? `https://wa.me/${wa}?text=${encodeURIComponent(teks)}` : `https://wa.me/?text=${encodeURIComponent(teks)}`;
+}
+function calonPengganti(p){
+  if(p.jenis !== 'lelang' || !p.idLelang) return null;
+  const l = lelangList.find(x => x.id === p.idLelang);
+  if(!l || l.status !== 'selesai') return null;
+  return bidsUntuk(p.idLelang).find(b => String(b.ekspedisi).toUpperCase() !== String(p.ekspedisi).toUpperCase()) || null;
+}
+function kartuPengajuan(p){
+  const selisih = p.hargaUsul - p.hargaAwal;
+  const calon = calonPengganti(p);
+  const putus = p.status !== 'menunggu';
+  const tb = !putus ? `<div class="pj-tb">
+      <button class="setuju" onclick="pjPutus('${p.id}','setuju')">✓ Setujui ${formatRupiah(p.hargaUsul)}</button>
+      ${calon ? `<button class="alih" onclick="pjPutus('${p.id}','tolak',true)">Tolak &amp; alihkan ke ${esc(calon.ekspedisi)} (${formatRupiah(calon.harga)})</button>` : ''}
+      <button onclick="pjPutus('${p.id}','tolak')">Tolak, minta ikut harga order</button>
+    </div>
+    <div class="pj-ket"><b>Setujui</b>: harga order berubah${p.jenis === 'lelang' ? ' (tercatat di riwayat harga &amp; SPK)' : ' untuk unit ini (tercatat di SPK)'}, ekspedisi bisa lanjut isi data armada.
+      <b>Tolak</b>: ekspedisi diminta menyetujui harga order ${formatRupiah(p.hargaAwal)}${p.jenis === 'lelang' ? ' — atau alihkan ke peringkat berikutnya' : ''}.</div>`
+    : `<div class="pj-tb"><a class="wa" href="${waKeputusan(p)}" target="_blank" rel="noopener">📲 Kabari ${esc(p.ekspedisi)}</a></div>
+       <div class="pj-ket">${p.status === 'disetujui' ? '✓ Disetujui' : '✕ Ditolak'} oleh ${esc(p.oleh)} · ${esc(p.waktuPutus)}${p.catatan ? ' · "' + esc(p.catatan) + '"' : ''}</div>`;
+  return `<div class="pj-kartu ${putus ? (p.status === 'disetujui' ? 'putus-setuju' : 'putus-tolak') : ''}">
+    <div class="jdl">${putus ? '' : '⚠ '}Pengajuan harga · ${esc(p.ekspedisi)}${putus ? '' : ' — perlu keputusan'}</div>
+    <div class="baris">
+      <div><span>No Order</span><b>${esc(p.noOrder || '—')}</b> · ${p.jenis === 'lelang' ? 'LELANG' : 'ORDER LANGSUNG'}</div>
+      <div><span>Tujuan</span>${esc(p.tujuan)} · ${esc(p.tipe)}</div>
+      <div><span>Harga order</span><b>${formatRupiah(p.hargaAwal)}</b></div>
+      <div><span>Diajukan</span><b style="color:var(--red)">${formatRupiah(p.hargaUsul)}</b> (${selisih >= 0 ? '+' : ''}${Number(selisih).toLocaleString('id-ID')})</div>
+    </div>
+    <div class="alasan">Alasan: <i>"${esc(p.alasan)}"</i> · diajukan ${esc(p.waktu)}</div>
+    ${tb}
+  </div>`;
+}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function renderPengajuan(){
+  const el = document.getElementById('kotak-pengajuan'); if(!el) return;
+  const tunggu = pengajuanList.filter(p => p.status === 'menunggu');
+  const baru = pengajuanList.filter(p => p.status !== 'menunggu' && p._baru);
+  const lama = pengajuanList.filter(p => p.status !== 'menunggu' && !p._baru);
+  if(!tunggu.length && !baru.length && !lama.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="section-title"><h2>Pengajuan Harga dari Ekspedisi</h2><small>${tunggu.length} menunggu keputusan</small></div>
+    ${tunggu.map(kartuPengajuan).join('')}${baru.map(kartuPengajuan).join('')}
+    ${lama.length ? `<details class="pj-riwayat"><summary>Sudah diputus · 14 hari terakhir (${lama.length})</summary>${lama.map(kartuPengajuan).join('')}</details>` : ''}`;
+}
+async function pjPutus(id, kep, alih){
+  const p = pengajuanList.find(x => x.id === id); if(!p) return;
+  let oleh = ''; try{ oleh = localStorage.getItem('pj-oleh') || ''; }catch(e){}
+  if(kep === 'setuju' && !confirm(`Setujui harga ${formatRupiah(p.hargaUsul)} untuk ${p.noOrder} (${p.ekspedisi})?\nHarga order lama ${formatRupiah(p.hargaAwal)} akan diganti.`)) return;
+  oleh = prompt('Nama yang memutuskan:', oleh); if(!oleh || !oleh.trim()) return;
+  oleh = oleh.trim(); try{ localStorage.setItem('pj-oleh', oleh); }catch(e){}
+  let catatan = '';
+  if(kep === 'tolak'){ catatan = prompt('Catatan untuk ekspedisi (opsional), mis. "harga pasar masih Rp 28 jt":', alih ? 'Order dialihkan ke ekspedisi lain' : ''); if(catatan === null) return; }
+
+  const lamaStatus = p.status;
+  Object.assign(p, { status: kep === 'setuju' ? 'disetujui' : 'ditolak', oleh, catatan, waktuPutus: new Date().toLocaleString('id-ID'), _baru: true });
+  renderPengajuan();
+  if(alih && p.idLelang) bukaAlihkan(p.idLelang);
+  try{
+    setStatus('Menyimpan keputusan pengajuan…');
+    const r = await gas({action:'pengajuan_putus', id, keputusan:kep, oleh, catatan});
+    if(r.pengajuan) Object.assign(p, r.pengajuan);
+    setStatus(`Pengajuan ${p.noOrder} ${p.status}. Kabari ekspedisi lewat tombol WA.`);
+    renderPengajuan();
+    if(kep === 'setuju' && p.jenis === 'lelang') muat(true);
+  }catch(err){
+    Object.assign(p, { status: lamaStatus, _baru: false });
+    renderPengajuan();
+    alert('Gagal menyimpan keputusan: ' + err.message);
+    setStatus('Gagal menyimpan keputusan: ' + err.message, true);
+  }
+}
 
 /* ===================== v110: ALIHKAN PEMENANG ===================== */
 function bukaAlihkan(idLelang){

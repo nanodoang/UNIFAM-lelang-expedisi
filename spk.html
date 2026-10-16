@@ -306,6 +306,7 @@ function renderManual(d){
     let ket;
     if(/tidak tersedia/i.test(u.status)) ket = `${esc(d.ekspedisi)} menyatakan armada <b>tidak tersedia</b>`;
     else if(/^sesuai$/i.test(sh)) ket = `Dikonfirmasi ${esc(d.ekspedisi)}: <b>harga sesuai</b>`;
+    else if(u.pengajuan) ket = `${esc(d.ekspedisi)} mengajukan harga ${rp(u.pengajuan.hargaUsul)} (${esc(u.pengajuan.waktu)}${u.pengajuan.alasan ? ' — "' + esc(u.pengajuan.alasan) + '"' : ''}); <b>disetujui UNIFAM</b> oleh ${esc(u.pengajuan.oleh)} ${esc(u.pengajuan.waktuPutus)}`;
     else if(/tidak sesuai/i.test(sh)) ket = `Dikonfirmasi ${esc(d.ekspedisi)}: <b>harga tidak sesuai</b>, mengajukan harga sendiri${u.alasan ? ' — ' + esc(u.alasan) : ''}`;
     else ket = `Armada dikonfirmasi ${esc(d.ekspedisi)} (tanpa konfirmasi harga)`;
     ket += unit.length > 1 ? ` <span style="color:var(--muted);font-size:12px">· unit ${i+1}${u.noPolisi ? ' ' + esc(u.noPolisi) : ''}</span>` : '';
@@ -315,6 +316,8 @@ function renderManual(d){
   const st = d.statusHarga;
   const kotak = st === 'sesuai'
     ? `<div class="stempel">✓ DISETUJUI EKSPEDISI</div><br>${esc(d.ekspedisi)}, lewat konfirmasi Pesanan Armada<br><span class="m">${esc((unit.find(u => /^sesuai$/i.test(u.statusHarga)) || {}).waktu || '')} · harga ${rp(d.hargaUnit)}</span>`
+    : st === 'pengajuan'
+      ? `<div class="stempel">✓ HARGA PENGAJUAN DISETUJUI</div><br>${esc(d.ekspedisi)} mengajukan, PT. UNIFAM menyetujui<br><span class="m">${esc(((unit.find(u => u.pengajuan) || {}).pengajuan || {}).waktuPutus || '')} · harga ${rp(d.hargaUnit)}</span>`
     : st === 'beda'
       ? `<div class="stempel" style="border-color:var(--amber);color:var(--amber)">HARGA DIAJUKAN EKSPEDISI</div><br><span style="font-size:12px">${esc(d.ekspedisi)} mengisi harga ${rp(d.hargaUnit)}${pl.harga ? ', berbeda dari harga order UNIFAM ' + rp(pl.harga) : ''}. Pastikan sudah disepakati sebelum dibayar.</span>`
       : `<div class="stempel belum">BELUM ADA KONFIRMASI HARGA</div><br><span class="catatan-merah">Ekspedisi belum memilih "Sesuai" / "Tidak sesuai" untuk harga order ini di Pesanan Armada. Harga di atas adalah harga order UNIFAM.</span>`;
