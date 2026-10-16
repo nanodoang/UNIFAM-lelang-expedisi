@@ -13,6 +13,8 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);padding:0 16px 50px}
 .alat{max-width:794px;margin:0 auto;padding:14px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.alat button.sekunder{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.alat button:disabled{opacity:.5;cursor:default}
 .alat button{font-family:var(--disp);font-weight:700;letter-spacing:.06em;font-size:15px;border:none;background:var(--navy);color:#fff;padding:10px 18px;cursor:pointer}
 #status{font-family:var(--mono);font-size:12px;color:var(--muted)}
 #status.err{color:var(--red)}
@@ -49,6 +51,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 .kosong{text-align:center;padding:60px 20px;color:var(--muted)}
 @media(max-width:640px){.kertas{padding:24px 16px}.kop{flex-wrap:wrap}.kop .kanan{margin-left:0;text-align:left;width:100%}
   .ttd{grid-template-columns:1fr}.info td:first-child{width:118px}h2{font-size:18px}}
+/* salinan untuk Download PDF selalu memakai tata letak A4, bukan versi HP */
+.kertas.mode-pdf{padding:44px 52px 40px!important}
+.kertas.mode-pdf .kop{flex-wrap:nowrap!important}
+.kertas.mode-pdf .kop .kanan{margin-left:auto!important;text-align:right!important;width:auto!important}
+.kertas.mode-pdf .ttd{grid-template-columns:1fr 1fr!important}
+.kertas.mode-pdf .info td:first-child{width:170px!important}
+.kertas.mode-pdf h2{font-size:21px!important}
 @media print{
   body{background:#fff;padding:0}
   .alat{display:none}
@@ -60,7 +69,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 </head>
 <body>
 <div class="alat">
-  <button onclick="window.print()">Cetak / Simpan PDF</button>
+  <button id="btn-unduh" onclick="unduhPdf()" disabled>⬇ Download PDF</button>
+  <button class="sekunder" onclick="window.print()">Cetak</button>
   <span id="status">Memuat…</span>
 </div>
 <div id="isi"></div>
@@ -137,6 +147,55 @@ const LOGO = "data:image/webp;base64,UklGRvYNAABXRUJQVlA4IOoNAAAQPACdASp4AHMAPj0
 const rp = n => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 const angka = n => Number(n || 0).toLocaleString('id-ID');
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* v112: unduh PDF langsung (tanpa jendela cetak) — file masuk folder Downloads
+   seperti unduhan biasa. Pustaka dimuat saat tombol ditekan pertama kali. */
+let pustakaPdf = null;
+function muatPustakaPdf(){
+  if(window.html2pdf) return Promise.resolve();
+  if(pustakaPdf) return pustakaPdf;
+  pustakaPdf = new Promise((ok, gagal) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload = ok; s.onerror = () => { pustakaPdf = null; gagal(new Error('Pustaka PDF gagal dimuat — cek koneksi internet')); };
+    document.head.appendChild(s);
+  });
+  return pustakaPdf;
+}
+async function unduhPdf(){
+  const el = document.querySelector('.kertas'); if(!el) return;
+  const btn = document.getElementById('btn-unduh');
+  const nama = (document.title.split(' — ')[0] || 'SPK').replace(/[^A-Za-z0-9._-]+/g, '-') + '.pdf';
+  btn.disabled = true; const teks = btn.textContent; btn.textContent = 'Menyiapkan PDF…';
+  /* salinan berukuran A4 tetap (794px), ditaruh di pojok kiri-atas di belakang
+     halaman — supaya hasil PDF tidak terpotong oleh posisi/lebar layar HP */
+  const wadah = document.createElement('div');
+  wadah.style.cssText = 'position:absolute;left:0;top:0;width:794px;z-index:-1;background:#fff;';
+  const salin = el.cloneNode(true);
+  salin.classList.add('mode-pdf');
+  salin.style.cssText = 'width:794px;max-width:none;margin:0;box-shadow:none;';
+  wadah.appendChild(salin);
+  document.body.appendChild(wadah);
+  const posisi = window.scrollY;
+  try{
+    await muatPustakaPdf();
+    window.scrollTo(0, 0);
+    await html2pdf().set({
+      margin: [6, 6, 6, 6],
+      filename: nama,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all'] }
+    }).from(salin).save();
+    setStatus('PDF tersimpan: ' + nama + ' (folder Download)');
+  }catch(err){
+    setStatus('Gagal membuat PDF: ' + err.message + '. Pakai tombol Cetak sebagai cadangan.', true);
+  }
+  wadah.remove();
+  window.scrollTo(0, posisi);
+  btn.disabled = false; btn.textContent = teks;
+}
+
 function setStatus(t, err){ const e = document.getElementById('status'); e.textContent = t; e.className = err ? 'err' : ''; }
 
 async function muat(){
@@ -144,6 +203,7 @@ async function muat(){
     try{
       const d = await gas({action:'spk_manual', no:noManual, ekspedisi:namaEkspedisi});
       renderManual(d);
+      document.getElementById('btn-unduh').disabled = false;
       setStatus('Data terbaru · ' + new Date().toLocaleTimeString('id-ID'));
       document.title = (d.spk && d.spk.nomor ? d.spk.nomor.replace(/\//g,'-') : 'SPK') + ' — UNIFAM';
     }catch(err){
@@ -159,6 +219,7 @@ async function muat(){
   try{
     const d = await gas({action:'spk_data', idOrder, idLelang, ekspedisi:namaEkspedisi});
     render(d);
+    document.getElementById('btn-unduh').disabled = false;
     setStatus('Data terbaru · ' + new Date().toLocaleTimeString('id-ID'));
     document.title = (d.spk && d.spk.nomor ? d.spk.nomor.replace(/\//g,'-') : 'SPK') + ' — UNIFAM';
   }catch(err){
