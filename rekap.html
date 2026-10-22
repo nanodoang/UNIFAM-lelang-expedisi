@@ -501,6 +501,34 @@ button{border-radius:10px;}
   table.rekap.beku th.b3,table.rekap.beku th.b4,table.rekap.beku th.b5,table.rekap.beku th.b6,table.rekap.beku th.b7{left:auto;box-shadow:none;}
   table.rekap.beku th.b2,table.rekap.beku td.b2{width:120px;min-width:120px;box-shadow:2px 0 5px -2px rgba(18,23,43,.18);}
 }
+
+/* ===== v113b: rekap seperti contoh ===== */
+.tab-atas{margin:4px 0 16px!important;border-bottom:1px solid #E1E5EE!important;border-radius:0!important;gap:2px!important;padding:0!important;}
+.tab-atas button{border:none!important;border-radius:0!important;background:transparent!important;padding:12px 14px!important;
+  border-bottom:3px solid transparent!important;color:#5A6480!important;font-weight:600;}
+.tab-atas button.aktif{border-bottom-color:var(--navy)!important;color:var(--navy)!important;background:transparent!important;font-weight:700;}
+.panel-dua{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0 4px;}
+.panel-dua:empty{display:none;}
+.pd-kartu{flex:1 1 380px;background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;min-width:0;}
+.pd-kop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.pd-kop h3{margin:0;font-family:var(--disp);font-weight:700;font-size:21px;}
+.pd-kop span{font-size:12.5px;color:#5A6480;}
+.pe-daftar{display:flex;flex-direction:column;gap:10px;}
+.pe-baris{display:grid;grid-template-columns:100px minmax(0,1fr) 34px 70px;gap:10px;align-items:center;font-size:14px;}
+.pe-nama{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pe-rel{height:14px;border-radius:7px;background:#E8EBF3;display:block;}
+.pe-isi{display:block;height:14px;border-radius:7px;background:var(--navy);}
+.pe-n{font-family:var(--mono);text-align:right;}
+.pe-h{font-family:var(--mono);text-align:right;font-size:13px;color:#5A6480;}
+.pe-h.hemat{color:#0B6350;} .pe-h.rugi{color:#A9322A;}
+.pb-baris{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #EDF0F5;font-size:14px;}
+.pb-n{font-family:var(--mono);font-weight:600;padding:2px 10px;border-radius:8px;}
+.pb-n.kuning{background:#FFF6E8;color:#8A5A0A;} .pb-n.merah{background:#FDECEA;color:#A9322A;} .pb-n.nol{background:#E3F4F1;color:#0B6350;}
+.pb-aksi{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.pb-btn{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line-tebal);background:#fff;color:var(--navy);
+  font-family:var(--sans);font-weight:700;font-size:13.5px;cursor:pointer;}
+.pb-btn:hover{border-color:var(--navy);}
+@media (max-width:760px){ .pe-baris{grid-template-columns:84px minmax(0,1fr) 28px 62px;gap:8px;} .pd-kartu{flex-basis:100%;} }
 </style>
 </head>
 <body>
@@ -545,12 +573,7 @@ button{border-radius:10px;}
 <div id="status-bar">Memuat data&hellip;</div>
 
 <main>
-  <div id="bar-bulan-atas"></div>
-  <div class="ringkas-kisi" id="ringkas"></div>
-
-  <div class="section-title"><h2 id="judul-tabel">Per Bulan</h2><small id="ket-tabel"></small></div>
-
-  <div class="tab-baris">
+  <nav class="tab-baris tab-atas" aria-label="Bagian rekap">
     <button id="t-bulan" class="aktif" onclick="gantiTab('bulan')">Per bulan</button>
     <button id="t-eks" onclick="gantiTab('eks')">Per ekspedisi</button>
     <button id="t-rinci" onclick="gantiTab('rinci')">Rincian &amp; realisasi</button>
@@ -558,7 +581,13 @@ button{border-radius:10px;}
     <button id="t-turun" onclick="gantiTab('turun')">Turun harga</button>
     <button id="t-hasil" onclick="gantiTab('hasil')">Hasil lelang</button>
     <button id="t-ranking" onclick="gantiTab('ranking')">Ranking rate</button>
-  </div>
+  </nav>
+  <div id="bar-bulan-atas"></div>
+  <div class="ringkas-kisi" id="ringkas"></div>
+  <div class="panel-dua" id="panel-dua"></div>
+
+  <div class="section-title"><h2 id="judul-tabel">Per Bulan</h2><small id="ket-tabel"></small></div>
+
 
   <button class="btn-salin" onclick="salin()">Salin tabel ini</button>
   <div class="kotak-tabel"><div class="gulir" id="wadah"></div></div>
@@ -931,7 +960,7 @@ function render(){
   /* v108: tab Hasil Lelang punya pemilih minggu & angka sendiri —
      filter bulan dan kartu penghematan di atas disembunyikan */
   const diHasil = tabAktif === 'hasil' || tabAktif === 'ranking';
-  ['bar-bulan-atas','ringkas'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display = diHasil ? 'none' : ''; });
+  ['bar-bulan-atas','ringkas','panel-dua'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display = diHasil ? 'none' : ''; });
   if(diHasil){
     const w = document.getElementById('wadah');
     w.classList.remove('gulir-tinggi');
@@ -968,6 +997,8 @@ function render(){
       <div class="nilai ${rk.totalHemat >= 0 ? 'hemat' : 'rugi'}">${rp(rk.totalHemat)}</div>
       <div class="ket">${pct(rk.persen)} dari rate rank 1</div></div>`;
 
+  { const pd = document.getElementById('panel-dua'); if(pd) pd.innerHTML = panelDua(); }
+
   const judul = {bulan:'Per Bulan', eks:'Per Ekspedisi', rinci:'Rincian & Realisasi', manual:'Order Manual', turun:'Turun Harga'};
   document.getElementById('judul-tabel').textContent = judul[tabAktif];
 
@@ -979,6 +1010,46 @@ function render(){
   else if(tabAktif === 'turun') wadah.innerHTML = tabelTurunHarga();
   else if(tabAktif === 'rinci') wadah.innerHTML = tabelRinci();
   else wadah.innerHTML = tabelKelompok(tabAktif === 'bulan' ? data.perBulan : ekspedisiTersaring(), tabAktif);
+}
+
+/* v113b: dua panel seperti contoh — kiriman per ekspedisi & realisasi belum lengkap */
+function panelDua(){
+  const r = rinciTersaring();
+  if(!r.length) return '';
+  const peta = new Map();
+  r.forEach(x => {
+    const k = String(x.pemenang || '-').trim().toUpperCase();
+    if(!peta.has(k)) peta.set(k, {nama:k, n:0, hemat:0});
+    const v = peta.get(k); v.n++;
+    if(!x.tanpaPembanding && x.hemat !== null && x.hemat !== undefined) v.hemat += Number(x.hemat) || 0;
+  });
+  const eks = Array.from(peta.values()).sort((a,b) => b.n - a.n).slice(0, 8);
+  const maks = Math.max(1, ...eks.map(e => e.n));
+  const jt = n => (n >= 0 ? '+' : '−') + (Math.abs(n) / 1e6).toLocaleString('id-ID', {maximumFractionDigits:1}) + ' jt';
+  const batang = eks.map(e => `<div class="pe-baris">
+      <span class="pe-nama" title="${aman(e.nama)}">${aman(e.nama)}</span>
+      <span class="pe-rel"><span class="pe-isi" style="width:${Math.max(4, e.n / maks * 100)}%"></span></span>
+      <span class="pe-n">${e.n}</span>
+      <span class="pe-h ${e.hemat > 0 ? 'hemat' : e.hemat < 0 ? 'rugi' : ''}">${e.hemat ? jt(e.hemat) : '0'}</span>
+    </div>`).join('');
+  const kosongKapal = r.filter(x => x.noOrder && (!x.noKontener || !x.namaKapal)).length;
+  const belumAta = r.filter(x => x.noOrder && !x.ata).length;
+  const belumDoor = r.filter(x => x.noOrder && !x.dooring).length;
+  const tanpaNo = r.filter(x => !x.noOrder).length;
+  const baris = (t, n, w) => `<div class="pb-baris"><span>${t}</span><span class="pb-n ${n ? w : 'nol'}">${n}</span></div>`;
+  return `<section class="pd-kartu">
+      <div class="pd-kop"><h3>Kiriman per ekspedisi</h3><span>jumlah · hemat vs rank 1</span></div>
+      <div class="pe-daftar">${batang}</div>
+    </section>
+    <section class="pd-kartu">
+      <div class="pd-kop"><h3>Realisasi belum lengkap</h3><span>${r.length} kiriman${bulanPilih ? ' · ' + labelBulan(bulanPilih) : ''}</span></div>
+      ${baris('Kapal / kontener kosong', kosongKapal, 'kuning')}
+      ${baris('Belum ATA', belumAta, 'kuning')}
+      ${baris('Belum dooring', belumDoor, 'kuning')}
+      ${baris('Menang tanpa No Order', tanpaNo, 'merah')}
+      <div class="pb-aksi"><button class="pb-btn" onclick="gantiTab('rinci')">Lihat rinciannya →</button>
+        <button class="pb-btn" onclick="bangunReport()">Tulis ke tab Report</button></div>
+    </section>`;
 }
 
 /* Angka di kartu atas — mengikuti bulan yang dipilih, kalau ada */

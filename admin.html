@@ -698,6 +698,102 @@ footer{max-width:1180px;}
   .tindakan{grid-template-columns:repeat(2,minmax(0,1fr));}
   .tk:last-child{grid-column:1 / -1;min-height:auto;}
 }
+
+/* ===== v113b: mengikuti contoh tampilan ===== */
+.sembunyi{display:none!important;}
+.sisi nav{padding-top:14px;}
+.sisi nav a .nb{margin-left:auto;font-family:var(--mono);font-size:11.5px;background:rgba(255,255,255,.16);border-radius:9px;padding:0 8px;}
+.sisi nav a .nb.oranye{background:var(--amber);color:#fff;}
+.bar-atas h1{font-size:30px;}
+.bar-atas .aksi{flex-wrap:wrap;gap:10px;}
+.cari-admin{display:flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line-tebal);
+  background:#fff;min-width:250px;margin:0;font-family:var(--sans);text-transform:none;letter-spacing:0;color:var(--muted);}
+.cari-admin input{border:none!important;outline:none;box-shadow:none!important;padding:0;min-height:0;height:40px;font-family:var(--sans);font-size:14.5px;background:transparent;}
+.btn-baru{height:44px;padding:0 18px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-family:var(--sans);
+  font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;cursor:pointer;}
+.btn-baru:hover{background:var(--navy-tua);}
+.menu-lain{position:relative;}
+.menu-lain summary{list-style:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line-tebal);background:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:var(--navy);}
+.menu-lain summary::-webkit-details-marker{display:none;}
+.ml-isi{position:absolute;right:0;top:50px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(18,23,43,.15);
+  padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:60;}
+.ml-isi button{background:none;border:none;text-align:left;padding:10px 12px;font-family:var(--sans);font-size:14px;cursor:pointer;border-radius:8px;}
+.ml-isi button:hover{background:#F3F5F9;}
+.tindakan{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));}
+.tk b{font-size:30px;}
+.btn-tutup-paste{background:none;border:1px solid var(--line-tebal);border-radius:9px;padding:5px 12px;font-family:var(--sans);font-size:13px;cursor:pointer;}
+
+/* pengajuan: satu baris seperti contoh */
+.pj-kartu{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:18px;align-items:center;padding:16px 20px;border:1px solid #F0C98A;}
+.pj-kartu .jdl,.pj-kartu .baris,.pj-kartu .alasan,.pj-kartu .pj-ket{grid-column:1;}
+.pj-kartu .pj-tb{grid-column:2;grid-row:1 / span 3;flex-wrap:wrap;justify-content:flex-end;max-width:430px;}
+.pj-kartu .pj-tb button,.pj-kartu .pj-tb a{flex:0 0 auto;min-width:0;height:44px;padding:0 16px;}
+.pj-kartu .alasan{margin-bottom:0;border-radius:10px;}
+.pj-kartu .jdl{font-size:13px;letter-spacing:.06em;}
+
+/* saringan pil */
+.chip-baris{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+.chip{min-height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--line-tebal);background:#fff;
+  font-family:var(--sans);font-weight:600;font-size:13.5px;color:#3A4360;cursor:pointer;}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+/* tabel lelang terbuka */
+.tabel-lelang-wadah{background:#fff;border:1px solid #E1E5EE;border-radius:16px;overflow-x:auto;}
+table.tabel-lelang{width:100%;min-width:900px;border-collapse:collapse;font-size:14px;border-radius:0;}
+table.tabel-lelang thead th{background:#F7F8FB;text-align:left;color:#5A6480;font-family:var(--sans);font-size:12.5px;font-weight:600;
+  letter-spacing:0;text-transform:none;padding:12px 10px;border-bottom:1px solid #E1E5EE;white-space:nowrap;}
+table.tabel-lelang th.kanan,table.tabel-lelang td.kanan{text-align:right;}
+.lb-baris td{padding:13px 10px;border-top:1px solid #EDF0F5;vertical-align:middle;cursor:pointer;}
+.lb:first-of-type .lb-baris td{border-top:none;}
+.lb-baris:hover td{background:#FAFBFE;}
+.lb.buka .lb-baris td{background:#F3F5FB;}
+.lb.dipilih .lb-baris td{background:#EEF8F7;}
+.lb-cek{width:36px;padding-left:16px!important;}
+.lb-cek input{width:18px;height:18px;min-height:0;accent-color:var(--navy);}
+.lb-kota{font-weight:700;}
+.lb-sub{font-size:12.5px;color:#5A6480;}
+.pil-tipe{background:#ECEEF8;color:var(--navy);font-weight:600;font-size:12.5px;padding:3px 8px;border-radius:6px;white-space:nowrap;}
+.pil-st{font-family:var(--mono);font-weight:600;font-size:12.5px;padding:3px 8px;border-radius:6px;white-space:nowrap;}
+.pil-st.merah{background:#FDECEA;color:#A9322A;} .pil-st.hijau{background:#E3F4F1;color:#0B6350;font-family:var(--sans);}
+.pil-st.biru{background:#ECEEF8;color:var(--navy);font-family:var(--sans);font-size:11px;}
+.mono{font-family:var(--mono);} .kecil{font-size:13px;} .tebal{font-weight:600;}
+.lb-beda{font-size:12px;font-weight:600;color:#5A6480;} .lb-beda.merah{color:#A9322A;} .lb-beda.hijau{color:#0B6350;}
+.btn-lb{height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--navy);background:#fff;color:var(--navy);
+  font-family:var(--sans);font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;}
+.btn-lb.utama{background:var(--navy);color:#fff;}
+.lb-rinci td{padding:0;border:none;}
+.lb.buka .lb-rinci td{padding:4px 14px 16px;background:#F3F5FB;}
+.lb-rinci .card{margin:0;box-shadow:none;}
+.lb-rinci .punggung{display:none;}
+.lb-rinci .card-head.dengan-cek{grid-template-columns:1fr auto;}
+.sr{position:absolute;left:-9999px;}
+@media (max-width:860px){
+  .cari-admin{min-width:0;flex:1 1 100%;order:3;}
+  .bar-atas h1{font-size:24px;}
+  .pj-kartu{grid-template-columns:1fr;}
+  .pj-kartu .pj-tb{grid-column:1;grid-row:auto;justify-content:flex-start;margin-top:10px;max-width:none;}
+  .aku{display:none!important;}
+}
+
+/* v113b-2 */
+#kotak-pengajuan .section-title{display:none;}
+#kotak-pengajuan{margin-top:14px;}
+.pj-kartu .pj-tb{flex-wrap:nowrap;max-width:none;}
+.pj-kartu .pj-ket{font-size:12px;margin-top:6px;}
+#bar-kota-lelang,#bar-tujuan-lelang{display:inline-block;margin:0 8px 12px 0;vertical-align:middle;}
+#tab-isi-lelang .bar-tanggal{background:none!important;border:none!important;padding:0!important;margin:0!important;box-shadow:none!important;}
+#tab-isi-lelang .bar-tanggal .bt-l{display:none;}
+#tab-isi-lelang .bar-tanggal select{height:38px;border-radius:19px!important;padding:0 14px;font-family:var(--sans);font-size:13.5px;}
+.bar-hapus{gap:8px;margin-bottom:12px;}
+.bar-hapus button{height:36px;padding:0 13px!important;font-size:13px!important;font-weight:600!important;}
+.btn-siar{background:#fff!important;border:1px solid #1F9E52!important;color:#147A3E!important;}
+.btn-siar:hover{background:#1F9E52!important;color:#fff!important;}
+@media (max-width:860px){ .pj-kartu .pj-tb{flex-wrap:wrap;} }
+
+.pj-kartu{grid-template-columns:1fr!important;}
+.pj-kartu .pj-tb{grid-column:1!important;grid-row:auto!important;justify-content:flex-start;margin-top:12px;flex-wrap:wrap;}
+.btn-lb{min-height:38px;height:auto;}
 </style>
 </head>
 <body>
@@ -709,16 +805,18 @@ footer{max-width:1180px;}
       <div><div class="t">Lelang</div><div class="s">PT. UNIFAM</div></div>
     </div>
     <nav>
-      <div class="grup">Harian</div>
-      <a href="ringkasan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15V11M12 15V8M16 15v-5"/></svg></span> Ringkasan</a>
-      <a href="admin.html" class="aktif"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span> Panel lelang</a>
+      <a href="admin.html" class="aktif" id="m-beranda" onclick="event.preventDefault();menuAdmin('beranda')"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg></span> Beranda</a>
+      <a href="#" id="m-lelang" onclick="event.preventDefault();menuAdmin('lelang')"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span> Lelang <span class="nb" id="nb-lelang"></span></a>
+      <a href="#" id="m-kiriman" onclick="event.preventDefault();menuAdmin('kiriman')"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span> Kiriman &amp; order <span class="nb" id="nb-kiriman"></span></a>
+      <a href="#" id="m-pj" onclick="event.preventDefault();menuAdmin('pengajuan')"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> Pengajuan harga <span class="nb oranye" id="nb-pj"></span></a>
+      <a href="rekap.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15V11M12 15V8M16 15v-5"/></svg></span> Rekap &amp; report</a>
+      <a href="ringkasan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 6"/></svg></span> Ringkasan</a>
       <div class="grup">Data</div>
       <a href="ekspedisi.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.3 3.6 5"/></svg></span> Ekspedisi</a>
       <a href="rate.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg></span> Template rate</a>
       <a href="kesepakatan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></span> Kesepakatan rate</a>
-      <a href="rekap.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span> Rekap & realisasi</a>
       <div class="grup">Sistem</div>
-      <a href="pengaturan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span> Pengaturan</a>
+      <a href="pengaturan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span> Setelan</a>
     </nav>
     <div class="sisi-kaki" id="sisi-kaki">PT. UNIFAM<br>Logistik &amp; Transportasi</div>
   </aside>
@@ -727,12 +825,19 @@ footer{max-width:1180px;}
     <div class="bar-atas">
       <button class="menu" aria-label="Menu" onclick="document.getElementById('sisi').classList.toggle('buka')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <div class="tajuk">
-        <h1>Panel Lelang</h1>
-        <div class="ket">Posting lelang, lihat penawaran, pilih pemenang</div>
+        <h1 id="sapa">Panel Lelang</h1>
+        <div class="ket" id="sapa-ket">Posting lelang, lihat penawaran, pilih pemenang</div>
       </div>
-      <div class="aksi"><button class="btn-segar" onclick="cekArmada()" title="Periksa akses ke spreadsheet Pesanan Armada">Cek Armada</button>
-        <button class="btn-segar" onclick="segarkanSekarang()" title="Ambil ulang data dari spreadsheet, lewati simpanan sementara">Segarkan</button>
-        <button class="btn-kunci" onclick="kunciPanel()">Kunci</button>
+      <div class="aksi">
+        <label class="cari-admin"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input id="cari-admin" type="text" placeholder="Cari kota, distributor, ekspedisi…" aria-label="Cari lelang" oninput="cariAdmin=this.value;render()"></label>
+        <button class="btn-baru" onclick="bukaPaste()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Lelang dari planning</button>
+        <details class="menu-lain"><summary aria-label="Menu lain">⋯</summary>
+          <div class="ml-isi">
+            <button onclick="cekArmada()">Cek akses Pesanan Armada</button>
+            <button onclick="segarkanSekarang()">Segarkan data</button>
+            <button onclick="kunciPanel()">Kunci panel</button>
+          </div></details>
         <div class="aku"><div class="bulat">N</div><div><div class="n">Nano</div><div class="r">Admin</div></div></div>
       </div>
     </div>
@@ -754,9 +859,10 @@ footer{max-width:1180px;}
   </div>
 
   <div id="tab-isi-lelang">
+    <div id="panel-paste" class="sembunyi">
     <div class="section-title">
       <h2>Tambah Lelang dari Planning</h2>
-      <small>paste langsung dari Excel</small>
+      <small><button class="btn-tutup-paste" onclick="bukaPaste(false)">tutup</button></small>
     </div>
     <div class="panel-box">
       <textarea id="paste-area" placeholder="Paste baris planning di sini, contoh:&#10;13/08/2026&#9;WURY&#9;PT. Prisma Reksa Sejahtera Bersama - DUMAI&#9;1.868&#9;30,7&#9;20 ft"></textarea>
@@ -777,11 +883,13 @@ footer{max-width:1180px;}
       <button class="btn-primary" onclick="prosesPaste()">Proses Paste</button>
       <div id="preview-wrap"></div>
     </div>
+    </div>
 
     <div class="section-title">
-      <h2>Lelang Terbuka</h2>
+      <h2>Lelang terbuka</h2>
       <small id="jumlah-lelang"></small>
     </div>
+    <div class="chip-baris" id="filter-lelang"></div>
     <div class="bar-hapus">
       <button class="btn-siar" onclick="bukaSiaran()">Beritahu semua ekspedisi</button>
       <button class="btn-rate" onclick="bukaUsulRate()">Perbarui tab Rate</button>
@@ -931,6 +1039,23 @@ let kotaPilihK = '';      // '' = semua kota (tab Kiriman)
 let rateInfo = {jumlah:0, kota:[]};
 let versiScript = '';
 let terpilih = new Set();
+let lelangBuka = new Set(), cariAdmin = '', filterLelang = '';   // v113b
+function bukaLelang(id){ if(lelangBuka.has(id)) lelangBuka.delete(id); else lelangBuka.add(id); render(); }
+function bukaPaste(buka){
+  const el = document.getElementById('panel-paste'); if(!el) return;
+  const mau = buka === undefined ? el.classList.contains('sembunyi') : buka;
+  el.classList.toggle('sembunyi', !mau);
+  if(mau){ gantiTabAdmin('lelang'); el.scrollIntoView({behavior:'smooth', block:'start'}); setTimeout(() => { const t = document.getElementById('paste-area'); if(t) t.focus(); }, 300); }
+}
+function menuAdmin(m){
+  ['beranda','lelang','kiriman','pj'].forEach(k => { const a = document.getElementById('m-' + k); if(a) a.classList.remove('aktif'); });
+  const a = document.getElementById('m-' + (m === 'pengajuan' ? 'pj' : m)); if(a) a.classList.add('aktif');
+  document.getElementById('sisi').classList.remove('buka');
+  if(m === 'pengajuan'){ const el = document.getElementById('kotak-pengajuan'); if(el) el.scrollIntoView({behavior:'smooth'}); return; }
+  if(m === 'beranda'){ gantiTabAdmin('lelang'); return; }
+  gantiTabAdmin(m);
+  const t = document.querySelector('.tab-admin'); if(t) t.scrollIntoView({behavior:'smooth'});
+}
 let terpilihOrder = new Set();   // combo order — beda dari 'terpilih' (combo lelang)
 
 function togglePilihOrder(id, el){
@@ -1263,12 +1388,18 @@ function renderTindakan(){
   const kotak = (n, judul, ket, aksi, warna) => `<button class="tk ${n ? warna : ''}" onclick="${aksi}">
       <span class="tk-j">${judul}</span><b>${n}</b><span class="tk-k">${ket}</span></button>`;
   el.innerHTML =
-    kotak(pj.length, 'Pengajuan harga', pj.length ? pj.map(p => p.ekspedisi + ' · ' + p.tujuan.split(' - ').pop()).slice(0,2).join(', ') : 'tidak ada yang menunggu',
-          "document.getElementById('kotak-pengajuan').scrollIntoView({behavior:'smooth'})", 'oranye') +
-    kotak(siap.length, 'Siap pilih pemenang', siap.length ? 'lelang sudah tutup' : 'belum ada yang tutup', "gantiTabAdmin('lelang')", 'biru') +
-    kotak(appr.length, 'Menunggu approval', appr.length ? 'pengalihan pemenang' : 'tidak ada', "gantiTabAdmin('kiriman')", 'oranye') +
-    kotak(tanpaOrder.length, 'Menang tanpa order', tanpaOrder.length ? 'belum dibuatkan No Order' : 'semua sudah ada order', "gantiTabAdmin('kiriman')", 'merah') +
-    kotak(terbuka.length, 'Lelang terbuka', terbuka.length - siap.length + ' masih berjalan', "gantiTabAdmin('lelang')", '');
+    kotak(pj.length, 'Pengajuan harga', pj.length ? pj.slice(0,2).map(p => p.ekspedisi + ' · ' + formatRupiah(p.hargaUsul)).join(', ') : 'tidak ada yang menunggu',
+          "menuAdmin('pengajuan')", 'oranye') +
+    kotak(siap.length, 'Siap pilih pemenang', siap.length ? 'lelang sudah tutup' : 'belum ada yang tutup', "filterLelang='tutup';menuAdmin('lelang');render()", 'biru') +
+    kotak(tanpaOrder.length + appr.length, 'Menang tanpa order', (tanpaOrder.length ? tanpaOrder.length + ' belum dibuatkan No Order' : 'semua sudah ada order') + (appr.length ? ' · ' + appr.length + ' menunggu approval' : ''), "menuAdmin('kiriman')", 'merah') +
+    kotak(terbuka.length, 'Lelang terbuka', (terbuka.length - siap.length) + ' masih berjalan', "filterLelang='';menuAdmin('lelang');render()", '');
+  const nb = (id, n) => { const e = document.getElementById(id); if(e){ e.textContent = n || ''; e.style.display = n ? '' : 'none'; } };
+  nb('nb-lelang', terbuka.length); nb('nb-kiriman', tanpaOrder.length); nb('nb-pj', pj.length);
+  const jam = new Date().getHours();
+  const s = document.getElementById('sapa'), k = document.getElementById('sapa-ket');
+  if(s) s.textContent = `Selamat ${jam < 11 ? 'pagi' : jam < 15 ? 'siang' : jam < 18 ? 'sore' : 'malam'}, Nano`;
+  if(k) k.textContent = new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) +
+    ' · data terbaru ' + new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
 }
 
 /* Paksa ambil ulang dari spreadsheet — dipakai setelah mengedit tab Rate,
@@ -3036,6 +3167,8 @@ async function pilihPemenangCombo(comboId, ekspedisi){
 
 function gantiTabAdmin(t){
   tabAdmin = t;
+  ['lelang','kiriman'].forEach(k => { const a = document.getElementById('m-' + k); if(a) a.classList.toggle('aktif', k === t); });
+  { const b = document.getElementById('m-beranda'); if(b) b.classList.remove('aktif'); }
   document.getElementById('tab-isi-lelang').classList.toggle('sembunyi', t !== 'lelang');
   document.getElementById('tab-isi-kiriman').classList.toggle('sembunyi', t !== 'kiriman');
   document.getElementById('t-lelang').className  = t === 'lelang'  ? 'aktif' : '';
@@ -3049,6 +3182,22 @@ function render(){
   const semuaTerbuka = lelangList.filter(l => l.status !== 'selesai');
   let terbuka = kotaPilih ? semuaTerbuka.filter(l => l.kota === kotaPilih) : semuaTerbuka;
   terbuka = tujuanPilih ? terbuka.filter(l => namaTujuan(l) === tujuanPilih) : terbuka;
+  /* v113b: cari + saringan pil */
+  const kini0 = Date.now();
+  const sudahTutupL = l => l.batasWaktu && l.batasWaktu - kini0 <= 0;
+  const termurahL = l => { const b = bidsUntuk(l.id); return b.length ? b[0].harga : 0; };
+  const targetL = l => l.target || l.rateExisting || 0;
+  const diAtasTarget = l => termurahL(l) && targetL(l) && termurahL(l) > targetL(l);
+  { const q = String(cariAdmin || '').trim().toLowerCase();
+    if(q) terbuka = terbuka.filter(l => [l.kota, l.customer, l.tipeMobil, l.id, l.noOrder]
+      .concat(bidsUntuk(l.id).map(b => b.ekspedisi)).join(' ').toLowerCase().includes(q)); }
+  const nTutup = terbuka.filter(sudahTutupL).length, nAtas = terbuka.filter(diAtasTarget).length;
+  { const f = document.getElementById('filter-lelang');
+    if(f) f.innerHTML = `<button class="chip ${filterLelang===''?'on':''}" onclick="filterLelang='';render()">Semua · ${terbuka.length}</button>
+      <button class="chip ${filterLelang==='tutup'?'on':''}" onclick="filterLelang='tutup';render()">Sudah tutup · ${nTutup}</button>
+      <button class="chip ${filterLelang==='atas'?'on':''}" onclick="filterLelang='atas';render()">Di atas target · ${nAtas}</button>`; }
+  if(filterLelang === 'tutup') terbuka = terbuka.filter(sudahTutupL);
+  if(filterLelang === 'atas') terbuka = terbuka.filter(diAtasTarget);
   document.getElementById('jumlah-lelang').textContent =
     (kotaPilih || tujuanPilih)
       ? `${terbuka.length} di ${tujuanPilih || kotaPilih} · ${semuaTerbuka.length} total`
@@ -3093,8 +3242,10 @@ function render(){
     } }
 
   grid.innerHTML = terbuka.length === 0
-    ? `<div class="empty">${(tujuanPilih || kotaPilih) ? 'Tidak ada lelang terbuka di ' + (tujuanPilih || kotaPilih) + '.' : 'Belum ada lelang terbuka saat ini.'}</div>`
-    : terbuka.map(l=>{
+    ? `<div class="empty">${(tujuanPilih || kotaPilih || cariAdmin || filterLelang) ? 'Tidak ada lelang terbuka di pilihan ini.' : 'Belum ada lelang terbuka saat ini.'}</div>`
+    : `<div class="tabel-lelang-wadah"><table class="tabel-lelang">
+        <thead><tr><th class="lb-cek"></th><th>Tujuan</th><th>Tipe</th><th>Muat</th><th>Tutup</th><th>Penawar</th>
+          <th class="kanan">Termurah</th><th class="kanan">Target</th><th><span class="sr">Aksi</span></th></tr></thead>` + terbuka.map(l=>{
         const bids = bidsUntuk(l.id);
         const lewat = l.batasWaktu - Date.now() <= 0;
         const rows = bids.length === 0
@@ -3156,11 +3307,9 @@ function render(){
           ratePanel = `<div class="rate-panel">Target Rate UNIFAM: <b>${formatRupiah(target)}</b> ${selisih}<br><span style="font-size:10.5px;">${l.target && l.target < hitungTargetLokal(l.rateExisting) ? 'turun dari penawaran lelang sebelumnya · ' : ''}rank 1 ${formatRupiah(l.rateExisting)}${l.asalRate ? ' (' + l.asalRate + ')' : ''} dipotong 3% lalu dibulatkan ke atas kelipatan 50 ribu</span></div>`;
         }
 
-        return `<div class="card">
+        const kartuRinci = `<div class="card">
           <div class="card-head dengan-cek">
             <div class="punggung">
-              <input type="checkbox" class="cek" ${terpilih.has(l.id) ? 'checked' : ''}
-                     onchange="togglePilih('${l.id}', this)" title="pilih untuk dihapus">
               <span class="kode">${l.kota}</span>
             </div>
             <div class="kepala-isi">
@@ -3197,7 +3346,34 @@ function render(){
             </table>
           </div>
         </div>`;
-      }).join('');
+
+        /* baris ringkas seperti contoh tampilan; rincian (penawaran, pilih pemenang) dibuka di bawahnya */
+        const buka = lelangBuka.has(l.id);
+        const sisa = l.batasWaktu - Date.now();
+        const tutupTeks = lewat ? '<span class="pil-st hijau">tutup</span>'
+          : sisa < 6*3600e3 ? `<span class="pil-st merah">${Math.floor(sisa/3600e3)}j ${Math.floor(sisa%3600e3/60e3)}m</span>`
+          : `<span class="mono kecil">${tanggalTutup(l.batasWaktu)}</span>`;
+        const target = l.target || l.rateExisting || 0;
+        const murah = bids.length ? bids[0] : null;
+        const beda = (murah && target) ? murah.harga - target : null;
+        const rb = n => (n/1000 >= 1000 ? (n/1e6).toLocaleString('id-ID',{maximumFractionDigits:2}) + ' jt' : Math.round(n/1000).toLocaleString('id-ID') + ' rb');
+        return `<tbody class="lb ${buka ? 'buka' : ''} ${terpilih.has(l.id) ? 'dipilih' : ''}">
+          <tr class="lb-baris" onclick="if(!event.target.closest('input,button,a'))bukaLelang('${l.id}')">
+            <td class="lb-cek"><input type="checkbox" class="cek" ${terpilih.has(l.id) ? 'checked' : ''}
+                 onchange="togglePilih('${l.id}', this)" aria-label="pilih ${l.kota}"></td>
+            <td><div class="lb-kota">${l.kota}${l.combo ? ' <span class="pil-st biru">combo</span>' : ''}</div><div class="lb-sub">${l.customer}</div></td>
+            <td><span class="pil-tipe">${l.tipeMobil}</span></td>
+            <td class="mono kecil">${l.tanggalMuat || l.tanggal || '—'}</td>
+            <td>${tutupTeks}</td>
+            <td class="mono">${bids.length}</td>
+            <td class="kanan">${murah ? `<div class="mono tebal">${formatRupiah(murah.harga).replace('Rp ','')}</div><div class="lb-sub">${murah.ekspedisi}</div>` : '<span class="lb-sub">belum ada</span>'}</td>
+            <td class="kanan">${target ? `<div class="mono">${formatRupiah(target).replace('Rp ','')}</div>${beda === null ? '' :
+                `<div class="lb-beda ${beda > 0 ? 'merah' : beda < 0 ? 'hijau' : ''}">${beda > 0 ? '+' : beda < 0 ? '−' : ''}${beda ? rb(Math.abs(beda)) : 'pas'}</div>`}` : '<span class="lb-sub">—</span>'}</td>
+            <td class="kanan"><button class="${lewat && bids.length ? 'btn-lb utama' : 'btn-lb'}" onclick="bukaLelang('${l.id}')">${buka ? 'Tutup' : lewat && bids.length ? 'Pilih pemenang' : 'Lihat penawaran'}</button></td>
+          </tr>
+          <tr class="lb-rinci"><td colspan="9">${buka ? kartuRinci : ''}</td></tr>
+        </tbody>`;
+      }).join('') + `</table></div>`;
 
   const selesai = lelangList.filter(l => l.status === 'selesai');
 
