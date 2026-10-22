@@ -639,6 +639,65 @@ table.tabel-order td.kanan{text-align:right;white-space:nowrap;}
 .pj-ket{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
 details.pj-riwayat{margin:4px 0 10px;font-size:13px}
 details.pj-riwayat summary{cursor:pointer;color:var(--muted);font-family:var(--disp);letter-spacing:.06em;text-transform:uppercase;font-size:12px;padding:4px 0}
+
+/* =====================================================================
+   v113 — TAMPILAN BARU (hanya gaya; data & cara simpan tidak berubah)
+   ===================================================================== */
+body{background:#F3F5F9!important;}
+.sisi{background:#1C2159;}
+.sisi-kop{padding:18px 16px;}
+.sisi-kop img{border-radius:9px;height:34px;}
+.sisi nav{padding:10px 10px;}
+.sisi .grup{padding:16px 10px 6px;}
+.sisi nav a{border-left:none;border-radius:10px;padding:10px 12px;margin-bottom:2px;font-size:14.5px;}
+.sisi nav a.aktif{background:rgba(255,255,255,.13);}
+.sisi nav a .ik{width:18px;display:flex;align-items:center;justify-content:center;opacity:1;}
+.bar-atas{padding:14px 26px;}
+.bar-atas h1{text-transform:none;font-size:27px;letter-spacing:.01em;}
+.bar-atas .menu{border-radius:10px;padding:8px 10px;color:var(--navy);}
+.bar-atas .aku .bulat{border-radius:50%;}
+.btn-segar,.btn-kunci{border-radius:10px!important;min-height:38px;}
+main,#status-bar{max-width:1180px;}
+main{padding-left:26px;padding-right:26px;}
+#status-bar{padding-left:26px;padding-right:26px;}
+
+.tindakan{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0 6px;}
+.tk{background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:14px 16px;text-align:left;cursor:pointer;
+  display:flex;flex-direction:column;gap:3px;font-family:var(--sans);color:var(--tinta);min-height:104px;}
+.tk:hover{border-color:var(--navy);}
+.tk b{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1.1;}
+.tk .tk-j{font-size:13px;font-weight:700;color:#3A4360;}
+.tk .tk-k{font-size:12.5px;color:var(--muted);line-height:1.35;}
+.tk.oranye{border-color:#F0C98A;background:#FFFBF4;} .tk.oranye .tk-j{color:#8A5A0A;}
+.tk.merah{border-color:#F3C4BF;background:#FFF8F7;} .tk.merah .tk-j{color:#A9322A;}
+.tk.biru{border-color:#C9CEEB;background:#F7F8FD;} .tk.biru .tk-j{color:var(--navy);}
+
+.tab-admin{border:none;background:transparent;gap:8px;margin:20px 0 6px;flex-wrap:wrap;}
+.tab-admin button{border:1px solid var(--line-tebal);border-radius:22px;background:#fff;padding:10px 18px;
+  font-family:var(--sans);font-weight:600;font-size:14.5px;letter-spacing:0;text-transform:none;color:#3A4360;}
+.tab-admin button.aktif{background:var(--navy);border-color:var(--navy);color:#fff;}
+.tab-admin .hit{border-radius:9px;}
+.section-title h2{text-transform:none;letter-spacing:.01em;font-size:22px;}
+.panel-box,.card,.pj-kartu,.kotak-tabel,.jendela,.peringatan-versi,.empty,#preview-wrap > div{border-radius:16px;}
+.card{border-color:#E1E5EE;overflow:hidden;}
+.card-body{background:#fff;}
+.pj-kartu{border-left-width:1px;border-color:#F0C98A;}
+.pj-kartu.putus-setuju{border-color:#BFE3DA;} .pj-kartu.putus-tolak{border-color:#F3C4BF;}
+.pj-tb button,.pj-tb a{border-radius:11px;}
+input,textarea,select{border-radius:10px!important;}
+button{border-radius:10px;}
+.btn-primary{border-radius:12px;text-transform:none;letter-spacing:.02em;font-family:var(--sans);font-size:15px;}
+.btn-siar,.btn-rate,.btn-combo,.btn-hapus,.btn-hapus-semua,.btn-buka,.btn-nego,.btn-wa-kecil,.btn-wa-approval{border-radius:10px!important;}
+.tirai .jendela{border-radius:18px;}
+table{border-radius:12px;}
+footer{max-width:1180px;}
+.bar-hapus button{text-transform:none!important;letter-spacing:.01em!important;font-family:var(--sans)!important;font-size:14px!important;}
+@media (max-width:860px){
+  main,#status-bar{padding-left:14px;padding-right:14px;}
+  .bar-atas{padding:12px 14px;}
+  .tindakan{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tk:last-child{grid-column:1 / -1;min-height:auto;}
+}
 </style>
 </head>
 <body>
@@ -651,22 +710,22 @@ details.pj-riwayat summary{cursor:pointer;color:var(--muted);font-family:var(--d
     </div>
     <nav>
       <div class="grup">Harian</div>
-      <a href="ringkasan.html"><span class="ik">◧</span> Ringkasan</a>
-      <a href="admin.html" class="aktif"><span class="ik">▤</span> Panel lelang</a>
+      <a href="ringkasan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15V11M12 15V8M16 15v-5"/></svg></span> Ringkasan</a>
+      <a href="admin.html" class="aktif"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span> Panel lelang</a>
       <div class="grup">Data</div>
-      <a href="ekspedisi.html"><span class="ik">◈</span> Ekspedisi</a>
-      <a href="rate.html"><span class="ik">≡</span> Template rate</a>
-      <a href="kesepakatan.html"><span class="ik">◇</span> Kesepakatan rate</a>
-      <a href="rekap.html"><span class="ik">◔</span> Rekap & realisasi</a>
+      <a href="ekspedisi.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.3 3.6 5"/></svg></span> Ekspedisi</a>
+      <a href="rate.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg></span> Template rate</a>
+      <a href="kesepakatan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></span> Kesepakatan rate</a>
+      <a href="rekap.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span> Rekap & realisasi</a>
       <div class="grup">Sistem</div>
-      <a href="pengaturan.html"><span class="ik">⚙</span> Pengaturan</a>
+      <a href="pengaturan.html"><span class="ik"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span> Pengaturan</a>
     </nav>
     <div class="sisi-kaki" id="sisi-kaki">PT. UNIFAM<br>Logistik &amp; Transportasi</div>
   </aside>
 
   <div class="utama">
     <div class="bar-atas">
-      <button class="menu" onclick="document.getElementById('sisi').classList.toggle('buka')">☰</button>
+      <button class="menu" aria-label="Menu" onclick="document.getElementById('sisi').classList.toggle('buka')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <div class="tajuk">
         <h1>Panel Lelang</h1>
         <div class="ket">Posting lelang, lihat penawaran, pilih pemenang</div>
@@ -683,32 +742,7 @@ details.pj-riwayat summary{cursor:pointer;color:var(--muted);font-family:var(--d
 <div id="status-bar">Memuat data…</div>
 
 <main>
-  <a class="tautan-eks" href="ringkasan.html">
-    <span class="ikon">&#9673;</span>
-    <span>
-      <b>Ringkasan</b>
-      <small>angka bulan ini, tujuan tersibuk, peringkat ekspedisi</small>
-    </span>
-    <span class="panah">&rarr;</span>
-  </a>
-
-  <a class="tautan-eks" href="rekap.html">
-    <span class="ikon">&#128200;</span>
-    <span>
-      <b>Rekap Lelang</b>
-      <small>penghematan terhadap target rate &amp; realisasi pengiriman</small>
-    </span>
-    <span class="panah">&rarr;</span>
-  </a>
-
-  <a class="tautan-eks" href="ekspedisi.html">
-    <span class="ikon">&#128100;</span>
-    <span>
-      <b>Daftar Ekspedisi</b>
-      <small id="ket-eks">kelola akun, user &amp; password mitra</small>
-    </span>
-    <span class="panah">&rarr;</span>
-  </a>
+  <section id="kotak-tindakan" class="tindakan" aria-label="Perlu tindakan"></section>
 
   <div id="kotak-pengajuan"></div>
 
@@ -1213,6 +1247,28 @@ function pakaiData(d){
   cekVersiBackend(d.versi);
   render();
   renderPengajuan();
+  renderTindakan();
+}
+
+/* v113: angka "perlu tindakan" di atas panel — dihitung dari data yang sudah dimuat */
+function renderTindakan(){
+  const el = document.getElementById('kotak-tindakan'); if(!el) return;
+  const kini = Date.now();
+  const terbuka = lelangList.filter(l => l.status !== 'selesai');
+  const siap = terbuka.filter(l => l.batasWaktu && l.batasWaktu - kini <= 0);
+  const tanpaOrder = lelangList.filter(l => l.status === 'selesai' &&
+    orderUntuk(l.id).filter(o => o.status !== 'batal').length === 0);
+  const pj = (pengajuanList || []).filter(p => p.status === 'menunggu');
+  const appr = lelangList.filter(l => String(l.approval || '') === 'MENUNGGU');
+  const kotak = (n, judul, ket, aksi, warna) => `<button class="tk ${n ? warna : ''}" onclick="${aksi}">
+      <span class="tk-j">${judul}</span><b>${n}</b><span class="tk-k">${ket}</span></button>`;
+  el.innerHTML =
+    kotak(pj.length, 'Pengajuan harga', pj.length ? pj.map(p => p.ekspedisi + ' · ' + p.tujuan.split(' - ').pop()).slice(0,2).join(', ') : 'tidak ada yang menunggu',
+          "document.getElementById('kotak-pengajuan').scrollIntoView({behavior:'smooth'})", 'oranye') +
+    kotak(siap.length, 'Siap pilih pemenang', siap.length ? 'lelang sudah tutup' : 'belum ada yang tutup', "gantiTabAdmin('lelang')", 'biru') +
+    kotak(appr.length, 'Menunggu approval', appr.length ? 'pengalihan pemenang' : 'tidak ada', "gantiTabAdmin('kiriman')", 'oranye') +
+    kotak(tanpaOrder.length, 'Menang tanpa order', tanpaOrder.length ? 'belum dibuatkan No Order' : 'semua sudah ada order', "gantiTabAdmin('kiriman')", 'merah') +
+    kotak(terbuka.length, 'Lelang terbuka', terbuka.length - siap.length + ' masih berjalan', "gantiTabAdmin('lelang')", '');
 }
 
 /* Paksa ambil ulang dari spreadsheet — dipakai setelah mengedit tab Rate,
@@ -1535,6 +1591,7 @@ function kartuPengajuan(p){
 }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function renderPengajuan(){
+  try{ renderTindakan(); }catch(e){}
   const el = document.getElementById('kotak-pengajuan'); if(!el) return;
   const tunggu = pengajuanList.filter(p => p.status === 'menunggu');
   const baru = pengajuanList.filter(p => p.status !== 'menunggu' && p._baru);
